@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://dwbod8lqb6dr6"]
+
+[ext_resource type="Texture2D" uid="uid://d1cg8s8r1x2hs" path="res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png" id="1_owq46"]
+[ext_resource type="Script" uid="uid://8b3ykb6uoy1r" path="res://entities/enemies/enemy.gd" id="1_wqcwe"]
+
+[node name="Enemy" type="Area2D" unique_id=1284810452]
+script = ExtResource("1_wqcwe")
+
+[node name="ShipRedStroked" type="Sprite2D" parent="." unique_id=550959270]
+rotation = 3.1415927
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("1_owq46")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1631309986]
+polygon = PackedVector2Array(0, 16, 0, 16, 16, -8, -16, -8)
+
+[connection signal="area_entered" from="." to="." method="_on_area_entered"]
