@@ -17,6 +17,7 @@ signal menu_requested
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _game_over_panel: Control = $Root/GameOverPanel
 
+@onready var _powerup_label: Label = $Root/PowerupLabel
 @onready var _banner_label: Label = $Root/BannerLabel
 @onready var _banner_timer: Timer = $BannerTimer
 
@@ -47,6 +48,11 @@ func set_lives(value: int, maximum: int) -> void:
 
 func set_high_score(value: int) -> void:
 	_best_label.text = "BEST %d" % value
+
+
+## One line describing the active power-ups, e.g. "RAPID 6s   SHIELD".
+func set_powerups(text: String) -> void:
+	_powerup_label.text = text
 
 
 func show_menu(high_score: int) -> void:
