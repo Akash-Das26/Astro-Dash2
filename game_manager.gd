@@ -27,7 +27,16 @@ var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 func _ready() -> void:
 	player.shot_fired.connect(_on_player_shot_fired)
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
-	spawner.start()
+	GameState.state_changed.connect(_on_state_changed)
+	GameState.change_state(GameState.State.PLAYING)
+
+
+func _on_state_changed(new_state: int) -> void:
+	# Pausing is handled by GameState; enemies simply stop spawning.
+	if new_state == GameState.State.PLAYING:
+		spawner.start()
+	else:
+		spawner.stop()
 
 
 func _on_player_shot_fired(spawn_position: Vector2) -> void:
