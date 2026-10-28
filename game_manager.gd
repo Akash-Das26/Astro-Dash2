@@ -57,6 +57,7 @@ func _ready() -> void:
 	hud.menu_requested.connect(_go_to_menu)
 	GameState.state_changed.connect(_on_state_changed)
 	hud.set_debug_visible(OS.is_debug_build())
+	AudioManager.play_music("music")
 	_reset_run()
 	_on_state_changed(GameState.state)
 
@@ -82,12 +83,14 @@ func _on_state_changed(new_state: int) -> void:
 			hud.show_paused()
 		GameState.State.GAME_OVER:
 			spawner.stop_run()
+			AudioManager.play_sfx("game_over")
 			var is_new_best: bool = SaveData.submit_score(score)
 			hud.set_high_score(SaveData.high_score)
 			hud.show_game_over(score, SaveData.high_score, is_new_best)
 
 
 func _start_run() -> void:
+	AudioManager.play_sfx("ui_click")
 	_clear_playfield()
 	_reset_run()
 	spawner.start_run()
@@ -95,10 +98,12 @@ func _start_run() -> void:
 
 
 func _resume() -> void:
+	AudioManager.play_sfx("ui_click")
 	GameState.change_state(GameState.State.PLAYING)
 
 
 func _go_to_menu() -> void:
+	AudioManager.play_sfx("ui_click")
 	GameState.change_state(GameState.State.MENU)
 
 
@@ -139,6 +144,7 @@ func _clear_container(container: Node) -> void:
 # --- Player signals ---------------------------------------------------------
 
 func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
+	AudioManager.play_sfx("shoot")
 	var bullet := _bullet_scene.instantiate() as Bullet
 	bullet.position = spawn_position
 	bullet.direction = direction
@@ -146,6 +152,7 @@ func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
 
 
 func _on_player_hurt() -> void:
+	AudioManager.play_sfx("player_hit")
 	_lose_life()
 
 
@@ -160,10 +167,12 @@ func _on_enemy_spawned(enemy: EnemyBase) -> void:
 	enemy.reached_boundary.connect(_on_enemy_reached_boundary)
 	if enemy is Boss:
 		(enemy as Boss).spread_shot.connect(_on_boss_spread_shot)
+		AudioManager.play_sfx("boss_spawn")
 	enemies.add_child(enemy)
 
 
 func _on_wave_started(wave_number: int, is_boss: bool) -> void:
+	AudioManager.play_sfx("wave")
 	if is_boss:
 		hud.show_wave_banner("BOSS WAVE")
 	else:
@@ -179,6 +188,7 @@ func _on_boss_spread_shot(origin: Vector2, directions: PackedVector2Array) -> vo
 
 
 func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
+	AudioManager.play_sfx("enemy_death")
 	score += points
 	_refresh_hud()
 	if enemy.is_boss:
@@ -226,6 +236,7 @@ func _random_pickup_kind() -> Pickup.Kind:
 
 
 func _on_pickup_collected(kind: Pickup.Kind) -> void:
+	AudioManager.play_sfx("pickup")
 	match kind:
 		Pickup.Kind.RAPID_FIRE:
 			# Same effect again refreshes the timer instead of stacking it.
@@ -264,6 +275,7 @@ func _deactivate_powerup(kind: int) -> void:
 
 ## Bomb: clears every non-boss enemy on screen, points included.
 func _detonate_bomb() -> void:
+	AudioManager.play_sfx("bomb")
 	for child: Node in enemies.get_children():
 		if child is EnemyBase and not (child as EnemyBase).is_boss:
 			(child as EnemyBase).die()
