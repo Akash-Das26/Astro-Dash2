@@ -1,7 +1,8 @@
 class_name GameManager
 extends Node2D
-## Root of the playfield. Owns score, lives and the Bullets/Enemies
-## containers, and connects the signal-emitting entities to each other.
+## Root of the playfield. Owns score, lives, power-up timers and the
+## Bullets/Enemies/EnemyBullets/Pickups containers, and connects the
+## signal-emitting entities to each other.
 ##
 ## Collision layers (project-wide, see each scene's collision_layer/mask):
 ##   1 = player, 2 = player bullets, 3 = enemies, 4 = boundary, 5 = enemy bullets
@@ -19,11 +20,14 @@ extends Node2D
 ## Waves come from EnemySpawner; every fifth wave is a single boss.
 
 const MAX_LIVES: int = 3
+const PICKUP_DROP_CHANCE: float = 0.1
+const POWERUP_DURATION: float = 8.0
 
 @onready var player: Player = $Player
 @onready var bullets: Node = $Bullets
 @onready var enemies: Node = $Enemies
 @onready var enemy_bullets: Node = $EnemyBullets
+@onready var pickups: Node = $Pickups
 @onready var spawner: EnemySpawner = $EnemySpawner
 @onready var hud: HUD = $HUD
 
@@ -32,11 +36,15 @@ var lives: int = MAX_LIVES
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
+var _pickup_scene: PackedScene = preload("res://entities/pickups/pickup.tscn")
+## Pickup.Kind -> seconds left, only for the timed effects.
+var _powerup_time_left: Dictionary = {}
 
 
 func _ready() -> void:
 	player.shot_fired.connect(_on_player_shot_fired)
 	player.hurt.connect(_on_player_hurt)
+	player.shield_changed.connect(_on_shield_changed)
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	spawner.wave_started.connect(_on_wave_started)
 	hud.play_requested.connect(_start_run)
@@ -46,6 +54,10 @@ func _ready() -> void:
 	GameState.state_changed.connect(_on_state_changed)
 	_reset_run()
 	_on_state_changed(GameState.state)
+
+
+func _process(delta: float) -> void:
+	_tick_powerups(delta)
 
 
 # --- State handling ---------------------------------------------------------
@@ -91,7 +103,10 @@ func _end_run() -> void:
 func _reset_run() -> void:
 	score = 0
 	lives = MAX_LIVES
+	_powerup_time_left.clear()
+	player.clear_powerups()
 	_refresh_hud()
+	_refresh_powerup_hud()
 
 
 func _refresh_hud() -> void:
@@ -103,6 +118,7 @@ func _refresh_hud() -> void:
 func _clear_playfield() -> void:
 	_clear_container(bullets)
 	_clear_container(enemy_bullets)
+	_clear_container(pickups)
 	_clear_container(enemies)
 
 
@@ -114,16 +130,27 @@ func _clear_container(container: Node) -> void:
 		child.queue_free()
 
 
-# --- Entity signals ---------------------------------------------------------
+# --- Player signals ---------------------------------------------------------
 
-func _on_player_shot_fired(spawn_position: Vector2) -> void:
+func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
 	var bullet := _bullet_scene.instantiate() as Bullet
 	bullet.position = spawn_position
+	bullet.direction = direction
 	bullets.add_child(bullet)
 
 
+func _on_player_hurt() -> void:
+	_lose_life()
+
+
+func _on_shield_changed(_active: bool) -> void:
+	_refresh_powerup_hud()
+
+
+# --- Enemy signals ----------------------------------------------------------
+
 func _on_enemy_spawned(enemy: EnemyBase) -> void:
-	enemy.died.connect(_on_enemy_died)
+	enemy.died.connect(_on_enemy_died.bind(enemy))
 	enemy.reached_boundary.connect(_on_enemy_reached_boundary)
 	if enemy is Boss:
 		(enemy as Boss).spread_shot.connect(_on_boss_spread_shot)
@@ -145,18 +172,18 @@ func _on_boss_spread_shot(origin: Vector2, directions: PackedVector2Array) -> vo
 		enemy_bullets.add_child(bullet)
 
 
-func _on_enemy_died(points: int) -> void:
+func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	score += points
 	_refresh_hud()
+	if enemy.is_boss:
+		return
+	if randf() < PICKUP_DROP_CHANCE:
+		_spawn_pickup(_random_pickup_kind(), enemy.global_position)
 
 
 func _on_enemy_reached_boundary(enemy: EnemyBase) -> void:
 	if not enemy.costs_life_on_boundary:
 		return
-	_lose_life()
-
-
-func _on_player_hurt() -> void:
 	_lose_life()
 
 
@@ -166,3 +193,75 @@ func _lose_life() -> void:
 	_refresh_hud()
 	if lives == 0:
 		_end_run()
+
+
+# --- Pickups and power-ups --------------------------------------------------
+
+func _spawn_pickup(kind: Pickup.Kind, at: Vector2) -> void:
+	var pickup := _pickup_scene.instantiate() as Pickup
+	pickup.kind = kind
+	pickup.position = at
+	pickup.collected.connect(_on_pickup_collected)
+	pickups.add_child(pickup)
+
+
+func _random_pickup_kind() -> Pickup.Kind:
+	var kinds: Array = Pickup.Kind.values()
+	return int(kinds.pick_random())
+
+
+func _on_pickup_collected(kind: Pickup.Kind) -> void:
+	match kind:
+		Pickup.Kind.RAPID_FIRE:
+			# Same effect again refreshes the timer instead of stacking it.
+			_powerup_time_left[kind] = POWERUP_DURATION
+			player.set_rapid_fire(true)
+		Pickup.Kind.SPREAD_SHOT:
+			_powerup_time_left[kind] = POWERUP_DURATION
+			player.set_spread_shot(true)
+		Pickup.Kind.SHIELD:
+			player.grant_shield()
+		Pickup.Kind.BOMB:
+			_detonate_bomb()
+	_refresh_powerup_hud()
+
+
+func _tick_powerups(delta: float) -> void:
+	if _powerup_time_left.is_empty():
+		return
+	for kind: int in _powerup_time_left.keys():
+		var remaining: float = float(_powerup_time_left[kind]) - delta
+		if remaining <= 0.0:
+			_powerup_time_left.erase(kind)
+			_deactivate_powerup(kind)
+		else:
+			_powerup_time_left[kind] = remaining
+	_refresh_powerup_hud()
+
+
+func _deactivate_powerup(kind: int) -> void:
+	match kind:
+		Pickup.Kind.RAPID_FIRE:
+			player.set_rapid_fire(false)
+		Pickup.Kind.SPREAD_SHOT:
+			player.set_spread_shot(false)
+
+
+## Bomb: clears every non-boss enemy on screen, points included.
+func _detonate_bomb() -> void:
+	for child: Node in enemies.get_children():
+		if child is EnemyBase and not (child as EnemyBase).is_boss:
+			(child as EnemyBase).die()
+
+
+func _refresh_powerup_hud() -> void:
+	var parts: PackedStringArray = []
+	var rapid: float = float(_powerup_time_left.get(Pickup.Kind.RAPID_FIRE, 0.0))
+	if rapid > 0.0:
+		parts.append("RAPID %ds" % ceili(rapid))
+	var spread: float = float(_powerup_time_left.get(Pickup.Kind.SPREAD_SHOT, 0.0))
+	if spread > 0.0:
+		parts.append("SPREAD %ds" % ceili(spread))
+	if player.has_shield():
+		parts.append("SHIELD")
+	hud.set_powerups("   ".join(parts))
