@@ -13,6 +13,9 @@ enum Phase { STRAFE, SPREAD }
 @export var strafe_margin: float = 70.0
 ## Seconds of pure strafing before the spread phase starts.
 @export var strafe_seconds: float = 4.0
+## Slow descent once it starts firing, so an unfinished boss eventually
+## crosses the Boundary and ends the wave by itself.
+@export var descent_speed: float = 32.0
 @export var spread_interval: float = 2.0
 @export var spread_bullets: int = 5
 ## Total width of the fan, in degrees.
@@ -37,6 +40,7 @@ func _move(delta: float) -> void:
 		_shot_timer = 0.0
 
 	if _phase == Phase.SPREAD:
+		position.y += descent_speed * delta
 		_shot_timer += delta
 		if _shot_timer >= spread_interval:
 			_shot_timer = 0.0
