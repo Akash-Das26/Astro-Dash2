@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://bb4ew1ds7tebg" path="res://entities/enemy_spawner/enemy_spawner.gd" id="5_shwjl"]
 [ext_resource type="Script" path="res://game_manager.gd" id="6_gmngr"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="7_hud"]
+[ext_resource type="Script" path="res://entities/effects/shake_camera.gd" id="8_camera"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_htemk"]
 size = Vector2(400, 16)
@@ -14,9 +15,13 @@ size = Vector2(400, 16)
 [node name="GameManager" type="Node2D" unique_id=42655754]
 script = ExtResource("6_gmngr")
 
+[node name="ShakeCamera" type="Camera2D" parent="."]
+position = Vector2(200, 300)
+script = ExtResource("8_camera")
+
 [node name="BackgroundSprite" type="Sprite2D" parent="." unique_id=1936400931]
 position = Vector2(200, 300)
-scale = Vector2(1, 1.5)
+scale = Vector2(1.06, 1.59)
 texture = ExtResource("1_70yv6")
 
 [node name="Player" parent="." unique_id=1168014697 instance=ExtResource("2_smx3j")]
