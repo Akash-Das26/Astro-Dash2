@@ -22,6 +22,9 @@ extends Node2D
 const MAX_LIVES: int = 3
 const PICKUP_DROP_CHANCE: float = 0.1
 const POWERUP_DURATION: float = 8.0
+const DEBUG_SAMPLE_INTERVAL: float = 0.25
+## Distance the debug pickup spawns above the player when a key is pressed.
+const DEBUG_PICKUP_OFFSET: float = 70.0
 
 @onready var player: Player = $Player
 @onready var bullets: Node = $Bullets
@@ -39,6 +42,7 @@ var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bul
 var _pickup_scene: PackedScene = preload("res://entities/pickups/pickup.tscn")
 ## Pickup.Kind -> seconds left, only for the timed effects.
 var _powerup_time_left: Dictionary = {}
+var _debug_sample_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -52,12 +56,14 @@ func _ready() -> void:
 	hud.resume_requested.connect(_resume)
 	hud.menu_requested.connect(_go_to_menu)
 	GameState.state_changed.connect(_on_state_changed)
+	hud.set_debug_visible(OS.is_debug_build())
 	_reset_run()
 	_on_state_changed(GameState.state)
 
 
 func _process(delta: float) -> void:
 	_tick_powerups(delta)
+	_update_debug_counter(delta)
 
 
 # --- State handling ---------------------------------------------------------
@@ -265,3 +271,47 @@ func _refresh_powerup_hud() -> void:
 	if player.has_shield():
 		parts.append("SHIELD")
 	hud.set_powerups("   ".join(parts))
+
+
+# --- Debug tooling (debug builds only) --------------------------------------
+
+func _update_debug_counter(delta: float) -> void:
+	if not OS.is_debug_build():
+		return
+	_debug_sample_timer += delta
+	if _debug_sample_timer < DEBUG_SAMPLE_INTERVAL:
+		return
+	_debug_sample_timer = 0.0
+	hud.set_debug_text("live nodes  bullets %d  enemies %d  enemy bullets %d  pickups %d" % [
+		bullets.get_child_count(),
+		enemies.get_child_count(),
+		enemy_bullets.get_child_count(),
+		pickups.get_child_count(),
+	])
+
+
+## B = force boss, 1-4 = drop a rapid/spread/shield/bomb pickup.
+func _unhandled_input(event: InputEvent) -> void:
+	if not OS.is_debug_build() or not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	match key_event.physical_keycode:
+		KEY_B:
+			spawner.spawn_boss_now()
+		KEY_1:
+			_debug_spawn_pickup(Pickup.Kind.RAPID_FIRE)
+		KEY_2:
+			_debug_spawn_pickup(Pickup.Kind.SPREAD_SHOT)
+		KEY_3:
+			_debug_spawn_pickup(Pickup.Kind.SHIELD)
+		KEY_4:
+			_debug_spawn_pickup(Pickup.Kind.BOMB)
+		_:
+			return
+	get_viewport().set_input_as_handled()
+
+
+func _debug_spawn_pickup(kind: Pickup.Kind) -> void:
+	_spawn_pickup(kind, player.position + Vector2(0.0, -DEBUG_PICKUP_OFFSET))
