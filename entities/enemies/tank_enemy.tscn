@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://entities/enemies/tank_enemy.gd" id="2_script"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_purple_stroked.png" id="3_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_tank"]
+radius = 22.0
+
+[node name="TankEnemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+max_hp = 3
+speed = 38.0
+points = 50
+hit_flash_time = 0.18
+
+[node name="Sprite" parent="." index="0"]
+modulate = Color(0.8, 0.85, 1, 1)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("3_tex")
+
+[node name="CollisionShape2D" parent="." index="2"]
+shape = SubResource("CircleShape2D_tank")
