@@ -14,12 +14,16 @@ extends Node2D
 ## Boundary rule: the blue bar at y=464 is the defence line. Any enemy that
 ## crosses it costs the player one life; the run ends at zero lives.
 
+const MAX_LIVES: int = 3
+const LIVES_LOST_PER_BOUNDARY_CROSSING: int = 1
+
 @onready var player: Player = $Player
 @onready var bullets: Node = $Bullets
 @onready var enemies: Node = $Enemies
 @onready var spawner: EnemySpawner = $EnemySpawner
 
 var score: int = 0
+var lives: int = MAX_LIVES
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 
@@ -56,4 +60,11 @@ func _on_enemy_died(points: int) -> void:
 
 
 func _on_enemy_reached_boundary() -> void:
-	pass
+	lives -= LIVES_LOST_PER_BOUNDARY_CROSSING
+	lives = maxi(lives, 0)
+	if lives == 0:
+		_end_run()
+
+
+func _end_run() -> void:
+	GameState.change_state(GameState.State.GAME_OVER)
