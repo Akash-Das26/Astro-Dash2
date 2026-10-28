@@ -1,0 +1,235 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hudg"]
+
+[node name="HUD" type="CanvasLayer"]
+process_mode = 3
+layer = 10
+script = ExtResource("1_hudg")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ScoreLabel" type="Label" parent="Root"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 6.0
+offset_right = 220.0
+offset_bottom = 32.0
+theme_override_font_sizes/font_size = 20
+text = "SCORE 0"
+
+[node name="BestLabel" type="Label" parent="Root"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 48.0
+theme_override_font_sizes/font_size = 12
+text = "BEST 0"
+
+[node name="LivesLabel" type="Label" parent="Root"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -152.0
+offset_top = 6.0
+offset_right = -12.0
+offset_bottom = 32.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 20
+text = "LIVES 3/3"
+horizontal_alignment = 2
+
+[node name="MenuPanel" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/MenuPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 0.82)
+
+[node name="Box" type="VBoxContainer" parent="Root/MenuPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -130.0
+offset_right = 140.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Title" type="Label" parent="Root/MenuPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ASTRO DASH 2"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="Root/MenuPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "SURVIVE - SHOOT - SCORE"
+horizontal_alignment = 1
+
+[node name="BestValueLabel" type="Label" parent="Root/MenuPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "BEST 0"
+horizontal_alignment = 1
+
+[node name="PlayButton" type="Button" parent="Root/MenuPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "PLAY"
+
+[node name="PausePanel" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 0.72)
+
+[node name="Box" type="VBoxContainer" parent="Root/PausePanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -110.0
+offset_right = 140.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="Root/PausePanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="ResumeButton" type="Button" parent="Root/PausePanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "RESUME"
+
+[node name="RestartButton" type="Button" parent="Root/PausePanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "RESTART"
+
+[node name="MenuButton" type="Button" parent="Root/PausePanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "MAIN MENU"
+
+[node name="GameOverPanel" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.0, 0.02, 0.78)
+
+[node name="Box" type="VBoxContainer" parent="Root/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -120.0
+offset_right = 140.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="FinalScoreLabel" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "SCORE 0"
+horizontal_alignment = 1
+
+[node name="GameOverBestLabel" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "BEST 0"
+horizontal_alignment = 1
+
+[node name="NewBestLabel" type="Label" parent="Root/GameOverPanel/Box"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "NEW BEST!"
+horizontal_alignment = 1
+
+[node name="RetryButton" type="Button" parent="Root/GameOverPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "RETRY"
+
+[node name="MenuButton" type="Button" parent="Root/GameOverPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "MAIN MENU"
