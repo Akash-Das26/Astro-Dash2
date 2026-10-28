@@ -212,8 +212,17 @@ func _spawn_pickup(kind: Pickup.Kind, at: Vector2) -> void:
 
 
 func _random_pickup_kind() -> Pickup.Kind:
-	var kinds: Array = Pickup.Kind.values()
-	return int(kinds.pick_random())
+	# Spelled out so the roll returns a real Pickup.Kind, and so the weights
+	# stay easy to tweak later.
+	match randi() % 4:
+		0:
+			return Pickup.Kind.RAPID_FIRE
+		1:
+			return Pickup.Kind.SPREAD_SHOT
+		2:
+			return Pickup.Kind.SHIELD
+		_:
+			return Pickup.Kind.BOMB
 
 
 func _on_pickup_collected(kind: Pickup.Kind) -> void:
