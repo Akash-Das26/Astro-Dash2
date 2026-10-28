@@ -1,9 +1,12 @@
 class_name SettingsPanel
 extends VBoxContainer
-## Audio settings block, instanced on both the main menu and the pause panel.
-## It writes straight through to AudioManager and SaveData (global services)
-## and holds no game state. Slider changes are saved on a short debounce so
-## dragging does not hit the disk every frame.
+## Audio and motion settings block, instanced on both the main menu and the
+## pause panel. It writes straight through to AudioManager and SaveData
+## (global services) and holds no game state.
+##
+## Two instances exist at once, so they resync from AudioManager's
+## `settings_changed` signal instead of reading each other. Slider changes are
+## saved on a short debounce so dragging does not hit the disk every frame.
 
 const SAVE_DEBOUNCE_SECONDS: float = 0.4
 
@@ -13,8 +16,8 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _motion_check: CheckButton = $MotionCheck
 @onready var _save_timer: Timer = $SaveTimer
 
-## True while the controls are being filled in, so echoing values do not
-## start a save.
+## True while the controls are being filled in, so echoed values neither
+## re-apply the setting nor start a save.
 var _syncing: bool = false
 
 
@@ -27,7 +30,7 @@ func _ready() -> void:
 	_sfx_slider.drag_ended.connect(_on_sfx_drag_ended)
 	_mute_check.toggled.connect(_on_mute_toggled)
 	_motion_check.toggled.connect(_on_motion_toggled)
-	visibility_changed.connect(_on_visibility_changed)
+	AudioManager.settings_changed.connect(_sync_from_settings)
 	_sync_from_settings()
 
 
@@ -40,27 +43,19 @@ func _sync_from_settings() -> void:
 	_syncing = false
 
 
-func _on_visibility_changed() -> void:
-	if visible:
-		_sync_from_settings()
-	elif _save_timer.time_left > 0.0:
-		_save_timer.stop()
-		_flush_settings()
-
-
 func _on_music_changed(value: float) -> void:
-	AudioManager.set_bus_volume(AudioManager.MUSIC_BUS, value)
 	if _syncing:
 		return
 	SaveData.music_volume = value
+	AudioManager.set_bus_volume(AudioManager.MUSIC_BUS, value)
 	_save_timer.start()
 
 
 func _on_sfx_changed(value: float) -> void:
-	AudioManager.set_bus_volume(AudioManager.SFX_BUS, value)
 	if _syncing:
 		return
 	SaveData.sfx_volume = value
+	AudioManager.set_bus_volume(AudioManager.SFX_BUS, value)
 	_save_timer.start()
 
 
@@ -70,17 +65,17 @@ func _on_sfx_drag_ended(value_changed: bool) -> void:
 
 
 func _on_mute_toggled(enabled: bool) -> void:
-	AudioManager.set_mute(enabled)
 	if _syncing:
 		return
 	SaveData.muted = enabled
+	AudioManager.set_mute(enabled)
 	_save_timer.start()
 
 
 func _on_motion_toggled(enabled: bool) -> void:
-	SaveData.reduce_motion = enabled
 	if _syncing:
 		return
+	SaveData.reduce_motion = enabled
 	_save_timer.start()
 
 

@@ -31,6 +31,10 @@ const PITCH_JITTER: Dictionary = {
 	"enemy_death": 0.05,
 }
 
+## Emitted whenever a real volume or mute change happens, so every settings
+## panel (menu and pause are separate instances) can stay in step.
+signal settings_changed
+
 var _streams: Dictionary = {}
 var _last_played: Dictionary = {}
 var _sfx_players: Array[AudioStreamPlayer] = []
@@ -88,9 +92,15 @@ func set_bus_volume(bus: String, linear: float) -> void:
 	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(clamped, 0.001)))
 	AudioServer.set_bus_mute(index, clamped <= 0.001)
 	if bus == MUSIC_BUS:
+		var music_changed: bool = not is_equal_approx(_music_volume, clamped)
 		_music_volume = clamped
+		if music_changed:
+			settings_changed.emit()
 	elif bus == SFX_BUS:
+		var sfx_changed: bool = not is_equal_approx(_sfx_volume, clamped)
 		_sfx_volume = clamped
+		if sfx_changed:
+			settings_changed.emit()
 
 
 func get_bus_volume(bus: String) -> float:
@@ -109,10 +119,13 @@ func sfx_volume() -> float:
 
 
 func set_mute(enabled: bool) -> void:
+	var changed: bool = _muted != enabled
 	_muted = enabled
 	var index: int = AudioServer.get_bus_index(MASTER_BUS)
 	if index >= 0:
 		AudioServer.set_bus_mute(index, _muted)
+	if changed:
+		settings_changed.emit()
 
 
 func is_muted() -> bool:
