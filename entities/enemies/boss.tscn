@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://entities/enemies/boss.gd" id="2_script"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.1.0/spacepixels-0.1.0/pixel_station_red.png" id="3_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 42.0
+
+[node name="Boss" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+max_hp = 20
+speed = 60.0
+points = 500
+costs_life_on_boundary = false
+is_boss = true
+
+[node name="Sprite" parent="." index="0"]
+rotation = 0.0
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("3_tex")
+
+[node name="CollisionShape2D" parent="." index="2"]
+shape = SubResource("CircleShape2D_boss")
