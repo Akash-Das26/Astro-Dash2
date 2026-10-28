@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://game_manager.gd" id="6_gmngr"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="7_hud"]
 [ext_resource type="Script" path="res://entities/effects/shake_camera.gd" id="8_camera"]
+[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="9_stars"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_htemk"]
 size = Vector2(400, 16)
@@ -23,6 +24,9 @@ script = ExtResource("8_camera")
 position = Vector2(200, 300)
 scale = Vector2(1.06, 1.59)
 texture = ExtResource("1_70yv6")
+
+[node name="Starfield" type="Node2D" parent="."]
+script = ExtResource("9_stars")
 
 [node name="Player" parent="." unique_id=1168014697 instance=ExtResource("2_smx3j")]
 position = Vector2(192, 568)
