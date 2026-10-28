@@ -10,6 +10,7 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _music_slider: HSlider = $MusicRow/MusicSlider
 @onready var _sfx_slider: HSlider = $SfxRow/SfxSlider
 @onready var _mute_check: CheckButton = $MuteCheck
+@onready var _motion_check: CheckButton = $MotionCheck
 @onready var _save_timer: Timer = $SaveTimer
 
 ## True while the controls are being filled in, so echoing values do not
@@ -25,6 +26,7 @@ func _ready() -> void:
 	_sfx_slider.value_changed.connect(_on_sfx_changed)
 	_sfx_slider.drag_ended.connect(_on_sfx_drag_ended)
 	_mute_check.toggled.connect(_on_mute_toggled)
+	_motion_check.toggled.connect(_on_motion_toggled)
 	visibility_changed.connect(_on_visibility_changed)
 	_sync_from_settings()
 
@@ -34,6 +36,7 @@ func _sync_from_settings() -> void:
 	_music_slider.value = SaveData.music_volume
 	_sfx_slider.value = SaveData.sfx_volume
 	_mute_check.button_pressed = SaveData.muted
+	_motion_check.button_pressed = SaveData.reduce_motion
 	_syncing = false
 
 
@@ -71,6 +74,13 @@ func _on_mute_toggled(enabled: bool) -> void:
 	if _syncing:
 		return
 	SaveData.muted = enabled
+	_save_timer.start()
+
+
+func _on_motion_toggled(enabled: bool) -> void:
+	SaveData.reduce_motion = enabled
+	if _syncing:
+		return
 	_save_timer.start()
 
 

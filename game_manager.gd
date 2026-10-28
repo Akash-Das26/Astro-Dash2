@@ -35,6 +35,7 @@ const DEBUG_PICKUP_OFFSET: float = 70.0
 @onready var enemy_bullets: Node = $EnemyBullets
 @onready var pickups: Node = $Pickups
 @onready var effects: Node = $Effects
+@onready var shake_camera: ShakeCamera = $ShakeCamera
 @onready var spawner: EnemySpawner = $EnemySpawner
 @onready var hud: HUD = $HUD
 
@@ -159,6 +160,7 @@ func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
 
 func _on_player_hurt() -> void:
 	AudioManager.play_sfx("player_hit")
+	_shake(0.55)
 	_lose_life()
 
 
@@ -204,6 +206,7 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	_refresh_hud()
 	if enemy.is_boss:
 		_spawn_explosion(enemy.global_position, enemy.effect_color, BOSS_EXPLOSION_COUNT, 2.0, 0.8)
+		_shake(0.8)
 		return
 	_spawn_explosion(enemy.global_position, enemy.effect_color, 14, 1.0, 0.5)
 	if randf() < PICKUP_DROP_CHANCE:
@@ -225,6 +228,10 @@ func _lose_life() -> void:
 
 
 # --- Effects ----------------------------------------------------------------
+
+func _shake(amount: float) -> void:
+	shake_camera.add_trauma(amount)
+
 
 func _spawn_explosion(at: Vector2, tint: Color, count: int, size_mult: float, life_time: float) -> void:
 	if effects.get_child_count() >= MAX_LIVE_EXPLOSIONS:
@@ -303,6 +310,7 @@ func _deactivate_powerup(kind: int) -> void:
 ## Bomb: clears every non-boss enemy on screen, points included.
 func _detonate_bomb() -> void:
 	AudioManager.play_sfx("bomb")
+	_shake(0.35)
 	for child: Node in enemies.get_children():
 		if child is EnemyBase and not (child as EnemyBase).is_boss:
 			(child as EnemyBase).die()

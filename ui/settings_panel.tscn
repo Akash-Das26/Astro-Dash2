@@ -47,6 +47,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "MUTE"
 
+[node name="MotionCheck" type="CheckButton" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "REDUCE MOTION"
+
 [node name="SaveTimer" type="Timer" parent="."]
 wait_time = 0.4
 one_shot = true
