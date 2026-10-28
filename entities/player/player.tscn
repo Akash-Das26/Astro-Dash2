@@ -15,7 +15,7 @@ texture = ExtResource("1_symyc")
 
 [node name="Hurtbox" type="Area2D" parent="." unique_id=882134607]
 collision_layer = 1
-collision_mask = 4
+collision_mask = 20
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 shape = SubResource("CircleShape2D_hurtbox")
