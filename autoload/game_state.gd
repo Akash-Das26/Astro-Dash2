@@ -3,9 +3,9 @@ extends Node
 ## paused in every state except PLAYING, so entities never need to ask
 ## "am I allowed to run?" themselves.
 
-signal state_changed(new_state: State)
-
 enum State { MENU, PLAYING, PAUSED, GAME_OVER }
+
+signal state_changed(new_state: State)
 
 var state: State = State.MENU
 
@@ -30,7 +30,7 @@ func is_playing() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("pause"):
+	if not event.is_action_pressed("pause") or event.is_echo():
 		return
 	if state == State.PLAYING:
 		change_state(State.PAUSED)
