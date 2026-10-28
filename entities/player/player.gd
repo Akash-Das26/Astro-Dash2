@@ -55,6 +55,7 @@ func take_hit() -> void:
 		return
 	if _shield:
 		_shield = false
+		queue_redraw()
 		_start_invulnerability(shield_grace_time)
 		_play_hit_feedback(Color(0.5, 0.95, 1.0))
 		shield_changed.emit(false)
@@ -76,6 +77,7 @@ func grant_shield() -> void:
 	if _shield:
 		return
 	_shield = true
+	queue_redraw()
 	shield_changed.emit(true)
 
 
@@ -94,7 +96,16 @@ func clear_powerups() -> void:
 	_spread_shot = false
 	if _shield:
 		_shield = false
+		queue_redraw()
 		shield_changed.emit(false)
+
+
+## Shield bubble, drawn behind the hull. No texture, no shader.
+func _draw() -> void:
+	if not _shield:
+		return
+	draw_circle(Vector2.ZERO, 26.0, Color(0.4, 0.9, 1.0, 0.12))
+	draw_arc(Vector2.ZERO, 26.0, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), 2.0, true)
 
 
 func _move(delta: float) -> void:
