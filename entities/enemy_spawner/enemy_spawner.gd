@@ -6,8 +6,13 @@ extends Node
 
 signal enemy_spawned(enemy: EnemyBase)
 
+const ENEMY_SCENES: Array[PackedScene] = [
+	preload("res://entities/enemies/enemy.tscn"),
+	preload("res://entities/enemies/zigzag_enemy.tscn"),
+	preload("res://entities/enemies/tank_enemy.tscn"),
+]
+
 @export var spawn_interval: float = 1.5
-@export var enemy_scene: PackedScene = preload("res://entities/enemies/enemy.tscn")
 
 var _timer: Timer
 
@@ -35,5 +40,6 @@ func restart() -> void:
 
 
 func _spawn_enemy() -> void:
-	var enemy := enemy_scene.instantiate() as EnemyBase
+	var scene: PackedScene = ENEMY_SCENES.pick_random()
+	var enemy := scene.instantiate() as EnemyBase
 	enemy_spawned.emit(enemy)
