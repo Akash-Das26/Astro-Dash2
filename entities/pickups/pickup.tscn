@@ -1,7 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/pickups/pickup.gd" id="1_pickup"]
-[ext_resource type="Texture2D" path="res://assests/spacepixels-0.1.0/spacepixels-0.1.0/pixel_laser_small_blue.png" id="2_tex"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pickup"]
 radius = 14.0
@@ -10,20 +9,6 @@ radius = 14.0
 collision_layer = 32
 collision_mask = 1
 script = ExtResource("1_pickup")
-
-[node name="Sprite" type="Sprite2D" parent="."]
-scale = Vector2(0.8, 0.8)
-texture = ExtResource("2_tex")
-
-[node name="Letter" type="Label" parent="."]
-offset_left = -12.0
-offset_top = -10.0
-offset_right = 12.0
-offset_bottom = 10.0
-theme_override_font_sizes/font_size = 14
-text = "R"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_pickup")
