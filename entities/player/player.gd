@@ -24,6 +24,7 @@ signal shield_changed(active: bool)
 @export var shield_grace_time: float = 0.4
 
 @onready var _sprite: Sprite2D = $ShipSprite
+@onready var _flash: Sprite2D = $FlashSprite
 @onready var _hurtbox: Area2D = $Hurtbox
 
 var _shoot_cooldown: float = 0.0
@@ -32,9 +33,12 @@ var _blink_timer: float = 0.0
 var _rapid_fire: bool = false
 var _spread_shot: bool = false
 var _shield: bool = false
+var _base_scale: Vector2 = Vector2.ONE
 
 
 func _ready() -> void:
+	_base_scale = _sprite.scale
+	_flash.scale = _base_scale
 	_hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 
 
@@ -52,9 +56,11 @@ func take_hit() -> void:
 	if _shield:
 		_shield = false
 		_start_invulnerability(shield_grace_time)
+		_play_hit_feedback(Color(0.5, 0.95, 1.0))
 		shield_changed.emit(false)
 		return
 	_start_invulnerability(invulnerability_time)
+	_play_hit_feedback(Color.WHITE)
 	hurt.emit()
 
 
@@ -114,6 +120,16 @@ func _fire() -> void:
 	var step: float = deg_to_rad(spread_angle_degrees)
 	for offset: float in [-step, 0.0, step]:
 		shot_fired.emit(origin, Vector2.UP.rotated(offset))
+
+
+## White flash on the hull plus a small scale pop when a hit lands.
+func _play_hit_feedback(tint: Color) -> void:
+	_flash.modulate = Color(tint.r, tint.g, tint.b, 0.85)
+	var flash_tween := create_tween()
+	flash_tween.tween_property(_flash, "modulate:a", 0.0, 0.16)
+	_sprite.scale = _base_scale * 1.3
+	var pop_tween := create_tween()
+	pop_tween.tween_property(_sprite, "scale", _base_scale, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _start_invulnerability(duration: float) -> void:
