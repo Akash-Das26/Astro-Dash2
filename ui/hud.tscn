@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hudg"]
+[ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="2_settings"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -109,10 +110,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -140.0
-offset_top = -130.0
-offset_right = 140.0
-offset_bottom = 130.0
+offset_left = -150.0
+offset_top = -172.0
+offset_right = 150.0
+offset_bottom = 172.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -142,6 +143,9 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "PLAY"
 
+[node name="SettingsPanel" parent="Root/MenuPanel/Box" instance=ExtResource("2_settings")]
+layout_mode = 2
+
 [node name="PausePanel" type="Control" parent="Root"]
 visible = false
 layout_mode = 1
@@ -167,10 +171,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -140.0
-offset_top = -110.0
-offset_right = 140.0
-offset_bottom = 110.0
+offset_left = -150.0
+offset_top = -186.0
+offset_right = 150.0
+offset_bottom = 186.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 14
@@ -199,6 +203,9 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "MAIN MENU"
+
+[node name="SettingsPanel" parent="Root/PausePanel/Box" instance=ExtResource("2_settings")]
+layout_mode = 2
 
 [node name="GameOverPanel" type="Control" parent="Root"]
 visible = false
