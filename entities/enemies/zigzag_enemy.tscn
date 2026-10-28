@@ -9,6 +9,7 @@ script = ExtResource("2_script")
 max_hp = 1
 speed = 95.0
 points = 20
+effect_color = Color(0.45, 1, 0.5, 1)
 sway_amplitude = 70.0
 sway_frequency = 2.5
 

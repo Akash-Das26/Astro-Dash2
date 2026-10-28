@@ -23,6 +23,9 @@ const MAX_LIVES: int = 3
 const PICKUP_DROP_CHANCE: float = 0.1
 const POWERUP_DURATION: float = 8.0
 const DEBUG_SAMPLE_INTERVAL: float = 0.25
+## Hard cap so a bomb chain cannot spawn hundreds of emitters at once.
+const MAX_LIVE_EXPLOSIONS: int = 12
+const BOSS_EXPLOSION_COUNT: int = 30
 ## Distance the debug pickup spawns above the player when a key is pressed.
 const DEBUG_PICKUP_OFFSET: float = 70.0
 
@@ -31,6 +34,7 @@ const DEBUG_PICKUP_OFFSET: float = 70.0
 @onready var enemies: Node = $Enemies
 @onready var enemy_bullets: Node = $EnemyBullets
 @onready var pickups: Node = $Pickups
+@onready var effects: Node = $Effects
 @onready var spawner: EnemySpawner = $EnemySpawner
 @onready var hud: HUD = $HUD
 
@@ -40,6 +44,7 @@ var lives: int = MAX_LIVES
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
 var _pickup_scene: PackedScene = preload("res://entities/pickups/pickup.tscn")
+var _explosion_scene: PackedScene = preload("res://entities/effects/explosion.tscn")
 ## Pickup.Kind -> seconds left, only for the timed effects.
 var _powerup_time_left: Dictionary = {}
 var _debug_sample_timer: float = 0.0
@@ -130,6 +135,7 @@ func _clear_playfield() -> void:
 	_clear_container(bullets)
 	_clear_container(enemy_bullets)
 	_clear_container(pickups)
+	_clear_container(effects)
 	_clear_container(enemies)
 
 
@@ -165,6 +171,7 @@ func _on_shield_changed(_active: bool) -> void:
 func _on_enemy_spawned(enemy: EnemyBase) -> void:
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	enemy.reached_boundary.connect(_on_enemy_reached_boundary)
+	enemy.damaged.connect(_on_enemy_damaged.bind(enemy))
 	if enemy is Boss:
 		(enemy as Boss).spread_shot.connect(_on_boss_spread_shot)
 		AudioManager.play_sfx("boss_spawn")
@@ -187,12 +194,18 @@ func _on_boss_spread_shot(origin: Vector2, directions: PackedVector2Array) -> vo
 		enemy_bullets.add_child(bullet)
 
 
+func _on_enemy_damaged(at: Vector2, enemy: EnemyBase) -> void:
+	_spawn_explosion(at, enemy.effect_color, 5, 0.7, 0.25)
+
+
 func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("enemy_death")
 	score += points
 	_refresh_hud()
 	if enemy.is_boss:
+		_spawn_explosion(enemy.global_position, enemy.effect_color, BOSS_EXPLOSION_COUNT, 2.0, 0.8)
 		return
+	_spawn_explosion(enemy.global_position, enemy.effect_color, 14, 1.0, 0.5)
 	if randf() < PICKUP_DROP_CHANCE:
 		_spawn_pickup(_random_pickup_kind(), enemy.global_position)
 
@@ -209,6 +222,20 @@ func _lose_life() -> void:
 	_refresh_hud()
 	if lives == 0:
 		_end_run()
+
+
+# --- Effects ----------------------------------------------------------------
+
+func _spawn_explosion(at: Vector2, tint: Color, count: int, size_mult: float, life_time: float) -> void:
+	if effects.get_child_count() >= MAX_LIVE_EXPLOSIONS:
+		return
+	var explosion := _explosion_scene.instantiate() as Explosion
+	explosion.position = at
+	explosion.tint = tint
+	explosion.particle_count = count
+	explosion.size_scale = size_mult
+	explosion.life_time = life_time
+	effects.add_child(explosion)
 
 
 # --- Pickups and power-ups --------------------------------------------------

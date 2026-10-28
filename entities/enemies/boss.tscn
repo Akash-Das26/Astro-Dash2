@@ -12,6 +12,7 @@ script = ExtResource("2_script")
 max_hp = 20
 speed = 60.0
 points = 500
+effect_color = Color(1, 0.7, 0.25, 1)
 costs_life_on_boundary = false
 is_boss = true
 

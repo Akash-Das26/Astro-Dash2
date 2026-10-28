@@ -13,6 +13,7 @@ max_hp = 3
 speed = 38.0
 points = 50
 hit_flash_time = 0.18
+effect_color = Color(0.7, 0.7, 1, 1)
 
 [node name="Sprite" parent="." index="0"]
 modulate = Color(0.8, 0.85, 1, 1)

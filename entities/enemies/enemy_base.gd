@@ -6,6 +6,7 @@ extends Area2D
 
 signal died(points: int)
 signal reached_boundary(enemy: EnemyBase)
+signal damaged(at: Vector2)
 
 ## Collision layer 4 (the Boundary bar) as a bit mask.
 const BOUNDARY_LAYER_BIT: int = 1 << 3
@@ -20,6 +21,8 @@ const PLAY_AREA_WIDTH: float = 400.0
 @export var costs_life_on_boundary: bool = true
 @export var is_boss: bool = false
 @export var hit_flash_time: float = 0.12
+## Tints this type's hit sparks and death burst.
+@export var effect_color: Color = Color(1.0, 0.45, 0.3)
 
 @onready var _sprite: Sprite2D = $Sprite
 @onready var _flash: Sprite2D = $FlashSprite
@@ -53,6 +56,7 @@ func take_damage(amount: int) -> void:
 	if not _active:
 		return
 	hp -= amount
+	damaged.emit(global_position)
 	if hp <= 0:
 		die()
 	else:
