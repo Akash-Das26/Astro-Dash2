@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://entities/enemies/enemy_base.gd" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://d1cg8s8r1x2hs" path="res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png" id="2_ship"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
+radius = 15.0
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_flash"]
+blend_mode = 1
+
+[node name="EnemyBase" type="Area2D"]
+collision_layer = 4
+collision_mask = 8
+script = ExtResource("1_base")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+rotation = 3.1415927
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_ship")
+
+[node name="FlashSprite" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0)
+material = SubResource("CanvasItemMaterial_flash")
+rotation = 3.1415927
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_ship")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_enemy")

@@ -81,7 +81,7 @@ func _update_invulnerability(delta: float) -> void:
 
 
 func _on_hurtbox_area_entered(area: Area2D) -> void:
-	if not area is Enemy or is_invulnerable():
+	if not area is EnemyBase or is_invulnerable():
 		return
-	(area as Enemy).destroy()
+	(area as EnemyBase).on_player_contact()
 	take_hit()

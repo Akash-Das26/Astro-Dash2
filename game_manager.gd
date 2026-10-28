@@ -115,7 +115,7 @@ func _on_player_shot_fired(spawn_position: Vector2) -> void:
 	bullets.add_child(bullet)
 
 
-func _on_enemy_spawned(enemy: Enemy) -> void:
+func _on_enemy_spawned(enemy: EnemyBase) -> void:
 	enemy.died.connect(_on_enemy_died)
 	enemy.reached_boundary.connect(_on_enemy_reached_boundary)
 	enemies.add_child(enemy)
@@ -126,7 +126,9 @@ func _on_enemy_died(points: int) -> void:
 	_refresh_hud()
 
 
-func _on_enemy_reached_boundary() -> void:
+func _on_enemy_reached_boundary(enemy: EnemyBase) -> void:
+	if not enemy.costs_life_on_boundary:
+		return
 	_lose_life()
 
 

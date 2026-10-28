@@ -1,21 +1,7 @@
 [gd_scene format=3 uid="uid://dwbod8lqb6dr6"]
 
-[ext_resource type="Texture2D" uid="uid://d1cg8s8r1x2hs" path="res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png" id="1_owq46"]
-[ext_resource type="Script" uid="uid://8b3ykb6uoy1r" path="res://entities/enemies/enemy.gd" id="1_wqcwe"]
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://8b3ykb6uoy1r" path="res://entities/enemies/enemy.gd" id="2_script"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
-radius = 15.0
-
-[node name="Enemy" type="Area2D" unique_id=1284810452]
-collision_layer = 4
-collision_mask = 8
-script = ExtResource("1_wqcwe")
-
-[node name="ShipRedStroked" type="Sprite2D" parent="." unique_id=550959270]
-rotation = 3.1415927
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("1_owq46")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1631309986]
-shape = SubResource("CircleShape2D_enemy")
-
+[node name="Enemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")

@@ -4,7 +4,7 @@ extends Node
 ## `enemy_spawned`. It deliberately does not touch the Enemies container,
 ## the Boundary or the score.
 
-signal enemy_spawned(enemy: Enemy)
+signal enemy_spawned(enemy: EnemyBase)
 
 @export var spawn_interval: float = 1.5
 @export var enemy_scene: PackedScene = preload("res://entities/enemies/enemy.tscn")
@@ -35,5 +35,5 @@ func restart() -> void:
 
 
 func _spawn_enemy() -> void:
-	var enemy := enemy_scene.instantiate() as Enemy
+	var enemy := enemy_scene.instantiate() as EnemyBase
 	enemy_spawned.emit(enemy)
