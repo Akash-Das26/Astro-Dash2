@@ -46,6 +46,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_streams()
 	_build_players()
+	_apply_saved_settings()
 
 
 func play_sfx(sound: String) -> void:
@@ -121,6 +122,12 @@ func is_muted() -> bool:
 func toggle_mute() -> bool:
 	set_mute(not _muted)
 	return _muted
+
+
+func _apply_saved_settings() -> void:
+	set_bus_volume(MUSIC_BUS, SaveData.music_volume)
+	set_bus_volume(SFX_BUS, SaveData.sfx_volume)
+	set_mute(SaveData.muted)
 
 
 func _load_streams() -> void:
