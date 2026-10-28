@@ -15,7 +15,6 @@ extends Node2D
 ## crosses it costs one life; the run ends when the last life is gone.
 
 const MAX_LIVES: int = 3
-const LIVES_LOST_PER_BOUNDARY_CROSSING: int = 1
 
 @onready var player: Player = $Player
 @onready var bullets: Node = $Bullets
@@ -31,6 +30,7 @@ var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 
 func _ready() -> void:
 	player.shot_fired.connect(_on_player_shot_fired)
+	player.hurt.connect(_on_player_hurt)
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	hud.play_requested.connect(_start_run)
 	hud.restart_requested.connect(_start_run)
@@ -127,7 +127,15 @@ func _on_enemy_died(points: int) -> void:
 
 
 func _on_enemy_reached_boundary() -> void:
-	lives -= LIVES_LOST_PER_BOUNDARY_CROSSING
+	_lose_life()
+
+
+func _on_player_hurt() -> void:
+	_lose_life()
+
+
+func _lose_life() -> void:
+	lives -= 1
 	lives = maxi(lives, 0)
 	_refresh_hud()
 	if lives == 0:

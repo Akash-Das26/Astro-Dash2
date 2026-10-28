@@ -48,6 +48,11 @@ func die() -> void:
 	queue_free()
 
 
+## Removed without awarding points (rammed the player ship).
+func destroy() -> void:
+	queue_free()
+
+
 func _on_area_entered(area: Area2D) -> void:
 	if (area.collision_layer & BOUNDARY_LAYER_BIT) == 0:
 		return
