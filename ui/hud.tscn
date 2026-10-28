@@ -57,6 +57,22 @@ offset_bottom = 68.0
 theme_override_font_sizes/font_size = 12
 text = ""
 
+[node name="DebugLabel" type="Label" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -20.0
+offset_right = -8.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 10
+text = ""
+
 [node name="BannerLabel" type="Label" parent="Root"]
 visible = false
 layout_mode = 1

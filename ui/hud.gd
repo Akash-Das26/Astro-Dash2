@@ -18,6 +18,7 @@ signal menu_requested
 @onready var _game_over_panel: Control = $Root/GameOverPanel
 
 @onready var _powerup_label: Label = $Root/PowerupLabel
+@onready var _debug_label: Label = $Root/DebugLabel
 @onready var _banner_label: Label = $Root/BannerLabel
 @onready var _banner_timer: Timer = $BannerTimer
 
@@ -48,6 +49,15 @@ func set_lives(value: int, maximum: int) -> void:
 
 func set_high_score(value: int) -> void:
 	_best_label.text = "BEST %d" % value
+
+
+## Debug builds only: live-node readout used to judge whether pooling pays.
+func set_debug_text(text: String) -> void:
+	_debug_label.text = text
+
+
+func set_debug_visible(is_visible: bool) -> void:
+	_debug_label.visible = is_visible
 
 
 ## One line describing the active power-ups, e.g. "RAPID 6s   SHIELD".
