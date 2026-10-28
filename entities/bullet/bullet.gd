@@ -1,17 +1,27 @@
+class_name Bullet
 extends Node2D
+## Player projectile. Collides with the enemy layer only (see the collision
+## layers table in game_manager.gd) and damages whatever enemy it touches.
 
-var bullet_speed:int = 300
+@export var bullet_speed: float = 300.0
+@export var damage: int = 1
+@export var despawn_y: float = -20.0
+
+@onready var _hitbox: Area2D = $BulletArea
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	_hitbox.area_entered.connect(_on_hitbox_area_entered)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	position.y -= bullet_speed*delta
-	
-	if position.y < 0:
+	position.y -= bullet_speed * delta
+	if position.y < despawn_y:
 		queue_free()
-	
+
+
+func _on_hitbox_area_entered(area: Area2D) -> void:
+	if not is_instance_valid(area) or not area is Enemy:
+		return
+	(area as Enemy).take_damage(damage)
+	queue_free()

@@ -5,11 +5,13 @@
 [ext_resource type="Texture2D" uid="uid://buvnnxenv853f" path="res://assests/spacepixels-0.1.0/spacepixels-0.1.0/horizontal_bar_blue.png" id="3_o2178"]
 [ext_resource type="PackedScene" uid="uid://bh808egkfrhtp" path="res://entities/enemy_spawner/enemy_spawner.tscn" id="4_vk86k"]
 [ext_resource type="Script" uid="uid://bb4ew1ds7tebg" path="res://entities/enemy_spawner/enemy_spawner.gd" id="5_shwjl"]
+[ext_resource type="Script" path="res://game_manager.gd" id="6_gmngr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_htemk"]
 size = Vector2(400, 16)
 
 [node name="GameManager" type="Node2D" unique_id=42655754]
+script = ExtResource("6_gmngr")
 
 [node name="BackgroundSprite" type="Sprite2D" parent="." unique_id=1936400931]
 position = Vector2(200, 300)
@@ -20,6 +22,8 @@ texture = ExtResource("1_70yv6")
 position = Vector2(192, 568)
 
 [node name="Boundary" type="Area2D" parent="." unique_id=494688904]
+collision_layer = 8
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Boundary" unique_id=1261980007]
 position = Vector2(200, 464)
