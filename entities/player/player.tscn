@@ -6,10 +6,19 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_hurtbox"]
 radius = 12.0
 
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_playerflash"]
+blend_mode = 1
+
 [node name="Player" type="Node2D" unique_id=1168014697]
 script = ExtResource("1_abrql")
 
 [node name="ShipSprite" type="Sprite2D" parent="." unique_id=238049365]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("1_symyc")
+
+[node name="FlashSprite" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0)
+material = SubResource("CanvasItemMaterial_playerflash")
 scale = Vector2(0.4, 0.4)
 texture = ExtResource("1_symyc")
 
