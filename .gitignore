@@ -5,3 +5,7 @@
 # Build output
 *.exe
 export/
+
+# Editor leftovers and reference footage
+*.tmp
+*.mp4
