@@ -139,6 +139,9 @@ in the game logic depends on the exact values, so edit and press `F5`.
 | Upgrade prices | `UPGRADES`: price of the next level is `base_cost + cost_step * current_level`; `UPGRADE_MAX_LEVEL` is the cap |
 | Upgrade effects | `HULL_LEVELS_PER_LIFE`, `SHIELD_LEVELS_PER_CHARGE`, `FIRE_LEVELS_PER_DAMAGE`, `SPEED_PER_LEVEL`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL`, `MIN_RAPID_INTERVAL`, `MAX_SHIELD_CHARGES` |
 | Waves | `WAVE_TABLE`, `BOSS_EVERY`, `FIRST_WAVE_INTERVAL`, `MIN_SPAWN_INTERVAL`, `INTERVAL_STEP`, `WAVE_GAP` |
+| Campaign tiers | `CAMPAIGN_TIER_DIFFICULTY` — one row per tier: `hp_scale` multiplies enemy health, `interval_scale` multiplies the seconds between spawns (below 1 = faster) and `bullet_scale` multiplies the boss spread interval (below 1 = more often). Tier 1 is the arcade pace; tier 3 is 1.6x health, 0.8x spawn gaps and a 0.7x boss fire gap |
+| Campaign sectors | `CAMPAIGN_SECTORS` (`name`, `tier`, `waves`, `mix`, `boss`, `pos`, `links`), `CAMPAIGN_ORDER` (map and keyboard order), `CAMPAIGN_START` (sectors open on a fresh campaign) |
+| Campaign rewards | `CAMPAIGN_PERFECT_SCORE_BONUS`, `CAMPAIGN_PERFECT_ENERGY_BONUS` (a sector cleared without losing a life), `CAMPAIGN_BOSS_LIFE_BONUS` (+1 life, capped at the hull upgrade's maximum) |
 | Drops and power-ups | `PICKUP_DROP_CHANCE`, `POWERUP_DURATION` |
 | Effect budget | `MAX_LIVE_EXPLOSIONS`, `BOSS_EXPLOSION_COUNT` |
 
