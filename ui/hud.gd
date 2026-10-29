@@ -26,6 +26,7 @@ const BANNER_FADE_SECONDS: float = 0.3
 @onready var _score_label: Label = $Root/ScoreLabel
 @onready var _best_label: Label = $Root/BestLabel
 @onready var _lives_label: Label = $Root/LivesLabel
+@onready var _energy_label: Label = $Root/EnergyLabel
 @onready var _powerup_label: Label = $Root/PowerupLabel
 @onready var _debug_label: Label = $Root/DebugLabel
 @onready var _banner_label: Label = $Root/BannerLabel
@@ -44,8 +45,10 @@ const BANNER_FADE_SECONDS: float = 0.3
 
 var _panel_tweens: Dictionary = {}
 var _score_tween: Tween
+var _energy_tween: Tween
 var _banner_tween: Tween
 var _displayed_score: int = 0
+var _displayed_energy: int = 0
 var _displayed_lives: int = 0
 
 
@@ -86,6 +89,19 @@ func set_score(value: int) -> void:
 		_score_tween.kill()
 	_score_tween = create_tween()
 	_score_tween.tween_method(_set_score_text, float(_displayed_score), float(value), SCORE_COUNT_SECONDS)
+
+
+## Banked energy, counted up like the score so a boss kill reads as a gain.
+func set_energy(value: int) -> void:
+	if _energy_tween != null and _energy_tween.is_valid():
+		_energy_tween.kill()
+	_energy_tween = create_tween()
+	_energy_tween.tween_method(_set_energy_text, float(_displayed_energy), float(value), SCORE_COUNT_SECONDS)
+
+
+func _set_energy_text(value: float) -> void:
+	_displayed_energy = int(round(value))
+	_energy_label.text = "ENERGY %d" % _displayed_energy
 
 
 func set_lives(value: int, maximum: int) -> void:

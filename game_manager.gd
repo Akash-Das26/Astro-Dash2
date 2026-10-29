@@ -22,6 +22,7 @@ extends Node2D
 const MAX_LIVES: int = 3
 const PICKUP_DROP_CHANCE: float = 0.1
 const POWERUP_DURATION: float = 8.0
+## Energy is dropped as motes that fly to the ship; see Tuning for the rates.
 const DEBUG_SAMPLE_INTERVAL: float = 0.25
 ## Hard cap so a bomb chain cannot spawn hundreds of emitters at once.
 const MAX_LIVE_EXPLOSIONS: int = 12
@@ -41,6 +42,8 @@ const DEBUG_PICKUP_OFFSET: float = 70.0
 
 var score: int = 0
 var lives: int = MAX_LIVES
+## Energy collected during the current run, for the game-over summary.
+var run_energy: int = 0
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -91,6 +94,8 @@ func _on_state_changed(new_state: int) -> void:
 			spawner.stop_run()
 			AudioManager.play_sfx("game_over")
 			var is_new_best: bool = SaveData.submit_score(score)
+			# Energy is banked per mote; flush it now that the run is over.
+			SaveData.save_data()
 			hud.set_high_score(SaveData.high_score)
 			hud.show_game_over(score, SaveData.high_score, is_new_best)
 
@@ -121,6 +126,8 @@ func _resume() -> void:
 
 func _go_to_menu() -> void:
 	AudioManager.play_sfx("ui_click")
+	# A run can be abandoned from the pause menu; keep the energy it earned.
+	SaveData.save_data()
 	GameState.change_state(GameState.State.MENU)
 
 
@@ -131,10 +138,12 @@ func _end_run() -> void:
 func _reset_run() -> void:
 	score = 0
 	lives = MAX_LIVES
+	run_energy = 0
 	_powerup_time_left.clear()
 	player.clear_powerups()
 	_refresh_hud()
 	_refresh_powerup_hud()
+	hud.set_energy(SaveData.energy)
 
 
 func _refresh_hud() -> void:
@@ -215,6 +224,7 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("enemy_death")
 	score += points
 	_refresh_hud()
+	_drop_energy(enemy.global_position, points)
 	if enemy.is_boss:
 		_spawn_explosion(enemy.global_position, enemy.effect_color, BOSS_EXPLOSION_COUNT, 2.0, 0.8)
 		_shake(0.8)
@@ -236,6 +246,29 @@ func _lose_life() -> void:
 	_refresh_hud()
 	if lives == 0:
 		_end_run()
+
+
+# --- Energy -----------------------------------------------------------------
+
+## Splits a kill's energy into a few motes so a boss reads as a shower of them
+## instead of one huge pickup.
+func _drop_energy(at: Vector2, points: int) -> void:
+	var total: int = maxi(Tuning.MIN_ENERGY_PER_KILL, points / Tuning.SCORE_POINTS_PER_ENERGY)
+	var mote_count: int = mini(total, Tuning.MAX_MOTES_PER_KILL)
+	var each: int = total / mote_count
+	var remainder: int = total % mote_count
+	for index: int in mote_count:
+		var mote := EnergyMote.new()
+		mote.position = at + Vector2(randf_range(-12.0, 12.0), randf_range(-12.0, 12.0))
+		mote.setup(player, each + (1 if index < remainder else 0))
+		mote.collected.connect(_on_energy_collected)
+		pickups.add_child(mote)
+
+
+func _on_energy_collected(value: int) -> void:
+	run_energy += value
+	SaveData.add_energy(value)
+	hud.set_energy(SaveData.energy)
 
 
 # --- Effects ----------------------------------------------------------------
