@@ -1,0 +1,54 @@
+# UNTESTED: this workflow was written without a Godot install or a runner to
+# try it on. The container tag below has to exist for your engine version —
+# if `barichello/godot-ci:4.7` is not published yet, pin the closest available
+# tag (the image bundles the matching export templates).
+#
+# What it does: imports the project, exports the Web preset into build/web and
+# uploads the result as a downloadable artifact (already unzipped, so it can go
+# straight into an itch.io HTML5 upload after zipping the folder contents).
+
+name: Export Web build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".github/**"
+
+jobs:
+  export-web:
+    name: Export Web
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.7
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Make the bundled export templates visible
+        run: |
+          mkdir -p "$HOME/.local/share/godot/export_templates"
+          if [ -d /root/.local/share/godot/export_templates ] &&
+             [ "$HOME/.local/share/godot/export_templates" != "/root/.local/share/godot/export_templates" ]; then
+            cp -r /root/.local/share/godot/export_templates/. "$HOME/.local/share/godot/export_templates/"
+          fi
+          godot --version
+          ls "$HOME/.local/share/godot/export_templates"
+
+      - name: Import the project
+        run: godot --headless --path . --import
+
+      - name: Export the Web preset
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          ls -la build/web
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          if-no-files-found: error
