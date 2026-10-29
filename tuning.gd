@@ -28,6 +28,13 @@ const MOTE_LIFE_SECONDS: float = 8.0
 ## Distance at which a homing mote counts as collected.
 const MOTE_PICKUP_DISTANCE: float = 18.0
 
+# --- Combo ------------------------------------------------------------------
+## Seconds a kill keeps the chain alive; every kill resets the clock.
+const COMBO_WINDOW: float = 2.5
+## Kills needed for one step of the multiplier: x2 at 4 kills, x3 at 8, ...
+const COMBO_KILLS_PER_STEP: int = 4
+const COMBO_MAX_MULTIPLIER: int = 5
+
 # --- Upgrades ---------------------------------------------------------------
 const UPGRADE_MAX_LEVEL: int = 10
 ## Ship stats before any upgrade level.

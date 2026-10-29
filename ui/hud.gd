@@ -23,6 +23,10 @@ const LIVES_PULSE_SECONDS: float = 0.25
 const BANNER_SCALE_FROM: float = 0.6
 const BANNER_POP_SECONDS: float = 0.22
 const BANNER_FADE_SECONDS: float = 0.3
+const COMBO_POP_SCALE: float = 1.4
+const COMBO_POP_SECONDS: float = 0.16
+## Alpha the combo label decays to before the chain expires and hides it.
+const COMBO_DECAY_ALPHA: float = 0.4
 
 @onready var _score_label: Label = $Root/ScoreLabel
 @onready var _best_label: Label = $Root/BestLabel
@@ -31,6 +35,7 @@ const BANNER_FADE_SECONDS: float = 0.3
 @onready var _powerup_label: Label = $Root/PowerupLabel
 @onready var _debug_label: Label = $Root/DebugLabel
 @onready var _banner_label: Label = $Root/BannerLabel
+@onready var _combo_label: Label = $Root/ComboLabel
 
 @onready var _menu_panel: Control = $Root/MenuPanel
 @onready var _pause_panel: Control = $Root/PausePanel
@@ -50,6 +55,7 @@ var _panel_tweens: Dictionary = {}
 var _score_tween: Tween
 var _energy_tween: Tween
 var _banner_tween: Tween
+var _combo_tween: Tween
 var _displayed_score: int = 0
 var _displayed_energy: int = 0
 ## Panel the shop card slides back to when it closes.
@@ -185,6 +191,28 @@ func show_game_over(final_score: int, high_score: int, is_new_best: bool) -> voi
 	_game_over_best_label.text = "BEST %d" % high_score
 	_new_best_label.visible = is_new_best
 	_show_only(_game_over_panel)
+
+
+## Floating "x3 COMBO". Pops on every chained kill, then fades over the combo
+## window so the decay itself shows how long the chain has left.
+func show_combo(multiplier: int, window: float) -> void:
+	_combo_label.text = "x%d COMBO" % multiplier
+	_combo_label.visible = true
+	_combo_label.modulate.a = 1.0
+	_combo_label.pivot_offset = _combo_label.size * 0.5
+	_combo_label.scale = Vector2(COMBO_POP_SCALE, COMBO_POP_SCALE)
+	if _combo_tween != null and _combo_tween.is_valid():
+		_combo_tween.kill()
+	_combo_tween = create_tween()
+	_combo_tween.tween_property(_combo_label, "scale", Vector2.ONE, COMBO_POP_SECONDS) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_combo_tween.parallel().tween_property(_combo_label, "modulate:a", COMBO_DECAY_ALPHA, window)
+
+
+func hide_combo() -> void:
+	if _combo_tween != null and _combo_tween.is_valid():
+		_combo_tween.kill()
+	_combo_label.visible = false
 
 
 ## Short "WAVE 3" / "BOSS WAVE" flash between waves.

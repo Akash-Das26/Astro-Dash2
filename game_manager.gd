@@ -45,6 +45,12 @@ var max_lives: int = Tuning.BASE_LIVES
 var lives: int = Tuning.BASE_LIVES
 ## Energy collected during the current run, for the game-over summary.
 var run_energy: int = 0
+## Best combo reached this run, for the game-over summary.
+var best_combo_multiplier: int = 1
+var best_combo_chain: int = 0
+
+var _combo_chain: int = 0
+var _combo_time_left: float = 0.0
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -75,6 +81,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_tick_powerups(delta)
+	_tick_combo(delta)
 	_update_debug_counter(delta)
 
 
@@ -151,6 +158,11 @@ func _reset_run() -> void:
 	max_lives = int(stats["lives"])
 	lives = max_lives
 	run_energy = 0
+	best_combo_multiplier = 1
+	best_combo_chain = 0
+	_combo_chain = 0
+	_combo_time_left = 0.0
+	hud.hide_combo()
 	_powerup_time_left.clear()
 	player.apply_run_stats(stats)
 	player.clear_powerups()
@@ -195,6 +207,9 @@ func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
 func _on_player_hurt() -> void:
 	AudioManager.play_sfx("player_hit")
 	_shake(0.55)
+	# Losing a life breaks the chain; a shield eating the hit does not, because
+	# the ship never emits `hurt` in that case.
+	_break_combo()
 	_lose_life()
 
 
@@ -236,7 +251,8 @@ func _on_enemy_damaged(at: Vector2, enemy: EnemyBase) -> void:
 
 func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("enemy_death")
-	score += points
+	_register_combo_kill()
+	score += points * combo_multiplier()
 	_refresh_hud()
 	_drop_energy(enemy.global_position, points)
 	if enemy.is_boss:
@@ -260,6 +276,42 @@ func _lose_life() -> void:
 	_refresh_hud()
 	if lives == 0:
 		_end_run()
+
+
+# --- Combo ------------------------------------------------------------------
+
+## 1.0 for no chain, then one step every COMBO_KILLS_PER_STEP kills.
+func combo_multiplier() -> int:
+	return mini(1 + _combo_chain / Tuning.COMBO_KILLS_PER_STEP, Tuning.COMBO_MAX_MULTIPLIER)
+
+
+func _register_combo_kill() -> void:
+	_combo_chain += 1
+	_combo_time_left = Tuning.COMBO_WINDOW
+	var multiplier: int = combo_multiplier()
+	best_combo_chain = maxi(best_combo_chain, _combo_chain)
+	best_combo_multiplier = maxi(best_combo_multiplier, multiplier)
+	if multiplier > 1:
+		hud.show_combo(multiplier, Tuning.COMBO_WINDOW)
+	else:
+		hud.hide_combo()
+
+
+func _tick_combo(delta: float) -> void:
+	if _combo_time_left <= 0.0:
+		return
+	_combo_time_left -= delta
+	if _combo_time_left <= 0.0:
+		_break_combo()
+
+
+## Resets the chain and the label. Safe to call when there is no chain.
+func _break_combo() -> void:
+	if _combo_chain == 0:
+		return
+	_combo_chain = 0
+	_combo_time_left = 0.0
+	hud.hide_combo()
 
 
 # --- Energy -----------------------------------------------------------------
