@@ -8,7 +8,28 @@ extends RefCounted
 const BASE_LIVES: int = 3
 const PICKUP_DROP_CHANCE: float = 0.1
 const POWERUP_DURATION: float = 8.0
+## Hard cap on particle emitters so a bomb chain cannot flood a phone.
 const MAX_LIVE_EXPLOSIONS: int = 12
+const BOSS_EXPLOSION_COUNT: int = 30
+
+# --- Waves ------------------------------------------------------------------
+## Wave number -> { enemy key: how many }. Past the last entry the last mix is
+## reused; the spawn interval keeps shrinking to its floor. Keys are
+## "straight", "zigzag" and "tank".
+const WAVE_TABLE: Dictionary = {
+	1: {"straight": 4},
+	2: {"straight": 5, "zigzag": 3},
+	3: {"zigzag": 5, "tank": 1},
+	4: {"straight": 4, "zigzag": 4, "tank": 2},
+}
+## Every Nth wave is a single boss instead of a mix.
+const BOSS_EVERY: int = 5
+## Seconds between spawns on wave 1, shrunk per wave down to the floor.
+const FIRST_WAVE_INTERVAL: float = 1.4
+const MIN_SPAWN_INTERVAL: float = 0.45
+const INTERVAL_STEP: float = 0.08
+## Beat between "wave cleared" and the next wave.
+const WAVE_GAP: float = 2.0
 
 # --- Energy -----------------------------------------------------------------
 ## Energy per kill = score points / this (integer division, floored at the

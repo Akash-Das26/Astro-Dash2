@@ -14,24 +14,7 @@ const ENEMY_SCENES: Dictionary = {
 }
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss.tscn")
 
-# --- Tunables: edit these to rebalance without touching the logic -----------
-
-## Wave number -> { enemy key: how many }. Beyond the last entry the last
-## mix is reused; the spawn interval keeps shrinking down to its floor.
-const WAVE_TABLE: Dictionary = {
-	1: {"straight": 4},
-	2: {"straight": 5, "zigzag": 3},
-	3: {"zigzag": 5, "tank": 1},
-	4: {"straight": 4, "zigzag": 4, "tank": 2},
-}
-## Every Nth wave is a single boss instead of a mix.
-const BOSS_EVERY: int = 5
-## Seconds between spawns on wave 1, shrunk per wave, but never below the floor.
-const FIRST_WAVE_INTERVAL: float = 1.4
-const MIN_SPAWN_INTERVAL: float = 0.45
-const INTERVAL_STEP: float = 0.08
-## Beat between "wave cleared" and the next wave.
-const WAVE_GAP: float = 2.0
+# Wave table, boss cadence and spawn ramp live in tuning.gd (Waves section).
 
 # --- Runtime ----------------------------------------------------------------
 
@@ -54,7 +37,7 @@ func _ready() -> void:
 	_gap_timer = Timer.new()
 	_gap_timer.name = "WaveGapTimer"
 	_gap_timer.one_shot = true
-	_gap_timer.wait_time = WAVE_GAP
+	_gap_timer.wait_time = Tuning.WAVE_GAP
 	_gap_timer.timeout.connect(_start_next_wave)
 	add_child(_gap_timer)
 
@@ -82,19 +65,19 @@ func spawn_boss_now() -> void:
 
 
 func is_boss_wave(wave_number: int) -> bool:
-	return wave_number > 0 and wave_number % BOSS_EVERY == 0
+	return wave_number > 0 and wave_number % Tuning.BOSS_EVERY == 0
 
 
 func spawn_interval_for(wave_number: int) -> float:
-	var ramp: float = INTERVAL_STEP * float(wave_number - 1)
-	return maxf(MIN_SPAWN_INTERVAL, FIRST_WAVE_INTERVAL - ramp)
+	var ramp: float = Tuning.INTERVAL_STEP * float(wave_number - 1)
+	return maxf(Tuning.MIN_SPAWN_INTERVAL, Tuning.FIRST_WAVE_INTERVAL - ramp)
 
 
 func wave_composition(wave_number: int) -> Dictionary:
 	if is_boss_wave(wave_number):
 		return {"boss": 1}
-	var table_wave: int = mini(wave_number, WAVE_TABLE.size())
-	return WAVE_TABLE[table_wave]
+	var table_wave: int = mini(wave_number, Tuning.WAVE_TABLE.size())
+	return Tuning.WAVE_TABLE[table_wave]
 
 
 func _start_wave(wave_number: int) -> void:

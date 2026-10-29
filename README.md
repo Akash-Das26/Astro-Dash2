@@ -16,8 +16,17 @@ they cross the blue defence line, and chase a high score across three lives.
   shake, hit flashes, a parallax starfield and tweened UI.
 - Audio on Master / Music / SFX buses, with volume sliders, mute and pitch
   variation on shots and explosions.
+- Energy: every kill drops motes that fly to the ship inside a magnet radius and
+  bank into a spendable currency, shown on the HUD.
+- Upgrade shop reachable from the menu or the game-over card: hull, speed,
+  shields and fire power, ten levels each, with prices that scale and levels
+  that persist between sessions.
+- Combo scoring: kills chained inside a short window raise the multiplier up to
+  x5, with a floating `xN COMBO` that decays as the window runs out.
+- Game-over summary with waves reached, best combo and energy earned, plus a
+  NEW HIGH SCORE banner when the run beats the record.
 - Settings persisted to `user://save.cfg`: volumes, mute, reduce motion,
-  auto-fire, high score.
+  auto-fire, high score, energy and upgrade levels.
 - Touch controls on phones and tablets (relative drag, auto-fire, on-screen
   pause), keyboard and gamepad on desktop.
 - Pauses itself when the window loses focus; Android's back button pauses,
@@ -111,6 +120,29 @@ Masks are bit values, so "layers 3 and 5" is `4 + 16 = 20`.
    ```
 3. Export templates are only needed for exporting
    (*Editor > Manage Export Templates*).
+
+## Balancing
+
+Every number worth tweaking lives in **`tuning.gd`** in the project root. Nothing
+in the game logic depends on the exact values, so edit and press `F5`.
+
+| What | Constant(s) |
+| --- | --- |
+| Starting lives | `BASE_LIVES` |
+| Energy per kill | `SCORE_POINTS_PER_ENERGY` — integer division of the enemy's score value, floored at `MIN_ENERGY_PER_KILL` (10 points = 1 energy, so a 50-point tank gives 5 and the boss 50) |
+| Mote feel | `MOTE_MAGNET_RADIUS`, `MOTE_DRIFT_SPEED`, `MOTE_HOME_SPEED`, `MOTE_LIFE_SECONDS`, `MAX_MOTES_PER_KILL` |
+| Combo window | `COMBO_WINDOW` — seconds a kill keeps the chain alive |
+| Combo steps | `COMBO_KILLS_PER_STEP` (4 kills per step), `COMBO_MAX_MULTIPLIER` (x5 cap) |
+| Upgrade prices | `UPGRADES`: price of the next level is `base_cost + cost_step * current_level`; `UPGRADE_MAX_LEVEL` is the cap |
+| Upgrade effects | `HULL_LEVELS_PER_LIFE`, `SHIELD_LEVELS_PER_CHARGE`, `FIRE_LEVELS_PER_DAMAGE`, `SPEED_PER_LEVEL`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL`, `MIN_RAPID_INTERVAL`, `MAX_SHIELD_CHARGES` |
+| Waves | `WAVE_TABLE`, `BOSS_EVERY`, `FIRST_WAVE_INTERVAL`, `MIN_SPAWN_INTERVAL`, `INTERVAL_STEP`, `WAVE_GAP` |
+| Drops and power-ups | `PICKUP_DROP_CHANCE`, `POWERUP_DURATION` |
+| Effect budget | `MAX_LIVE_EXPLOSIONS`, `BOSS_EXPLOSION_COUNT` |
+
+Per-enemy character stays on the scenes, because it is not global pacing:
+`max_hp`, `speed`, `points` and `effect_color` on each enemy scene. The ship's
+`move_speed` and `fire_interval` exports are starting values only — the upgrade
+totals overwrite them at the start of every run.
 
 ## Exporting
 

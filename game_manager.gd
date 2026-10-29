@@ -19,13 +19,9 @@ extends Node2D
 ##
 ## Waves come from EnemySpawner; every fifth wave is a single boss.
 
-const PICKUP_DROP_CHANCE: float = 0.1
-const POWERUP_DURATION: float = 8.0
-## Energy is dropped as motes that fly to the ship; see Tuning for the rates.
+## Every number that decides pacing lives in tuning.gd; nothing below is a
+## balance value, only debug plumbing.
 const DEBUG_SAMPLE_INTERVAL: float = 0.25
-## Hard cap so a bomb chain cannot spawn hundreds of emitters at once.
-const MAX_LIVE_EXPLOSIONS: int = 12
-const BOSS_EXPLOSION_COUNT: int = 30
 ## Distance the debug pickup spawns above the player when a key is pressed.
 const DEBUG_PICKUP_OFFSET: float = 70.0
 
@@ -266,11 +262,11 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	_refresh_hud()
 	_drop_energy(enemy.global_position, points)
 	if enemy.is_boss:
-		_spawn_explosion(enemy.global_position, enemy.effect_color, BOSS_EXPLOSION_COUNT, 2.0, 0.8)
+		_spawn_explosion(enemy.global_position, enemy.effect_color, Tuning.BOSS_EXPLOSION_COUNT, 2.0, 0.8)
 		_shake(0.8)
 		return
 	_spawn_explosion(enemy.global_position, enemy.effect_color, 14, 1.0, 0.5)
-	if randf() < PICKUP_DROP_CHANCE:
+	if randf() < Tuning.PICKUP_DROP_CHANCE:
 		_spawn_pickup(_random_pickup_kind(), enemy.global_position)
 
 
@@ -354,7 +350,7 @@ func _shake(amount: float) -> void:
 
 
 func _spawn_explosion(at: Vector2, tint: Color, count: int, size_mult: float, life_time: float) -> void:
-	if effects.get_child_count() >= MAX_LIVE_EXPLOSIONS:
+	if effects.get_child_count() >= Tuning.MAX_LIVE_EXPLOSIONS:
 		return
 	var explosion := _explosion_scene.instantiate() as Explosion
 	explosion.position = at
@@ -394,10 +390,10 @@ func _on_pickup_collected(kind: Pickup.Kind) -> void:
 	match kind:
 		Pickup.Kind.RAPID_FIRE:
 			# Same effect again refreshes the timer instead of stacking it.
-			_powerup_time_left[kind] = POWERUP_DURATION
+			_powerup_time_left[kind] = Tuning.POWERUP_DURATION
 			player.set_rapid_fire(true)
 		Pickup.Kind.SPREAD_SHOT:
-			_powerup_time_left[kind] = POWERUP_DURATION
+			_powerup_time_left[kind] = Tuning.POWERUP_DURATION
 			player.set_spread_shot(true)
 		Pickup.Kind.SHIELD:
 			player.grant_shield()
