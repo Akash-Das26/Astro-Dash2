@@ -56,6 +56,9 @@ var _battle_kills: int = 0
 var _battle_lives_start: int = 0
 ## Filled when a sector is won, read by the BATTLE_WON state.
 var _battle_summary: Dictionary = {}
+## True while the card on screen belongs to a finished campaign, so RETRY knows
+## to start a fresh one instead of an arcade run.
+var _game_over_is_campaign: bool = false
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -79,7 +82,7 @@ func _ready() -> void:
 	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
 	hud.battle_won_continue.connect(_on_battle_won_continue)
-	hud.restart_requested.connect(_start_run)
+	hud.restart_requested.connect(_on_restart_requested)
 	hud.resume_requested.connect(_resume)
 	hud.menu_requested.connect(_go_to_menu)
 	GameState.state_changed.connect(_on_state_changed)
@@ -104,6 +107,7 @@ func _on_state_changed(new_state: int) -> void:
 		GameState.State.MENU:
 			_battle_is_campaign = false
 			_battle_sector = &""
+			_game_over_is_campaign = false
 			spawner.stop_run()
 			_clear_playfield()
 			_reset_run()
@@ -150,6 +154,7 @@ func _start_run() -> void:
 	_battle_is_campaign = false
 	_battle_sector = &""
 	_battle_kills = 0
+	_game_over_is_campaign = false
 	_clear_playfield()
 	_reset_run()
 	spawner.start_run()
@@ -198,7 +203,16 @@ func _on_battle_cleared() -> void:
 	if Campaign.has_boss(sector_id) and lives < max_lives:
 		lives = mini(lives + Tuning.CAMPAIGN_BOSS_LIFE_BONUS, max_lives)
 		life_gained = true
-	SaveData.record_campaign_progress(sector_id, lives, SaveData.campaign_score + score + bonus_score)
+	var is_final: bool = Campaign.is_final(sector_id)
+	if is_final:
+		# The last sector ends the campaign: fold in the conquest, then record
+		# the run as a finished one (this is what updates the best result).
+		if not SaveData.campaign_conquered.has(sector_id):
+			SaveData.campaign_conquered.append(sector_id)
+		SaveData.campaign_score += score + bonus_score
+		SaveData.finish_campaign()
+	else:
+		SaveData.record_campaign_progress(sector_id, lives, SaveData.campaign_score + score + bonus_score)
 	_battle_summary = {
 		"sector_name": Campaign.title(sector_id),
 		"waves": spawner.wave,
@@ -210,7 +224,7 @@ func _on_battle_cleared() -> void:
 		"bonus_score": bonus_score,
 		"bonus_energy": bonus_energy,
 		"life_gained": life_gained,
-		"campaign_complete": false,
+		"campaign_complete": is_final,
 	}
 	_battle_is_campaign = false
 	_battle_sector = &""
@@ -219,7 +233,25 @@ func _on_battle_cleared() -> void:
 
 func _on_battle_won_continue() -> void:
 	AudioManager.play_sfx("ui_click")
+	if bool(_battle_summary.get("campaign_complete", false)):
+		_battle_summary = {}
+		GameState.change_state(GameState.State.MENU)
+		return
 	GameState.change_state(GameState.State.MAP)
+
+
+## RESTART (pause) restarts the sector; RETRY on a campaign card starts a fresh
+## campaign; RETRY on the arcade card starts arcade.
+func _on_restart_requested() -> void:
+	if _battle_is_campaign and _battle_sector != &"":
+		# Restarting the sector keeps the lives already lost this campaign.
+		SaveData.campaign_lives = maxi(lives, 1)
+		_on_map_battle_requested(_battle_sector)
+	elif _game_over_is_campaign:
+		AudioManager.play_sfx("ui_click")
+		_begin_campaign()
+	else:
+		_start_run()
 
 
 func _begin_campaign() -> void:
@@ -250,11 +282,22 @@ func _on_upgrade_requested(kind: StringName) -> void:
 
 ## Campaign defeat: the run is over, so sector progress and lives reset and the
 ## best result is recorded. Energy and upgrades are meta-progression and stay.
-func _campaign_defeat(waves_reached: int) -> void:
-	SaveData.campaign_score += score
-	SaveData.finish_campaign()
-	hud.set_high_score(SaveData.high_score)
-	hud.show_game_over(score, SaveData.high_score, false, waves_reached, 1, 0, run_energy)
+func _campaign_defeat(_waves_reached: int) -> void:
+	var final_score: int = SaveData.campaign_score + score
+	var planets: int = SaveData.campaign_conquered.size()
+	var tier: int = Campaign.highest_tier(SaveData.campaign_conquered)
+	SaveData.campaign_score = final_score
+	var is_new_best: bool = SaveData.finish_campaign()
+	_game_over_is_campaign = true
+	hud.show_campaign_over({
+		"campaign_score": final_score,
+		"best_score": SaveData.campaign_best_score,
+		"is_new_best": is_new_best,
+		"planets": planets,
+		"total": Campaign.total_sectors(),
+		"highest_tier": tier,
+		"energy": run_energy,
+	})
 
 
 func _go_to_menu() -> void:

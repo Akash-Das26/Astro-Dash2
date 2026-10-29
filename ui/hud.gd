@@ -56,6 +56,8 @@ const COMBO_DECAY_ALPHA: float = 0.4
 @onready var _final_score_label: Label = $Root/GameOverPanel/Box/FinalScoreLabel
 @onready var _game_over_best_label: Label = $Root/GameOverPanel/Box/GameOverBestLabel
 @onready var _new_best_label: Label = $Root/GameOverPanel/Box/NewBestLabel
+@onready var _game_over_title: Label = $Root/GameOverPanel/Box/Title
+@onready var _retry_button: Button = $Root/GameOverPanel/Box/RetryButton
 @onready var _wave_label: Label = $Root/GameOverPanel/Box/WaveLabel
 @onready var _run_combo_label: Label = $Root/GameOverPanel/Box/ComboValueLabel
 @onready var _run_energy_label: Label = $Root/GameOverPanel/Box/EnergyValueLabel
@@ -213,6 +215,9 @@ func show_game_over(
 	best_chain: int,
 	energy_earned: int
 ) -> void:
+	_game_over_title.text = "GAME OVER"
+	_retry_button.text = "RETRY"
+	_new_best_label.text = "NEW HIGH SCORE!"
 	_final_score_label.text = "SCORE %d" % final_score
 	_game_over_best_label.text = "BEST %d" % high_score
 	_new_best_label.visible = is_new_best
@@ -222,6 +227,21 @@ func show_game_over(
 	else:
 		_run_combo_label.text = "BEST COMBO -"
 	_run_energy_label.text = "ENERGY +%d" % energy_earned
+	_show_only(_game_over_panel)
+
+
+## Campaign defeat. Reuses the game-over card: planets and tier take the place
+## of the wave/combo lines, RETRY starts a fresh campaign instead of arcade.
+func show_campaign_over(summary: Dictionary) -> void:
+	_game_over_title.text = "CAMPAIGN OVER"
+	_retry_button.text = "NEW CAMPAIGN"
+	_new_best_label.text = "NEW CAMPAIGN BEST!"
+	_new_best_label.visible = bool(summary.get("is_new_best", false))
+	_final_score_label.text = "SCORE %d" % int(summary.get("campaign_score", 0))
+	_game_over_best_label.text = "BEST %d" % int(summary.get("best_score", 0))
+	_wave_label.text = "PLANETS %d/%d" % [int(summary.get("planets", 0)), int(summary.get("total", 0))]
+	_run_combo_label.text = "HIGHEST TIER %d" % int(summary.get("highest_tier", 1))
+	_run_energy_label.text = "ENERGY +%d" % int(summary.get("energy", 0))
 	_show_only(_game_over_panel)
 
 
