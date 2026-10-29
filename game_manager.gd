@@ -51,6 +51,9 @@ var _combo_time_left: float = 0.0
 ## Campaign battle in flight. An empty sector id means the arcade mode.
 var _battle_sector: StringName = &""
 var _battle_is_campaign: bool = false
+## Per-battle counters for the victory summary.
+var _battle_kills: int = 0
+var _battle_lives_start: int = 0
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -67,6 +70,7 @@ func _ready() -> void:
 	player.shield_changed.connect(_on_shield_changed)
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	spawner.wave_started.connect(_on_wave_started)
+	spawner.battle_cleared.connect(_on_battle_cleared)
 	hud.play_requested.connect(_start_run)
 	hud.campaign_requested.connect(_on_campaign_requested)
 	campaign_map.battle_requested.connect(_on_map_battle_requested)
@@ -115,27 +119,34 @@ func _on_state_changed(new_state: int) -> void:
 			var waves_reached: int = spawner.wave
 			spawner.stop_run()
 			AudioManager.play_sfx("game_over")
-			var is_new_best: bool = SaveData.submit_score(score)
-			# Energy is banked per mote; flush it now that the run is over.
-			SaveData.save_data()
-			hud.set_high_score(SaveData.high_score)
-			hud.show_game_over(
-				score,
-				SaveData.high_score,
-				is_new_best,
-				waves_reached,
-				best_combo_multiplier,
-				best_combo_chain,
-				run_energy
-			)
+			if _battle_is_campaign:
+				_campaign_defeat(waves_reached)
+			else:
+				var is_new_best: bool = SaveData.submit_score(score)
+				# Energy is banked per mote; flush it now that the run is over.
+				SaveData.save_data()
+				hud.set_high_score(SaveData.high_score)
+				hud.show_game_over(
+					score,
+					SaveData.high_score,
+					is_new_best,
+					waves_reached,
+					best_combo_multiplier,
+					best_combo_chain,
+					run_energy
+				)
 
 
 func _start_run() -> void:
-	# This runs from the PLAY / RETRY button press, so the music starts on a
+	# This runs from the ARCADE / RETRY button press, so the music starts on a
 	# real user gesture. Browsers block audio until then, and starting it in
 	# _ready() would silently leave the Web build silent.
 	AudioManager.play_music("music")
 	AudioManager.play_sfx("ui_click")
+	# Arcade, even when the previous battle belonged to a campaign.
+	_battle_is_campaign = false
+	_battle_sector = &""
+	_battle_kills = 0
 	_clear_playfield()
 	_reset_run()
 	spawner.start_run()
@@ -163,8 +174,24 @@ func _on_map_battle_requested(sector_id: StringName) -> void:
 	_battle_is_campaign = true
 	_clear_playfield()
 	_reset_run(SaveData.campaign_lives)
-	spawner.start_run()
+	_battle_kills = 0
+	_battle_lives_start = lives
+	spawner.start_battle(Campaign.waves_for(sector_id), Campaign.difficulty_for(sector_id))
 	GameState.change_state(GameState.State.PLAYING)
+
+
+## Every wave of the sector is gone. The summary screen arrives with the next
+## step; for now the progress is recorded and the map comes back.
+func _on_battle_cleared() -> void:
+	if not _battle_is_campaign:
+		return
+	var sector_id: StringName = _battle_sector
+	if Campaign.has_boss(sector_id):
+		lives = mini(lives + Tuning.CAMPAIGN_BOSS_LIFE_BONUS, max_lives)
+	SaveData.record_campaign_progress(sector_id, lives, SaveData.campaign_score + score)
+	_battle_is_campaign = false
+	_battle_sector = &""
+	GameState.change_state(GameState.State.MAP)
 
 
 func _begin_campaign() -> void:
@@ -193,9 +220,21 @@ func _on_upgrade_requested(kind: StringName) -> void:
 	hud.refresh_shop()
 
 
+## Campaign defeat: the run is over, so sector progress and lives reset and the
+## best result is recorded. Energy and upgrades are meta-progression and stay.
+func _campaign_defeat(waves_reached: int) -> void:
+	SaveData.campaign_score += score
+	SaveData.finish_campaign()
+	hud.set_high_score(SaveData.high_score)
+	hud.show_game_over(score, SaveData.high_score, false, waves_reached, 1, 0, run_energy)
+
+
 func _go_to_menu() -> void:
 	AudioManager.play_sfx("ui_click")
-	# A run can be abandoned from the pause menu; keep the energy it earned.
+	# A run can be abandoned from the pause menu; keep the energy it earned and
+	# the lives the campaign still has.
+	if _battle_is_campaign:
+		SaveData.campaign_lives = maxi(lives, 1)
 	SaveData.save_data()
 	GameState.change_state(GameState.State.MENU)
 
@@ -289,6 +328,8 @@ func _on_wave_started(wave_number: int, is_boss: bool) -> void:
 	AudioManager.play_sfx("wave")
 	if is_boss:
 		hud.show_wave_banner("BOSS WAVE")
+	elif _battle_is_campaign:
+		hud.show_wave_banner("WAVE %d/%d" % [wave_number, spawner.wave_total()])
 	else:
 		hud.show_wave_banner("WAVE %d" % wave_number)
 
@@ -307,6 +348,7 @@ func _on_enemy_damaged(at: Vector2, enemy: EnemyBase) -> void:
 
 func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("enemy_death")
+	_battle_kills += 1
 	_register_combo_kill()
 	score += points * combo_multiplier()
 	_refresh_hud()

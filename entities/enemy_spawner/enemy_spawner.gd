@@ -6,6 +6,8 @@ extends Node
 
 signal enemy_spawned(enemy: EnemyBase)
 signal wave_started(wave_number: int, is_boss: bool)
+## Campaign battles only: every wave of the sector has been cleared.
+signal battle_cleared
 
 const ENEMY_SCENES: Dictionary = {
 	"straight": preload("res://entities/enemies/enemy.tscn"),
@@ -25,6 +27,11 @@ var _gap_timer: Timer
 var _queue: Array[PackedScene] = []
 var _active_enemies: int = 0
 var _running: bool = false
+## Campaign battle: a fixed wave list and the sector's tier multipliers.
+## Empty in arcade, which keeps using the endless WAVE_TABLE.
+var _battle_waves: Array[Dictionary] = []
+var _difficulty: Dictionary = {}
+var _battle_active: bool = false
 
 
 func _ready() -> void:
@@ -48,11 +55,34 @@ func start_run() -> void:
 	_start_wave(1)
 
 
+## Campaign sector: play the given wave compositions (last one may include the
+## boss), then stop and emit `battle_cleared` instead of rolling into a new one.
+func start_battle(waves: Array[Dictionary], difficulty: Dictionary) -> void:
+	stop_run()
+	_battle_active = true
+	_battle_waves = waves
+	_difficulty = difficulty
+	_running = true
+	_start_wave(1)
+
+
+func is_battle() -> bool:
+	return _battle_active
+
+
+## Total waves of the running battle, or 0 in arcade.
+func wave_total() -> int:
+	return _battle_waves.size()
+
+
 func stop_run() -> void:
 	_running = false
 	wave = 0
 	_queue.clear()
 	_active_enemies = 0
+	_battle_active = false
+	_battle_waves.clear()
+	_difficulty.clear()
 	_spawn_timer.stop()
 	_gap_timer.stop()
 
@@ -82,10 +112,25 @@ func wave_composition(wave_number: int) -> Dictionary:
 
 func _start_wave(wave_number: int) -> void:
 	wave = wave_number
-	_queue = _build_queue(wave_composition(wave_number))
-	wave_started.emit(wave, is_boss_wave(wave))
-	_spawn_timer.wait_time = spawn_interval_for(wave)
+	var composition: Dictionary = _composition_for(wave_number)
+	_queue = _build_queue(composition)
+	wave_started.emit(wave, composition.has("boss"))
+	_spawn_timer.wait_time = _interval_for(wave_number)
 	_spawn_timer.start()
+
+
+func _composition_for(wave_number: int) -> Dictionary:
+	if _battle_active:
+		if wave_number >= 1 and wave_number <= _battle_waves.size():
+			return _battle_waves[wave_number - 1]
+		return {}
+	return wave_composition(wave_number)
+
+
+## Arcade ramp, tightened by the sector's tier (below 1 = faster spawns).
+func _interval_for(wave_number: int) -> float:
+	var scale: float = float(_difficulty.get("interval_scale", 1.0))
+	return maxf(Tuning.MIN_SPAWN_INTERVAL, spawn_interval_for(wave_number) * scale)
 
 
 func _start_next_wave() -> void:
@@ -116,10 +161,22 @@ func _spawn_enemy(scene: PackedScene) -> void:
 	var enemy := scene.instantiate() as EnemyBase
 	if enemy == null:
 		return
+	_apply_difficulty(enemy)
 	_active_enemies += 1
 	# Connect before the enemy reaches the tree, so every exit is counted.
 	enemy.tree_exited.connect(_on_enemy_exited)
 	enemy_spawned.emit(enemy)
+
+
+## Tier scaling has to land before the enemy enters the tree, because that is
+## where EnemyBase copies max_hp into the live hp.
+func _apply_difficulty(enemy: EnemyBase) -> void:
+	var hp_scale: float = float(_difficulty.get("hp_scale", 1.0))
+	if hp_scale > 1.0:
+		enemy.max_hp = maxi(1, ceili(float(enemy.max_hp) * hp_scale))
+	var bullet_scale: float = float(_difficulty.get("bullet_scale", 1.0))
+	if enemy is Boss and bullet_scale < 1.0:
+		(enemy as Boss).spread_interval = maxf(0.4, (enemy as Boss).spread_interval * bullet_scale)
 
 
 func _on_enemy_exited() -> void:
@@ -132,6 +189,11 @@ func _check_wave_cleared() -> void:
 		return
 	if not _queue.is_empty() or _active_enemies > 0:
 		return
+	if _battle_active:
+		if wave >= _battle_waves.size():
+			_running = false
+			battle_cleared.emit()
+			return
 	if _gap_timer.time_left > 0.0:
 		return
 	_gap_timer.start()
