@@ -8,6 +8,7 @@ const SECTION_PROGRESS: String = "progress"
 const SECTION_AUDIO: String = "audio"
 const SECTION_GAMEPLAY: String = "gameplay"
 const SECTION_UPGRADES: String = "upgrades"
+const SECTION_CAMPAIGN: String = "campaign"
 const KEY_HIGH_SCORE: String = "high_score"
 const KEY_ENERGY: String = "energy"
 const KEY_REDUCE_MOTION: String = "reduce_motion"
@@ -15,12 +16,26 @@ const KEY_MUSIC_VOLUME: String = "music_volume"
 const KEY_SFX_VOLUME: String = "sfx_volume"
 const KEY_MUTED: String = "muted"
 const KEY_AUTO_FIRE: String = "auto_fire"
+const KEY_CAMPAIGN_ACTIVE: String = "active"
+const KEY_CAMPAIGN_LIVES: String = "lives"
+const KEY_CAMPAIGN_SCORE: String = "score"
+const KEY_CAMPAIGN_CONQUERED: String = "conquered"
+const KEY_CAMPAIGN_BEST_SCORE: String = "best_score"
+const KEY_CAMPAIGN_BEST_PLANETS: String = "best_planets"
 
 var high_score: int = 0
 ## Spendable currency, earned by killing enemies and spent in the upgrade shop.
 var energy: int = 0
 ## Upgrade kind (StringName) -> level 0..Tuning.UPGRADE_MAX_LEVEL.
 var upgrade_levels: Dictionary = {}
+## Campaign run in progress: conquered sector ids, carried lives and total score.
+var campaign_active: bool = false
+var campaign_conquered: Array[StringName] = []
+var campaign_lives: int = 0
+var campaign_score: int = 0
+## Best campaign ever finished, for the summaries and the menu.
+var campaign_best_score: int = 0
+var campaign_best_planets: int = 0
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -70,6 +85,45 @@ func buy_upgrade(kind: StringName) -> bool:
 	return true
 
 
+## Starts (or restarts) a campaign. Sector progress and lives reset; energy and
+## upgrades are meta-progression and deliberately survive.
+func begin_campaign(start_lives: int) -> void:
+	campaign_active = true
+	campaign_conquered.clear()
+	campaign_lives = maxi(start_lives, 1)
+	campaign_score = 0
+	save_data()
+
+
+## Saves the campaign after a sector is won, without ending it.
+func record_campaign_progress(sector_id: StringName, lives: int, score: int) -> void:
+	if not campaign_conquered.has(sector_id):
+		campaign_conquered.append(sector_id)
+	campaign_lives = maxi(lives, 1)
+	campaign_score = maxi(score, 0)
+	save_data()
+
+
+## Ends the campaign (completion or defeat), records the best result and clears
+## the in-progress run. Returns true when this run beat the stored best.
+func finish_campaign() -> bool:
+	var planets: int = campaign_conquered.size()
+	var is_new_best: bool = campaign_score > campaign_best_score \
+		or (campaign_score == campaign_best_score and planets > campaign_best_planets)
+	campaign_best_score = maxi(campaign_best_score, campaign_score)
+	campaign_best_planets = maxi(campaign_best_planets, planets)
+	campaign_active = false
+	campaign_conquered.clear()
+	campaign_lives = 0
+	campaign_score = 0
+	save_data()
+	return is_new_best
+
+
+func is_sector_conquered(sector_id: StringName) -> bool:
+	return campaign_conquered.has(sector_id)
+
+
 func _reset_upgrade_levels() -> void:
 	upgrade_levels.clear()
 	for kind: StringName in Tuning.UPGRADE_ORDER:
@@ -93,6 +147,15 @@ func load_data() -> void:
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
 	auto_fire = bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true))
+	campaign_active = bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false))
+	campaign_lives = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_LIVES, 0)), 0)
+	campaign_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0)), 0)
+	campaign_best_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, 0)), 0)
+	campaign_best_planets = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, 0)), 0)
+	campaign_conquered.clear()
+	var conquered: PackedStringArray = config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, PackedStringArray())
+	for sector: String in conquered:
+		campaign_conquered.append(StringName(sector))
 
 
 func save_data() -> void:
@@ -106,6 +169,15 @@ func save_data() -> void:
 	config.set_value(SECTION_AUDIO, KEY_MUTED, muted)
 	config.set_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, reduce_motion)
 	config.set_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, auto_fire)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, campaign_active)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_LIVES, campaign_lives)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, campaign_score)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, campaign_best_score)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, campaign_best_planets)
+	var conquered := PackedStringArray()
+	for sector: StringName in campaign_conquered:
+		conquered.append(String(sector))
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, conquered)
 	var error: Error = config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save data to %s (error %d)." % [SAVE_PATH, error])

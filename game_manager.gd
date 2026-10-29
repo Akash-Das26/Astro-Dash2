@@ -64,6 +64,7 @@ func _ready() -> void:
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	spawner.wave_started.connect(_on_wave_started)
 	hud.play_requested.connect(_start_run)
+	hud.campaign_requested.connect(_on_campaign_requested)
 	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
 	hud.restart_requested.connect(_start_run)
@@ -91,6 +92,10 @@ func _on_state_changed(new_state: int) -> void:
 			_clear_playfield()
 			_reset_run()
 			hud.show_menu(SaveData.high_score)
+		GameState.State.MAP:
+			hud.show_map()
+		GameState.State.BATTLE_WON:
+			pass
 		GameState.State.PLAYING:
 			hud.show_playing()
 		GameState.State.PAUSED:
@@ -125,6 +130,22 @@ func _start_run() -> void:
 	_reset_run()
 	spawner.start_run()
 	GameState.change_state(GameState.State.PLAYING)
+
+
+## Menu CAMPAIGN. A run in progress is resumed; otherwise a campaign starts at
+## the first sector. Upgrades and energy are kept either way.
+func _on_campaign_requested() -> void:
+	AudioManager.play_sfx("ui_click")
+	if SaveData.campaign_active:
+		GameState.change_state(GameState.State.MAP)
+		return
+	_begin_campaign()
+
+
+func _begin_campaign() -> void:
+	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
+	SaveData.begin_campaign(int(stats["lives"]))
+	GameState.change_state(GameState.State.MAP)
 
 
 ## On-screen pause button (touch). Keyboard and gamepad use GameState's own

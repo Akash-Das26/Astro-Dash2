@@ -2,8 +2,12 @@ extends Node
 ## Global game state machine. Owns the single rule that the scene tree is
 ## paused in every state except PLAYING, so entities never need to ask
 ## "am I allowed to run?" themselves.
+##
+## MENU and MAP are hub screens (HUD panels and the campaign map), PLAYING is
+## the only state where the tree runs, PAUSED freezes a live run, and GAME_OVER
+## and BATTLE_WON are both frozen summaries of a finished run.
 
-enum State { MENU, PLAYING, PAUSED, GAME_OVER }
+enum State { MENU, PLAYING, PAUSED, GAME_OVER, MAP, BATTLE_WON }
 
 signal state_changed(new_state: State)
 
@@ -55,6 +59,11 @@ func _handle_back_request() -> void:
 			change_state(State.PAUSED)
 		State.PAUSED, State.GAME_OVER:
 			change_state(State.MENU)
+		State.MAP:
+			change_state(State.MENU)
+		State.BATTLE_WON:
+			# Continue by default; a finished campaign installs its own handler.
+			change_state(State.MAP)
 		State.MENU:
 			get_tree().quit()
 

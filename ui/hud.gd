@@ -9,6 +9,7 @@ extends CanvasLayer
 ## menus need.
 
 signal play_requested
+signal campaign_requested
 signal pause_requested
 signal resume_requested
 signal restart_requested
@@ -67,7 +68,8 @@ var _displayed_lives: int = 0
 
 
 func _ready() -> void:
-	$Root/MenuPanel/Box/PlayButton.pressed.connect(play_requested.emit)
+	$Root/MenuPanel/Box/Actions/PlayButton.pressed.connect(play_requested.emit)
+	$Root/MenuPanel/Box/Actions/CampaignButton.pressed.connect(campaign_requested.emit)
 	$Root/MenuPanel/Box/ShopButton.pressed.connect(_on_shop_pressed.bind(_menu_panel))
 	$Root/MenuPanel/Box/HowToButton.pressed.connect(_on_how_to_pressed)
 	$Root/HelpPanel/Box/BackButton.pressed.connect(_on_help_back_pressed)
@@ -182,6 +184,11 @@ func show_menu(high_score: int) -> void:
 
 
 func show_playing() -> void:
+	_show_only(null)
+
+
+## The campaign map is its own CanvasLayer, so the HUD just clears its panels.
+func show_map() -> void:
 	_show_only(null)
 
 

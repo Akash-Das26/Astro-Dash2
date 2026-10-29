@@ -208,11 +208,23 @@ theme_override_font_sizes/font_size = 16
 text = "BEST 0"
 horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="Root/MenuPanel/Box"]
+[node name="Actions" type="HBoxContainer" parent="Root/MenuPanel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PlayButton" type="Button" parent="Root/MenuPanel/Box/Actions"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "PLAY"
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "ARCADE"
+
+[node name="CampaignButton" type="Button" parent="Root/MenuPanel/Box/Actions"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+text = "CAMPAIGN"
 
 [node name="ShopButton" type="Button" parent="Root/MenuPanel/Box"]
 custom_minimum_size = Vector2(0, 48)
