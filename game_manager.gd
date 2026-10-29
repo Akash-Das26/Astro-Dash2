@@ -78,6 +78,7 @@ func _ready() -> void:
 	spawner.battle_cleared.connect(_on_battle_cleared)
 	hud.play_requested.connect(_start_run)
 	hud.campaign_requested.connect(_on_campaign_requested)
+	hud.new_campaign_confirmed.connect(_begin_campaign)
 	campaign_map.battle_requested.connect(_on_map_battle_requested)
 	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
@@ -257,6 +258,10 @@ func _on_restart_requested() -> void:
 func _begin_campaign() -> void:
 	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
 	SaveData.begin_campaign(int(stats["lives"]))
+	# A fresh campaign never inherits the flags of a battle that already ended.
+	_battle_is_campaign = false
+	_battle_sector = &""
+	_game_over_is_campaign = false
 	GameState.change_state(GameState.State.MAP)
 
 

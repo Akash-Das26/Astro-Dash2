@@ -182,12 +182,12 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -265.0
+offset_top = -280.0
 offset_right = 150.0
-offset_bottom = 265.0
+offset_bottom = 280.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="Title" type="Label" parent="Root/MenuPanel/Box"]
@@ -225,6 +225,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
 text = "CAMPAIGN"
+
+[node name="NewCampaignButton" type="Button" parent="Root/MenuPanel/Box"]
+visible = false
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "NEW CAMPAIGN"
 
 [node name="ShopButton" type="Button" parent="Root/MenuPanel/Box"]
 custom_minimum_size = Vector2(0, 48)
@@ -396,6 +403,66 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "MAIN MENU"
+
+[node name="NewCampaignPanel" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/NewCampaignPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 0.88)
+
+[node name="Box" type="VBoxContainer" parent="Root/NewCampaignPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -140.0
+offset_right = 160.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="Root/NewCampaignPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "START A NEW CAMPAIGN?"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Body" type="Label" parent="Root/NewCampaignPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Sector progress and lives reset.\nEnergy and upgrades are kept."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="StartButton" type="Button" parent="Root/NewCampaignPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "START"
+
+[node name="CancelButton" type="Button" parent="Root/NewCampaignPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "CANCEL"
 
 [node name="VictoryPanel" type="Control" parent="Root"]
 visible = false

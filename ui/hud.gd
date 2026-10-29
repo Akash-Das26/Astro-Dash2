@@ -16,6 +16,8 @@ signal restart_requested
 signal menu_requested
 signal upgrade_requested(kind: StringName)
 signal battle_won_continue
+## The player confirmed the "start over" card on the menu.
+signal new_campaign_confirmed
 
 const PANEL_FADE_SECONDS: float = 0.18
 const PANEL_SLIDE_PIXELS: float = 16.0
@@ -49,6 +51,9 @@ const COMBO_DECAY_ALPHA: float = 0.4
 @onready var _victory_stats: Label = $Root/VictoryPanel/Box/StatsLabel
 @onready var _victory_bonus: Label = $Root/VictoryPanel/Box/BonusLabel
 @onready var _victory_continue: Button = $Root/VictoryPanel/Box/ContinueButton
+@onready var _new_campaign_panel: Control = $Root/NewCampaignPanel
+@onready var _campaign_button: Button = $Root/MenuPanel/Box/Actions/CampaignButton
+@onready var _new_campaign_button: Button = $Root/MenuPanel/Box/NewCampaignButton
 @onready var _shop_overlay: Control = $Root/ShopOverlay
 @onready var _shop: ShopPanel = $Root/ShopOverlay/Card
 
@@ -78,7 +83,10 @@ var _displayed_lives: int = 0
 
 func _ready() -> void:
 	$Root/MenuPanel/Box/Actions/PlayButton.pressed.connect(play_requested.emit)
-	$Root/MenuPanel/Box/Actions/CampaignButton.pressed.connect(campaign_requested.emit)
+	_campaign_button.pressed.connect(campaign_requested.emit)
+	_new_campaign_button.pressed.connect(_on_new_campaign_pressed)
+	$Root/NewCampaignPanel/Box/StartButton.pressed.connect(_on_new_campaign_start)
+	$Root/NewCampaignPanel/Box/CancelButton.pressed.connect(_on_new_campaign_cancel)
 	$Root/MenuPanel/Box/ShopButton.pressed.connect(_on_shop_pressed.bind(_menu_panel))
 	$Root/MenuPanel/Box/HowToButton.pressed.connect(_on_how_to_pressed)
 	$Root/HelpPanel/Box/BackButton.pressed.connect(_on_help_back_pressed)
@@ -189,8 +197,32 @@ func set_powerups(text: String) -> void:
 
 func show_menu(high_score: int) -> void:
 	_menu_best_label.text = "BEST %d" % high_score
+	# With a campaign in progress the button resumes it and a second button
+	# offers a clean restart; with none it just starts a campaign.
+	var in_progress: bool = SaveData.campaign_active
+	_campaign_button.text = "CONTINUE\nCAMPAIGN" if in_progress else "CAMPAIGN"
+	_new_campaign_button.visible = in_progress
 	_show_only(_menu_panel)
 	_snap_score()
+
+
+## Android Back closes the card, like the how-to and shop overlays.
+func _on_new_campaign_pressed() -> void:
+	AudioManager.play_sfx("ui_click")
+	_show_only(_new_campaign_panel)
+	GameState.back_handler = _on_new_campaign_cancel
+
+
+func _on_new_campaign_cancel() -> void:
+	GameState.back_handler = Callable()
+	AudioManager.play_sfx("ui_click")
+	_show_only(_menu_panel)
+
+
+func _on_new_campaign_start() -> void:
+	GameState.back_handler = Callable()
+	AudioManager.play_sfx("ui_click")
+	new_campaign_confirmed.emit()
 
 
 func show_playing() -> void:
@@ -341,7 +373,7 @@ func _on_banner_timeout() -> void:
 func _show_only(panel: Control) -> void:
 	if panel != _help_panel:
 		GameState.back_handler = Callable()
-	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel, _shop_overlay, _victory_panel]:
+	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel, _shop_overlay, _victory_panel, _new_campaign_panel]:
 		if candidate == panel:
 			_fade_in(candidate)
 		elif candidate.visible:
