@@ -4,12 +4,33 @@ A small vertical space shooter built with **Godot 4.7** (GL Compatibility) for
 desktop, the web and Android. Survive waves of incoming ships, shoot them before
 they cross the blue defence line, and chase a high score across three lives.
 
+Two modes share the same battle: **ARCADE** is the endless run, and **CAMPAIGN**
+is a nine-planet sector map where the ship's lives carry from battle to battle.
+
 ## Features
 
 - Wave director: a tunable enemy mix per wave, shrinking spawn intervals, and a
   boss every fifth wave that strafes, fires fan spreads and eventually leaves.
 - Three enemy types (straight, zigzag, three-hit tank) plus the boss, all built
   on one shared `EnemyBase` (hp, score value, hit flash, boundary rule).
+- Two modes from the menu: **ARCADE** (endless waves, high score) and
+  **CAMPAIGN** (nine planets; clear a sector's 1-3 waves to unlock the sectors
+  it links to, and conquer all nine to finish).
+- Campaign map: a vertical planet graph drawn with primitives — rings and colour
+  variations per planet, lines between linked sectors, a green glow on the ones
+  you can attack now, a check on conquered ones and a dimmed, locked rest — with
+  a confirmation card (BATTLE / CANCEL, 48px and up) and arrow-key / d-pad
+  navigation.
+- Campaign battles reuse the wave director with per-tier scaling and carry the
+  ship's lives between battles; the sector score adds up across the campaign, a
+  boss sector hands one life back, and a clear with no life lost pays a PERFECT
+  VICTORY bonus.
+- Sector victory summary (waves, kills, score, energy, bonus) and a campaign-over
+  card with planets conquered and the highest tier reached, plus an
+  end-of-campaign screen after the final sector.
+- Campaign progress is saved as it happens (conquered sectors, lives, campaign
+  score, best result), so the menu offers CONTINUE CAMPAIGN after a relaunch and
+  puts NEW CAMPAIGN behind a confirmation card.
 - Falling pickups: rapid fire, spread shot, shield and bomb, with HUD timers that
   refresh instead of stacking.
 - Feel: CPUParticles2D bursts tinted per enemy type, capped trauma-based camera
@@ -26,11 +47,12 @@ they cross the blue defence line, and chase a high score across three lives.
 - Game-over summary with waves reached, best combo and energy earned, plus a
   NEW HIGH SCORE banner when the run beats the record.
 - Settings persisted to `user://save.cfg`: volumes, mute, reduce motion,
-  auto-fire, high score, energy and upgrade levels.
+  auto-fire, high score, energy, upgrade levels and campaign progress.
 - Touch controls on phones and tablets (relative drag, auto-fire, on-screen
   pause), keyboard and gamepad on desktop.
-- Pauses itself when the window loses focus; Android's back button pauses,
-  returns to the menu, or quits, depending on where you are.
+- Pauses itself when the window loses focus; Android's back button pauses a
+  battle, closes the campaign card, leaves the map, or quits, depending on where
+  you are.
 - Web build starts audio on the first click so browser autoplay policy cannot
   silence the game.
 
@@ -43,6 +65,8 @@ they cross the blue defence line, and chase a high score across three lives.
 | Move | `A` / `D` or `Left` / `Right` |
 | Fire | `Space` |
 | Pause | `P` or `Esc` |
+| Map: pick a sector | `Left` / `Right` or `Up` / `Down`, then `Space` / `Enter` |
+| Map: close the card | `Esc` |
 
 **Gamepad**
 
@@ -51,6 +75,8 @@ they cross the blue defence line, and chase a high score across three lives.
 | Move | Left stick |
 | Fire | `A` / Cross |
 | Pause | `Start` |
+| Map: pick a sector | D-pad or left stick, then `A` / Cross |
+| Map: close the card | `B` / Circle |
 
 **Touch** (only shown when a touchscreen is detected)
 
@@ -59,9 +85,46 @@ they cross the blue defence line, and chase a high score across three lives.
 | Move | Drag anywhere on the lower half of the screen (relative, so your thumb never covers the ship) |
 | Fire | Automatic while a finger is down; with **Auto-fire** off, hold the **FIRE** button in the bottom-right corner |
 | Pause | The **II** button in the top-right corner |
+| Map | Tap a planet, then **BATTLE**; **CANCEL** or Back closes the card |
 
 Debug builds only: `B` drops a boss in, `1`–`4` spawn a rapid / spread / shield /
 bomb pickup, and the bottom-left line counts live nodes.
+
+## Campaign mode
+
+ARCADE is one endless run. CAMPAIGN is a map of nine planets fought with the same
+ship, the same pickups and the same wave director.
+
+- **The map.** One vertical screen, drawn with primitives. Glowing planets can be
+  attacked now, checked ones are conquered, dimmed ones are still locked. Lines
+  between sectors show where clearing one can take you. Tap a planet (or use the
+  arrow keys / d-pad and accept) for a card with its name, tier, wave count and
+  boss flag, then BATTLE or CANCEL.
+- **Battles.** A sector is 1-3 waves of its own enemy mix; the last wave of a boss
+  sector adds the boss. Clear every wave to win the sector, or lose a life the
+  usual way. Losing the last life ends the campaign.
+- **Lives carry over.** A campaign starts with the hull upgrade's lives and keeps
+  what is left from battle to battle. A sector won against a boss gives one life
+  back, up to the hull maximum. Lives reset only when a new campaign starts.
+- **Score and energy.** Each battle's score adds to the campaign total, and energy
+  still banks per mote into the shop currency, so a failed campaign has still fed
+  the meta-progression.
+- **Victory summary.** Sector name, waves cleared, enemies destroyed, score and
+  energy earned, plus a PERFECT VICTORY line when no life was lost (an extra
+  score and energy bonus, set in `tuning.gd`). CONTINUE goes back to the map.
+- **Defeat and completion.** A lost campaign shows planets conquered and the
+  highest tier reached; RETRY starts a fresh campaign (sector progress and lives
+  reset, energy and upgrades are kept). Conquering the final sector shows the
+  campaign-complete screen and records the best result.
+- **Resume.** Progress is written to `user://save.cfg` as sectors are conquered, so
+  quitting mid-campaign and relaunching leaves CONTINUE CAMPAIGN and NEW CAMPAIGN
+  on the menu.
+- **Difficulty.** `CAMPAIGN_TIER_DIFFICULTY` in `tuning.gd` scales enemy health, the
+  gap between spawns and the boss fire gap per tier; see the balancing table.
+
+Android's Back button closes the confirmation card, leaves the map for the menu,
+pauses a battle, and leaves a summary for the map (or the menu after a finished
+campaign).
 
 ## Project structure
 
@@ -71,10 +134,11 @@ default_bus_layout.tres  Master / Music / SFX buses
 game_manager.gd/.tscn    playfield root: score, lives, combo, energy, power-ups, spawning glue
 tuning.gd                every balance number, in one file (see Balancing)
 upgrades.gd              upgrade table -> prices and ship stats
+campaign.gd              sector graph queries: unlocks, waves, tier difficulty
 
 autoload/
-  game_state.gd          MENU / PLAYING / PAUSED / GAME_OVER, owns tree pause,
-                         focus-loss and back-button handling
+  game_state.gd          MENU / MAP / PLAYING / PAUSED / GAME_OVER / BATTLE_WON,
+                         owns tree pause, focus-loss and back-button handling
   save_data.gd           ConfigFile persistence in user://save.cfg
   audio_manager.gd       bus volumes, pooled SFX players, music, pitch jitter
 
@@ -88,7 +152,10 @@ entities/
   effects/               explosion, shake_camera, starfield
 
 ui/
-  hud.gd/.tscn           readouts and the menu / pause / game-over / how-to / shop panels
+  hud.gd/.tscn           readouts and the menu / pause / game-over / how-to / shop panels,
+                           the sector victory card and the campaign summaries
+  campaign_map.gd/.tscn    map layer: top bar, confirm card, keyboard cycling, signals up
+  campaign_map_view.gd     draws planets, links, glow, checks and the selection
   shop_panel.gd/.tscn      the upgrade card and its four purchase rows
   settings_panel.gd/.tscn  audio and gameplay toggles, instanced twice
   touch_controls.gd      relative drag, auto-fire, on-screen pause and fire buttons

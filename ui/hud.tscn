@@ -557,9 +557,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -166.0
-offset_top = -230.0
+offset_top = -262.0
 offset_right = 166.0
-offset_bottom = 230.0
+offset_bottom = 262.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
@@ -576,7 +576,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Shoot the incoming ships before they cross the blue line.\nThree lives. Every fifth wave is a boss."
+text = "Shoot the incoming ships before they cross the blue line.\nA boss arrives every fifth arcade wave."
+
+[node name="ModesLabel" type="Label" parent="Root/HelpPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+text = "MODES\nARCADE: endless waves, chase a high score.\nCAMPAIGN: clear a planet's waves to open the next.\nLives carry over; a boss planet gives one back.\nArrows / left stick pick, launch to fight."
 
 [node name="KeyboardLabel" type="Label" parent="Root/HelpPanel/Box"]
 layout_mode = 2
