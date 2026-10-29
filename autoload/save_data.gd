@@ -156,6 +156,10 @@ func load_data() -> void:
 	var conquered: PackedStringArray = config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, PackedStringArray())
 	for sector: String in conquered:
 		campaign_conquered.append(StringName(sector))
+	# A campaign always has at least one life; a file claiming otherwise (an
+	# interrupted write, a hand-edited save) would resume into an instant loss.
+	if campaign_active and campaign_lives < 1:
+		campaign_lives = 1
 
 
 func save_data() -> void:
