@@ -33,6 +33,7 @@ const BANNER_FADE_SECONDS: float = 0.3
 @onready var _menu_panel: Control = $Root/MenuPanel
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _game_over_panel: Control = $Root/GameOverPanel
+@onready var _help_panel: Control = $Root/HelpPanel
 
 @onready var _menu_best_label: Label = $Root/MenuPanel/Box/BestValueLabel
 @onready var _final_score_label: Label = $Root/GameOverPanel/Box/FinalScoreLabel
@@ -50,6 +51,8 @@ var _displayed_lives: int = 0
 
 func _ready() -> void:
 	$Root/MenuPanel/Box/PlayButton.pressed.connect(play_requested.emit)
+	$Root/MenuPanel/Box/HowToButton.pressed.connect(_on_how_to_pressed)
+	$Root/HelpPanel/Box/BackButton.pressed.connect(_on_help_back_pressed)
 	$Root/PausePanel/Box/ResumeButton.pressed.connect(resume_requested.emit)
 	$Root/PausePanel/Box/RestartButton.pressed.connect(restart_requested.emit)
 	$Root/PausePanel/Box/MenuButton.pressed.connect(menu_requested.emit)
@@ -62,6 +65,20 @@ func _ready() -> void:
 
 func _on_pause_pressed() -> void:
 	pause_requested.emit()
+
+
+## The how-to-play card is a menu overlay, not a game state: it slides over the
+## menu and hands Android's back button back when it closes.
+func _on_how_to_pressed() -> void:
+	AudioManager.play_sfx("ui_click")
+	_show_only(_help_panel)
+	GameState.back_handler = _on_help_back_pressed
+
+
+func _on_help_back_pressed() -> void:
+	GameState.back_handler = Callable()
+	AudioManager.play_sfx("ui_click")
+	_show_only(_menu_panel)
 
 
 func set_score(value: int) -> void:
@@ -163,7 +180,9 @@ func _on_banner_timeout() -> void:
 
 
 func _show_only(panel: Control) -> void:
-	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel]:
+	if panel != _help_panel:
+		GameState.back_handler = Callable()
+	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel]:
 		if candidate == panel:
 			_fade_in(candidate)
 		elif candidate.visible:
