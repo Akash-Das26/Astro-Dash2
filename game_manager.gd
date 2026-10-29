@@ -100,13 +100,23 @@ func _on_state_changed(new_state: int) -> void:
 		GameState.State.PAUSED:
 			hud.show_paused()
 		GameState.State.GAME_OVER:
+			# Read the wave before stop_run() clears it.
+			var waves_reached: int = spawner.wave
 			spawner.stop_run()
 			AudioManager.play_sfx("game_over")
 			var is_new_best: bool = SaveData.submit_score(score)
 			# Energy is banked per mote; flush it now that the run is over.
 			SaveData.save_data()
 			hud.set_high_score(SaveData.high_score)
-			hud.show_game_over(score, SaveData.high_score, is_new_best)
+			hud.show_game_over(
+				score,
+				SaveData.high_score,
+				is_new_best,
+				waves_reached,
+				best_combo_multiplier,
+				best_combo_chain,
+				run_energy
+			)
 
 
 func _start_run() -> void:

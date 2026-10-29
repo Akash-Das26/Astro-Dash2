@@ -48,6 +48,9 @@ const COMBO_DECAY_ALPHA: float = 0.4
 @onready var _final_score_label: Label = $Root/GameOverPanel/Box/FinalScoreLabel
 @onready var _game_over_best_label: Label = $Root/GameOverPanel/Box/GameOverBestLabel
 @onready var _new_best_label: Label = $Root/GameOverPanel/Box/NewBestLabel
+@onready var _wave_label: Label = $Root/GameOverPanel/Box/WaveLabel
+@onready var _run_combo_label: Label = $Root/GameOverPanel/Box/ComboValueLabel
+@onready var _run_energy_label: Label = $Root/GameOverPanel/Box/EnergyValueLabel
 @onready var _banner_timer: Timer = $BannerTimer
 @onready var _touch_controls: TouchControls = $Root/TouchControls
 
@@ -186,10 +189,24 @@ func show_paused() -> void:
 	_show_only(_pause_panel)
 
 
-func show_game_over(final_score: int, high_score: int, is_new_best: bool) -> void:
+func show_game_over(
+	final_score: int,
+	high_score: int,
+	is_new_best: bool,
+	waves_reached: int,
+	best_multiplier: int,
+	best_chain: int,
+	energy_earned: int
+) -> void:
 	_final_score_label.text = "SCORE %d" % final_score
 	_game_over_best_label.text = "BEST %d" % high_score
 	_new_best_label.visible = is_new_best
+	_wave_label.text = "WAVE %d" % waves_reached
+	if best_chain > 1:
+		_run_combo_label.text = "BEST COMBO x%d  (%d KILLS)" % [best_multiplier, best_chain]
+	else:
+		_run_combo_label.text = "BEST COMBO -"
+	_run_energy_label.text = "ENERGY +%d" % energy_earned
 	_show_only(_game_over_panel)
 
 

@@ -182,9 +182,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -245.0
+offset_top = -265.0
 offset_right = 150.0
-offset_bottom = 245.0
+offset_bottom = 265.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -315,13 +315,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -140.0
-offset_top = -120.0
-offset_right = 140.0
-offset_bottom = 120.0
+offset_left = -162.0
+offset_top = -240.0
+offset_right = 162.0
+offset_bottom = 240.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="Title" type="Label" parent="Root/GameOverPanel/Box"]
@@ -345,8 +345,26 @@ horizontal_alignment = 1
 [node name="NewBestLabel" type="Label" parent="Root/GameOverPanel/Box"]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "NEW BEST!"
+theme_override_font_sizes/font_size = 18
+text = "NEW HIGH SCORE!"
+horizontal_alignment = 1
+
+[node name="WaveLabel" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "WAVE 0"
+horizontal_alignment = 1
+
+[node name="ComboValueLabel" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "BEST COMBO -"
+horizontal_alignment = 1
+
+[node name="EnergyValueLabel" type="Label" parent="Root/GameOverPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "ENERGY +0"
 horizontal_alignment = 1
 
 [node name="ShopButton" type="Button" parent="Root/GameOverPanel/Box"]
