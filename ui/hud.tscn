@@ -228,9 +228,9 @@ text = "CAMPAIGN"
 
 [node name="NewCampaignButton" type="Button" parent="Root/MenuPanel/Box"]
 visible = false
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "NEW CAMPAIGN"
 
 [node name="ShopButton" type="Button" parent="Root/MenuPanel/Box"]
