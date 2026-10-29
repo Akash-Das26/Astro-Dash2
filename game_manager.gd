@@ -155,6 +155,8 @@ func _go_to_menu() -> void:
 
 
 func _end_run() -> void:
+	# The tree pauses here, so a live combo label would freeze on screen.
+	hud.hide_combo()
 	GameState.change_state(GameState.State.GAME_OVER)
 
 
