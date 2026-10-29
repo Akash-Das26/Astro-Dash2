@@ -12,6 +12,9 @@ extends Control
 signal pause_requested
 
 const MIN_TOUCH_TARGET: float = 48.0
+## The fire button only exists while auto-fire is off, so it gets a thumb-sized
+## target rather than the minimum.
+const FIRE_TARGET: float = 72.0
 ## Drag pixels banked at most, so a fast flick cannot keep the ship moving for
 ## seconds after the finger lifted.
 const MAX_PENDING_DRAG: float = 96.0
@@ -22,23 +25,29 @@ const MAX_PENDING_DRAG: float = 96.0
 @export var steer_zone_top: float = 0.5
 
 @onready var _pause_button: Button = $PauseButton
+@onready var _fire_button: Button = $FireButton
 
 var _touch_seen: bool = false
 var _finger_index: int = -1
 var _pending_drag: float = 0.0
 var _applied_axis: float = 0.0
 var _shooting: bool = false
+var _fire_held: bool = false
 
 
 func _ready() -> void:
 	_pause_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
+	_fire_button.custom_minimum_size = Vector2(FIRE_TARGET, FIRE_TARGET)
 	_pause_button.pressed.connect(_on_pause_pressed)
+	_fire_button.button_down.connect(_on_fire_down)
+	_fire_button.button_up.connect(_on_fire_up)
 	GameState.state_changed.connect(_on_state_changed)
 	_touch_seen = DisplayServer.is_touchscreen_available()
-	_refresh_pause_button()
+	_refresh_buttons()
 
 
 func _process(delta: float) -> void:
+	_refresh_buttons()
 	if _finger_index < 0:
 		return
 	if _shooting and not SaveData.auto_fire:
@@ -74,20 +83,22 @@ func _on_pause_pressed() -> void:
 
 func _on_state_changed(_new_state: int) -> void:
 	_release_all()
-	_refresh_pause_button()
+	_refresh_buttons()
 
 
 func _note_touch_device() -> void:
 	if _touch_seen:
 		return
 	_touch_seen = true
-	_refresh_pause_button()
+	_refresh_buttons()
 
 
 func _begin_steer(touch: InputEventScreenTouch) -> void:
 	if _finger_index != -1 or not GameState.is_playing():
 		return
-	if not _is_in_steer_zone(touch.position) or _is_on_pause_button(touch.position):
+	if not _is_in_steer_zone(touch.position):
+		return
+	if _is_on_pause_button(touch.position) or _is_on_fire_button(touch.position):
 		return
 	_finger_index = touch.index
 	_pending_drag = 0.0
@@ -139,16 +150,39 @@ func _stop_auto_fire() -> void:
 	Input.action_release("shoot")
 
 
+## Hold-to-fire, only shown while auto-fire is turned off.
+func _on_fire_down() -> void:
+	_fire_held = true
+	Input.action_press("shoot")
+
+
+func _on_fire_up() -> void:
+	_stop_fire_button()
+
+
+func _stop_fire_button() -> void:
+	if not _fire_held:
+		return
+	_fire_held = false
+	Input.action_release("shoot")
+
+
 ## Never leave an action stuck down when the run stops or the app is paused.
 func _release_all() -> void:
 	_finger_index = -1
 	_pending_drag = 0.0
 	_apply_axis(0.0)
 	_stop_auto_fire()
+	_stop_fire_button()
 
 
-func _refresh_pause_button() -> void:
-	_pause_button.visible = _touch_seen and GameState.is_playing()
+## Called every frame: the auto-fire toggle can change from the pause menu.
+func _refresh_buttons() -> void:
+	var playing: bool = GameState.is_playing()
+	_pause_button.visible = _touch_seen and playing
+	_fire_button.visible = _touch_seen and playing and not SaveData.auto_fire
+	if not _fire_button.visible:
+		_stop_fire_button()
 
 
 func _is_in_steer_zone(at: Vector2) -> bool:
@@ -157,3 +191,7 @@ func _is_in_steer_zone(at: Vector2) -> bool:
 
 func _is_on_pause_button(at: Vector2) -> bool:
 	return _pause_button.visible and _pause_button.get_global_rect().has_point(at)
+
+
+func _is_on_fire_button(at: Vector2) -> bool:
+	return _fire_button.visible and _fire_button.get_global_rect().has_point(at)
