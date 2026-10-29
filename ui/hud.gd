@@ -9,6 +9,7 @@ extends CanvasLayer
 ## menus need.
 
 signal play_requested
+signal pause_requested
 signal resume_requested
 signal restart_requested
 signal menu_requested
@@ -38,6 +39,7 @@ const BANNER_FADE_SECONDS: float = 0.3
 @onready var _game_over_best_label: Label = $Root/GameOverPanel/Box/GameOverBestLabel
 @onready var _new_best_label: Label = $Root/GameOverPanel/Box/NewBestLabel
 @onready var _banner_timer: Timer = $BannerTimer
+@onready var _touch_controls: TouchControls = $Root/TouchControls
 
 var _panel_tweens: Dictionary = {}
 var _score_tween: Tween
@@ -53,8 +55,13 @@ func _ready() -> void:
 	$Root/PausePanel/Box/MenuButton.pressed.connect(menu_requested.emit)
 	$Root/GameOverPanel/Box/RetryButton.pressed.connect(restart_requested.emit)
 	$Root/GameOverPanel/Box/MenuButton.pressed.connect(menu_requested.emit)
+	_touch_controls.pause_requested.connect(_on_pause_pressed)
 	_banner_timer.timeout.connect(_on_banner_timeout)
 	_show_only(_menu_panel)
+
+
+func _on_pause_pressed() -> void:
+	pause_requested.emit()
 
 
 func set_score(value: int) -> void:

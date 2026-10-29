@@ -12,12 +12,16 @@ const KEY_REDUCE_MOTION: String = "reduce_motion"
 const KEY_MUSIC_VOLUME: String = "music_volume"
 const KEY_SFX_VOLUME: String = "sfx_volume"
 const KEY_MUTED: String = "muted"
+const KEY_AUTO_FIRE: String = "auto_fire"
 
 var high_score: int = 0
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
 var reduce_motion: bool = false
+## Touch only: fire while a finger is on the screen. On by default because a
+## phone has no fire key.
+var auto_fire: bool = true
 
 
 func _ready() -> void:
@@ -43,6 +47,7 @@ func load_data() -> void:
 	sfx_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8)), 0.0, 1.0)
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
+	auto_fire = bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true))
 
 
 func save_data() -> void:
@@ -52,6 +57,7 @@ func save_data() -> void:
 	config.set_value(SECTION_AUDIO, KEY_SFX_VOLUME, sfx_volume)
 	config.set_value(SECTION_AUDIO, KEY_MUTED, muted)
 	config.set_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, reduce_motion)
+	config.set_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, auto_fire)
 	var error: Error = config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save data to %s (error %d)." % [SAVE_PATH, error])

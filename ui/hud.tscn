@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hudg"]
 [ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="2_settings"]
+[ext_resource type="Script" path="res://ui/touch_controls.gd" id="3_touch"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -85,6 +86,31 @@ grow_horizontal = 2
 theme_override_font_sizes/font_size = 28
 text = "WAVE 1"
 horizontal_alignment = 1
+
+[node name="TouchControls" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_touch")
+
+[node name="PauseButton" type="Button" parent="Root/TouchControls"]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -60.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 60.0
+grow_horizontal = 0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "II"
 
 [node name="MenuPanel" type="Control" parent="Root"]
 layout_mode = 1

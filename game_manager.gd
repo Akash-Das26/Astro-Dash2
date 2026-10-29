@@ -58,6 +58,7 @@ func _ready() -> void:
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	spawner.wave_started.connect(_on_wave_started)
 	hud.play_requested.connect(_start_run)
+	hud.pause_requested.connect(_on_pause_requested)
 	hud.restart_requested.connect(_start_run)
 	hud.resume_requested.connect(_resume)
 	hud.menu_requested.connect(_go_to_menu)
@@ -101,6 +102,13 @@ func _start_run() -> void:
 	_reset_run()
 	spawner.start_run()
 	GameState.change_state(GameState.State.PLAYING)
+
+
+## On-screen pause button (touch). Keyboard and gamepad use GameState's own
+## `pause` action handling.
+func _on_pause_requested() -> void:
+	if GameState.is_playing():
+		GameState.change_state(GameState.State.PAUSED)
 
 
 func _resume() -> void:
