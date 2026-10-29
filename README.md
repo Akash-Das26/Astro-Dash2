@@ -57,7 +57,7 @@ they cross the blue defence line, and chase a high score across three lives.
 | Action | Input |
 | --- | --- |
 | Move | Drag anywhere on the lower half of the screen (relative, so your thumb never covers the ship) |
-| Fire | Automatic while a finger is down (can be turned off with **Auto-fire** in settings) |
+| Fire | Automatic while a finger is down; with **Auto-fire** off, hold the **FIRE** button in the bottom-right corner |
 | Pause | The **II** button in the top-right corner |
 
 Debug builds only: `B` drops a boss in, `1`–`4` spawn a rapid / spread / shield /
@@ -68,7 +68,9 @@ bomb pickup, and the bottom-left line counts live nodes.
 ```
 project.godot            input actions, display/stretch, autoloads
 default_bus_layout.tres  Master / Music / SFX buses
-game_manager.gd/.tscn    playfield root: score, lives, power-up timers, spawning glue
+game_manager.gd/.tscn    playfield root: score, lives, combo, energy, power-ups, spawning glue
+tuning.gd                every balance number, in one file (see Balancing)
+upgrades.gd              upgrade table -> prices and ship stats
 
 autoload/
   game_state.gd          MENU / PLAYING / PAUSED / GAME_OVER, owns tree pause,
@@ -86,9 +88,10 @@ entities/
   effects/               explosion, shake_camera, starfield
 
 ui/
-  hud.gd/.tscn           readouts and the menu / pause / game-over / how-to panels
+  hud.gd/.tscn           readouts and the menu / pause / game-over / how-to / shop panels
+  shop_panel.gd/.tscn      the upgrade card and its four purchase rows
   settings_panel.gd/.tscn  audio and gameplay toggles, instanced twice
-  touch_controls.gd      relative drag, auto-fire, on-screen pause button
+  touch_controls.gd      relative drag, auto-fire, on-screen pause and fire buttons
 
 assests/                 sprites, backgrounds and (empty) audio drop folder
                          (the folder name is misspelled on purpose; paths depend on it)

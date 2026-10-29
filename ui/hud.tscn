@@ -448,7 +448,7 @@ text = "GAMEPAD\nLeft stick   move\nA / Cross   fire\nStart   pause"
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
-text = "TOUCH\nDrag anywhere on the lower half to steer.\nThe ship fires while your finger is down.\nThe II button in the top right pauses."
+text = "TOUCH\nDrag anywhere on the lower half to steer.\nThe ship fires while your finger is down.\nWith auto-fire off, hold FIRE in the corner.\nThe II button in the top right pauses."
 
 [node name="PickupLabel" type="Label" parent="Root/HelpPanel/Box"]
 layout_mode = 2

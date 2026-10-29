@@ -286,7 +286,7 @@ func _lose_life() -> void:
 
 # --- Combo ------------------------------------------------------------------
 
-## 1.0 for no chain, then one step every COMBO_KILLS_PER_STEP kills.
+## 1 for no chain, then one step every COMBO_KILLS_PER_STEP kills.
 func combo_multiplier() -> int:
 	return mini(1 + _combo_chain / Tuning.COMBO_KILLS_PER_STEP, Tuning.COMBO_MAX_MULTIPLIER)
 
