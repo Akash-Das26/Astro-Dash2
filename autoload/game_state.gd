@@ -8,6 +8,10 @@ enum State { MENU, PLAYING, PAUSED, GAME_OVER }
 signal state_changed(new_state: State)
 
 var state: State = State.MENU
+## Optional hook for an open menu overlay: while set, Back closes that overlay
+## instead of moving between game states. The HUD installs it (and clears it)
+## so a "how to play" screen can be dismissed with Android's back button.
+var back_handler: Callable = Callable()
 
 
 func _ready() -> void:
@@ -27,6 +31,32 @@ func change_state(new_state: State) -> void:
 
 func is_playing() -> bool:
 	return state == State.PLAYING
+
+
+## Focus loss and Android's back button. Only a live run is worth pausing;
+## menus are already stopped and must not fight the player's choice.
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+			if state == State.PLAYING:
+				change_state(State.PAUSED)
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			_handle_back_request()
+
+
+func _handle_back_request() -> void:
+	if back_handler.is_valid():
+		var handler: Callable = back_handler
+		back_handler = Callable()
+		handler.call()
+		return
+	match state:
+		State.PLAYING:
+			change_state(State.PAUSED)
+		State.PAUSED, State.GAME_OVER:
+			change_state(State.MENU)
+		State.MENU:
+			get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:

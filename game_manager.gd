@@ -64,7 +64,6 @@ func _ready() -> void:
 	hud.menu_requested.connect(_go_to_menu)
 	GameState.state_changed.connect(_on_state_changed)
 	hud.set_debug_visible(OS.is_debug_build())
-	AudioManager.play_music("music")
 	_reset_run()
 	_on_state_changed(GameState.state)
 
@@ -97,6 +96,10 @@ func _on_state_changed(new_state: int) -> void:
 
 
 func _start_run() -> void:
+	# This runs from the PLAY / RETRY button press, so the music starts on a
+	# real user gesture. Browsers block audio until then, and starting it in
+	# _ready() would silently leave the Web build silent.
+	AudioManager.play_music("music")
 	AudioManager.play_sfx("ui_click")
 	_clear_playfield()
 	_reset_run()
