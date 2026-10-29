@@ -49,6 +49,80 @@ const MOTE_LIFE_SECONDS: float = 8.0
 ## Distance at which a homing mote counts as collected.
 const MOTE_PICKUP_DISTANCE: float = 18.0
 
+# --- Campaign ---------------------------------------------------------------
+## The sector graph for campaign mode. Each entry is a planet drawn on the
+## vertical 400x600 map: `tier` picks a row of CAMPAIGN_TIER_DIFFICULTY,
+## `waves` is 1-3 battles of `mix`, `boss` adds a boss to the last wave, `pos`
+## is the node centre on the map, and `links` are the sectors this one unlocks
+## when conquered. Sectors with no links are the final one.
+const CAMPAIGN_SECTORS: Dictionary = {
+	&"drift": {
+		"name": "DRIFT BELT", "tier": 1, "waves": 1, "boss": false,
+		"mix": {"straight": 4}, "pos": Vector2(200, 528),
+		"links": [&"cinder", &"vesper"],
+	},
+	&"cinder": {
+		"name": "CINDER RUN", "tier": 1, "waves": 2, "boss": false,
+		"mix": {"straight": 4, "zigzag": 2}, "pos": Vector2(110, 452),
+		"links": [&"hollow", &"ember"],
+	},
+	&"vesper": {
+		"name": "VESPER FIELD", "tier": 1, "waves": 2, "boss": false,
+		"mix": {"zigzag": 4, "tank": 1}, "pos": Vector2(290, 452),
+		"links": [&"ember", &"quill"],
+	},
+	&"hollow": {
+		"name": "HOLLOW MOON", "tier": 2, "waves": 2, "boss": false,
+		"mix": {"straight": 5, "tank": 2}, "pos": Vector2(88, 368),
+		"links": [&"warden"],
+	},
+	&"ember": {
+		"name": "EMBER GATE", "tier": 2, "waves": 2, "boss": false,
+		"mix": {"zigzag": 6, "tank": 2}, "pos": Vector2(200, 368),
+		"links": [&"warden", &"sable"],
+	},
+	&"quill": {
+		"name": "QUILL NEBULA", "tier": 2, "waves": 3, "boss": false,
+		"mix": {"straight": 5, "zigzag": 4, "tank": 2}, "pos": Vector2(312, 368),
+		"links": [&"sable"],
+	},
+	&"warden": {
+		"name": "WARDEN REEF", "tier": 3, "waves": 3, "boss": true,
+		"mix": {"zigzag": 5, "tank": 3}, "pos": Vector2(140, 286),
+		"links": [&"nexus"],
+	},
+	&"sable": {
+		"name": "SABLE EXPANSE", "tier": 3, "waves": 3, "boss": false,
+		"mix": {"straight": 6, "zigzag": 5, "tank": 2}, "pos": Vector2(262, 286),
+		"links": [&"nexus"],
+	},
+	&"nexus": {
+		"name": "THE NEXUS", "tier": 3, "waves": 3, "boss": true,
+		"mix": {"tank": 4, "zigzag": 6}, "pos": Vector2(200, 204),
+		"links": [],
+	},
+}
+## Display order (and the order the map uses for keyboard cycling).
+const CAMPAIGN_ORDER: Array[StringName] = [
+	&"drift", &"cinder", &"vesper", &"hollow", &"ember", &"quill", &"warden", &"sable", &"nexus",
+]
+## Sectors the player may attack before conquering anything.
+const CAMPAIGN_START: Array[StringName] = [&"drift"]
+
+## Per-tier difficulty. `hp_scale` multiplies enemy health, `interval_scale`
+## multiplies the seconds between spawns (below 1 = faster), and `bullet_scale`
+## multiplies the boss spread interval (below 1 = more frequent).
+const CAMPAIGN_TIER_DIFFICULTY: Dictionary = {
+	1: {"hp_scale": 1.0, "interval_scale": 1.0, "bullet_scale": 1.0},
+	2: {"hp_scale": 1.3, "interval_scale": 0.9, "bullet_scale": 0.85},
+	3: {"hp_scale": 1.6, "interval_scale": 0.8, "bullet_scale": 0.7},
+}
+## Cleared without losing a life.
+const CAMPAIGN_PERFECT_SCORE_BONUS: int = 250
+const CAMPAIGN_PERFECT_ENERGY_BONUS: int = 10
+## Clearing a sector that ends with a boss grants one extra life.
+const CAMPAIGN_BOSS_LIFE_BONUS: int = 1
+
 # --- Combo ------------------------------------------------------------------
 ## Seconds a kill keeps the chain alive; every kill resets the clock.
 const COMBO_WINDOW: float = 2.5
