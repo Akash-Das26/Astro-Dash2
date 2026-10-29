@@ -7,6 +7,7 @@ const SAVE_PATH: String = "user://save.cfg"
 const SECTION_PROGRESS: String = "progress"
 const SECTION_AUDIO: String = "audio"
 const SECTION_GAMEPLAY: String = "gameplay"
+const SECTION_UPGRADES: String = "upgrades"
 const KEY_HIGH_SCORE: String = "high_score"
 const KEY_ENERGY: String = "energy"
 const KEY_REDUCE_MOTION: String = "reduce_motion"
@@ -18,6 +19,8 @@ const KEY_AUTO_FIRE: String = "auto_fire"
 var high_score: int = 0
 ## Spendable currency, earned by killing enemies and spent in the upgrade shop.
 var energy: int = 0
+## Upgrade kind (StringName) -> level 0..Tuning.UPGRADE_MAX_LEVEL.
+var upgrade_levels: Dictionary = {}
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -29,6 +32,7 @@ var auto_fire: bool = true
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_reset_upgrade_levels()
 	load_data()
 
 
@@ -46,12 +50,44 @@ func add_energy(amount: int) -> void:
 	energy = maxi(energy + amount, 0)
 
 
+func level_of(kind: StringName) -> int:
+	return Upgrades.level_of(upgrade_levels, kind)
+
+
+## 0 when the track is already maxed.
+func next_upgrade_cost(kind: StringName) -> int:
+	return Upgrades.cost(kind, level_of(kind))
+
+
+## Spends energy and raises one track by a level. Saves on success.
+func buy_upgrade(kind: StringName) -> bool:
+	var price: int = next_upgrade_cost(kind)
+	if price <= 0 or energy < price:
+		return false
+	energy -= price
+	upgrade_levels[kind] = level_of(kind) + 1
+	save_data()
+	return true
+
+
+func _reset_upgrade_levels() -> void:
+	upgrade_levels.clear()
+	for kind: StringName in Tuning.UPGRADE_ORDER:
+		upgrade_levels[kind] = 0
+
+
 func load_data() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return
 	high_score = int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0))
 	energy = maxi(int(config.get_value(SECTION_PROGRESS, KEY_ENERGY, 0)), 0)
+	for kind: StringName in Tuning.UPGRADE_ORDER:
+		upgrade_levels[kind] = clampi(
+			int(config.get_value(SECTION_UPGRADES, String(kind) + "_level", 0)),
+			0,
+			Tuning.UPGRADE_MAX_LEVEL
+		)
 	music_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, 0.8)), 0.0, 1.0)
 	sfx_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8)), 0.0, 1.0)
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
@@ -63,6 +99,8 @@ func save_data() -> void:
 	var config := ConfigFile.new()
 	config.set_value(SECTION_PROGRESS, KEY_HIGH_SCORE, high_score)
 	config.set_value(SECTION_PROGRESS, KEY_ENERGY, energy)
+	for kind: StringName in Tuning.UPGRADE_ORDER:
+		config.set_value(SECTION_UPGRADES, String(kind) + "_level", level_of(kind))
 	config.set_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, music_volume)
 	config.set_value(SECTION_AUDIO, KEY_SFX_VOLUME, sfx_volume)
 	config.set_value(SECTION_AUDIO, KEY_MUTED, muted)

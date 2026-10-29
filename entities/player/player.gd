@@ -23,6 +23,10 @@ signal shield_changed(active: bool)
 ## Short mercy window after the shield absorbs a hit.
 @export var shield_grace_time: float = 0.4
 
+## Damage every bullet gets. Raised by the fire-power upgrade, read by the
+## manager when it spawns a bullet.
+var bullet_damage: int = Tuning.BASE_BULLET_DAMAGE
+
 @onready var _sprite: Sprite2D = $ShipSprite
 @onready var _flash: Sprite2D = $FlashSprite
 @onready var _hurtbox: Area2D = $Hurtbox
@@ -32,7 +36,9 @@ var _invulnerable_time_left: float = 0.0
 var _blink_timer: float = 0.0
 var _rapid_fire: bool = false
 var _spread_shot: bool = false
-var _shield: bool = false
+var _shield_charges: int = 0
+## Charges a fresh run starts with, from the shield upgrade.
+var _starting_shield_charges: int = 0
 var _base_scale: Vector2 = Vector2.ONE
 
 
@@ -48,17 +54,15 @@ func _process(delta: float) -> void:
 	_update_invulnerability(delta)
 
 
-## Applies one hit: the shield eats it, otherwise it costs a life and starts
-## the invulnerability window.
+## Applies one hit: a shield charge eats it, otherwise it costs a life and
+## starts the invulnerability window.
 func take_hit() -> void:
 	if is_invulnerable():
 		return
-	if _shield:
-		_shield = false
-		queue_redraw()
+	if _shield_charges > 0:
+		_set_shield_charges(_shield_charges - 1)
 		_start_invulnerability(shield_grace_time)
 		_play_hit_feedback(Color(0.5, 0.95, 1.0))
-		shield_changed.emit(false)
 		return
 	_start_invulnerability(invulnerability_time)
 	_play_hit_feedback(Color.WHITE)
@@ -70,15 +74,26 @@ func is_invulnerable() -> bool:
 
 
 func has_shield() -> bool:
-	return _shield
+	return _shield_charges > 0
 
 
+func shield_charges() -> int:
+	return _shield_charges
+
+
+## A shield pickup is one extra charge, up to the cap.
 func grant_shield() -> void:
-	if _shield:
-		return
-	_shield = true
-	queue_redraw()
-	shield_changed.emit(true)
+	_set_shield_charges(_shield_charges + 1)
+
+
+## Run-start totals from the upgrade shop. Lives stay the manager's business.
+func apply_run_stats(stats: Dictionary) -> void:
+	move_speed = float(stats["move_speed"])
+	bullet_damage = int(stats["bullet_damage"])
+	fire_interval = float(stats["fire_interval"])
+	rapid_fire_interval = float(stats["rapid_interval"])
+	_starting_shield_charges = int(stats["shield_charges"])
+	_set_shield_charges(_starting_shield_charges)
 
 
 ## Rapid fire and spread shot last as long as the manager keeps them active;
@@ -94,18 +109,19 @@ func set_spread_shot(active: bool) -> void:
 func clear_powerups() -> void:
 	_rapid_fire = false
 	_spread_shot = false
-	if _shield:
-		_shield = false
-		queue_redraw()
-		shield_changed.emit(false)
+	_set_shield_charges(_starting_shield_charges)
 
 
-## Shield bubble, drawn behind the hull. No texture, no shader.
+## Shield bubble with one pip per charge, drawn behind the hull. No texture,
+## no shader.
 func _draw() -> void:
-	if not _shield:
+	if _shield_charges <= 0:
 		return
 	draw_circle(Vector2.ZERO, 26.0, Color(0.4, 0.9, 1.0, 0.12))
 	draw_arc(Vector2.ZERO, 26.0, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), 2.0, true)
+	for index: int in _shield_charges:
+		var angle: float = -PI * 0.5 + float(index) * (TAU / float(Tuning.MAX_SHIELD_CHARGES))
+		draw_circle(Vector2(cos(angle), sin(angle)) * 26.0, 2.5, Color(0.75, 1.0, 1.0, 0.9))
 
 
 func _move(delta: float) -> void:
@@ -141,6 +157,15 @@ func _play_hit_feedback(tint: Color) -> void:
 	_sprite.scale = _base_scale * 1.3
 	var pop_tween := create_tween()
 	pop_tween.tween_property(_sprite, "scale", _base_scale, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _set_shield_charges(count: int) -> void:
+	var clamped: int = clampi(count, 0, Tuning.MAX_SHIELD_CHARGES)
+	if clamped == _shield_charges:
+		return
+	_shield_charges = clamped
+	queue_redraw()
+	shield_changed.emit(has_shield())
 
 
 func _start_invulnerability(duration: float) -> void:

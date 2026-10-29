@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hudg"]
 [ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="2_settings"]
 [ext_resource type="Script" path="res://ui/touch_controls.gd" id="3_touch"]
+[ext_resource type="PackedScene" path="res://ui/shop_panel.tscn" id="4_shop"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -169,9 +170,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -205.0
+offset_top = -245.0
 offset_right = 150.0
-offset_bottom = 205.0
+offset_bottom = 245.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -200,6 +201,12 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "PLAY"
+
+[node name="ShopButton" type="Button" parent="Root/MenuPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "UPGRADES"
 
 [node name="HowToButton" type="Button" parent="Root/MenuPanel/Box"]
 custom_minimum_size = Vector2(0, 48)
@@ -330,6 +337,12 @@ theme_override_font_sizes/font_size = 16
 text = "NEW BEST!"
 horizontal_alignment = 1
 
+[node name="ShopButton" type="Button" parent="Root/GameOverPanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "UPGRADES"
+
 [node name="RetryButton" type="Button" parent="Root/GameOverPanel/Box"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -418,6 +431,38 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "BACK"
+
+[node name="ShopOverlay" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/ShopOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 0.9)
+
+[node name="Card" parent="Root/ShopOverlay" instance=ExtResource("4_shop")]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -215.0
+offset_right = 170.0
+offset_bottom = 215.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="BannerTimer" type="Timer" parent="."]
 wait_time = 1.5

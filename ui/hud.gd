@@ -13,6 +13,7 @@ signal pause_requested
 signal resume_requested
 signal restart_requested
 signal menu_requested
+signal upgrade_requested(kind: StringName)
 
 const PANEL_FADE_SECONDS: float = 0.18
 const PANEL_SLIDE_PIXELS: float = 16.0
@@ -35,6 +36,8 @@ const BANNER_FADE_SECONDS: float = 0.3
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _game_over_panel: Control = $Root/GameOverPanel
 @onready var _help_panel: Control = $Root/HelpPanel
+@onready var _shop_overlay: Control = $Root/ShopOverlay
+@onready var _shop: ShopPanel = $Root/ShopOverlay/Card
 
 @onready var _menu_best_label: Label = $Root/MenuPanel/Box/BestValueLabel
 @onready var _final_score_label: Label = $Root/GameOverPanel/Box/FinalScoreLabel
@@ -49,11 +52,14 @@ var _energy_tween: Tween
 var _banner_tween: Tween
 var _displayed_score: int = 0
 var _displayed_energy: int = 0
+## Panel the shop card slides back to when it closes.
+var _shop_return_panel: Control
 var _displayed_lives: int = 0
 
 
 func _ready() -> void:
 	$Root/MenuPanel/Box/PlayButton.pressed.connect(play_requested.emit)
+	$Root/MenuPanel/Box/ShopButton.pressed.connect(_on_shop_pressed.bind(_menu_panel))
 	$Root/MenuPanel/Box/HowToButton.pressed.connect(_on_how_to_pressed)
 	$Root/HelpPanel/Box/BackButton.pressed.connect(_on_help_back_pressed)
 	$Root/PausePanel/Box/ResumeButton.pressed.connect(resume_requested.emit)
@@ -61,7 +67,11 @@ func _ready() -> void:
 	$Root/PausePanel/Box/MenuButton.pressed.connect(menu_requested.emit)
 	$Root/GameOverPanel/Box/RetryButton.pressed.connect(restart_requested.emit)
 	$Root/GameOverPanel/Box/MenuButton.pressed.connect(menu_requested.emit)
+	$Root/GameOverPanel/Box/ShopButton.pressed.connect(_on_shop_pressed.bind(_game_over_panel))
 	_touch_controls.pause_requested.connect(_on_pause_pressed)
+	_shop.buy_requested.connect(_on_shop_buy_requested)
+	_shop.close_requested.connect(_on_shop_closed)
+	_shop_return_panel = _menu_panel
 	_banner_timer.timeout.connect(_on_banner_timeout)
 	_show_only(_menu_panel)
 
@@ -82,6 +92,32 @@ func _on_help_back_pressed() -> void:
 	GameState.back_handler = Callable()
 	AudioManager.play_sfx("ui_click")
 	_show_only(_menu_panel)
+
+
+## The shop is an overlay like the how-to card: it opens over the menu or the
+## game-over summary and slides back to whichever one sent it.
+func _on_shop_pressed(return_to: Control) -> void:
+	AudioManager.play_sfx("ui_click")
+	_shop_return_panel = return_to
+	_shop.refresh()
+	_show_only(_shop_overlay)
+	GameState.back_handler = _on_shop_closed
+
+
+func _on_shop_closed() -> void:
+	GameState.back_handler = Callable()
+	AudioManager.play_sfx("ui_click")
+	_show_only(_shop_return_panel)
+
+
+func _on_shop_buy_requested(kind: StringName) -> void:
+	upgrade_requested.emit(kind)
+
+
+## Re-reads energy and levels after a purchase attempt.
+func refresh_shop() -> void:
+	_shop.refresh()
+	set_energy(SaveData.energy)
 
 
 func set_score(value: int) -> void:
@@ -198,7 +234,7 @@ func _on_banner_timeout() -> void:
 func _show_only(panel: Control) -> void:
 	if panel != _help_panel:
 		GameState.back_handler = Callable()
-	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel]:
+	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel, _shop_overlay]:
 		if candidate == panel:
 			_fade_in(candidate)
 		elif candidate.visible:

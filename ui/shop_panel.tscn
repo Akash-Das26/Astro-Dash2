@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/shop_panel.gd" id="1_shop"]
+
+[node name="ShopPanel" type="VBoxContainer"]
+theme_override_constants/separation = 8
+script = ExtResource("1_shop")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "UPGRADES"
+horizontal_alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "ENERGY 0"
+horizontal_alignment = 1
+
+[node name="HullRow" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "HULL"
+
+[node name="SpeedRow" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "SPEED"
+
+[node name="ShieldRow" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "SHIELDS"
+
+[node name="FireRow" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "FIRE POWER"
+
+[node name="CloseButton" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "BACK"

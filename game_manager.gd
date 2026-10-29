@@ -19,7 +19,6 @@ extends Node2D
 ##
 ## Waves come from EnemySpawner; every fifth wave is a single boss.
 
-const MAX_LIVES: int = 3
 const PICKUP_DROP_CHANCE: float = 0.1
 const POWERUP_DURATION: float = 8.0
 ## Energy is dropped as motes that fly to the ship; see Tuning for the rates.
@@ -41,7 +40,9 @@ const DEBUG_PICKUP_OFFSET: float = 70.0
 @onready var hud: HUD = $HUD
 
 var score: int = 0
-var lives: int = MAX_LIVES
+## Lives for this run: the base count plus whatever the hull upgrade adds.
+var max_lives: int = Tuning.BASE_LIVES
+var lives: int = Tuning.BASE_LIVES
 ## Energy collected during the current run, for the game-over summary.
 var run_energy: int = 0
 
@@ -61,6 +62,7 @@ func _ready() -> void:
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 	spawner.wave_started.connect(_on_wave_started)
 	hud.play_requested.connect(_start_run)
+	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
 	hud.restart_requested.connect(_start_run)
 	hud.resume_requested.connect(_resume)
@@ -124,6 +126,14 @@ func _resume() -> void:
 	GameState.change_state(GameState.State.PLAYING)
 
 
+## Shop purchase. The HUD owns the card, SaveData owns the money and the
+## levels, and a new run is the only place the ship picks the result up.
+func _on_upgrade_requested(kind: StringName) -> void:
+	var bought: bool = SaveData.buy_upgrade(kind)
+	AudioManager.play_sfx("pickup" if bought else "ui_click")
+	hud.refresh_shop()
+
+
 func _go_to_menu() -> void:
 	AudioManager.play_sfx("ui_click")
 	# A run can be abandoned from the pause menu; keep the energy it earned.
@@ -136,10 +146,13 @@ func _end_run() -> void:
 
 
 func _reset_run() -> void:
+	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
 	score = 0
-	lives = MAX_LIVES
+	max_lives = int(stats["lives"])
+	lives = max_lives
 	run_energy = 0
 	_powerup_time_left.clear()
+	player.apply_run_stats(stats)
 	player.clear_powerups()
 	_refresh_hud()
 	_refresh_powerup_hud()
@@ -148,7 +161,7 @@ func _reset_run() -> void:
 
 func _refresh_hud() -> void:
 	hud.set_score(score)
-	hud.set_lives(lives, MAX_LIVES)
+	hud.set_lives(lives, max_lives)
 	hud.set_high_score(SaveData.high_score)
 
 
@@ -175,6 +188,7 @@ func _on_player_shot_fired(spawn_position: Vector2, direction: Vector2) -> void:
 	var bullet := _bullet_scene.instantiate() as Bullet
 	bullet.position = spawn_position
 	bullet.direction = direction
+	bullet.damage = player.bullet_damage
 	bullets.add_child(bullet)
 
 
@@ -368,8 +382,9 @@ func _refresh_powerup_hud() -> void:
 	var spread: float = float(_powerup_time_left.get(Pickup.Kind.SPREAD_SHOT, 0.0))
 	if spread > 0.0:
 		parts.append("SPREAD %ds" % ceili(spread))
-	if player.has_shield():
-		parts.append("SHIELD")
+	var charges: int = player.shield_charges()
+	if charges > 0:
+		parts.append("SHIELD" if charges == 1 else "SHIELD x%d" % charges)
 	hud.set_powerups("   ".join(parts))
 
 
