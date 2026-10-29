@@ -54,6 +54,8 @@ var _battle_is_campaign: bool = false
 ## Per-battle counters for the victory summary.
 var _battle_kills: int = 0
 var _battle_lives_start: int = 0
+## Filled when a sector is won, read by the BATTLE_WON state.
+var _battle_summary: Dictionary = {}
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -76,6 +78,7 @@ func _ready() -> void:
 	campaign_map.battle_requested.connect(_on_map_battle_requested)
 	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
+	hud.battle_won_continue.connect(_on_battle_won_continue)
 	hud.restart_requested.connect(_start_run)
 	hud.resume_requested.connect(_resume)
 	hud.menu_requested.connect(_go_to_menu)
@@ -109,7 +112,7 @@ func _on_state_changed(new_state: int) -> void:
 			hud.show_map()
 			campaign_map.show_map()
 		GameState.State.BATTLE_WON:
-			pass
+			hud.show_battle_won(_battle_summary)
 		GameState.State.PLAYING:
 			hud.show_playing()
 		GameState.State.PAUSED:
@@ -180,17 +183,42 @@ func _on_map_battle_requested(sector_id: StringName) -> void:
 	GameState.change_state(GameState.State.PLAYING)
 
 
-## Every wave of the sector is gone. The summary screen arrives with the next
-## step; for now the progress is recorded and the map comes back.
+## Every wave of the sector is gone. Rewards and the summary are settled here,
+## then BATTLE_WON shows them and CONTINUE goes back to the map.
 func _on_battle_cleared() -> void:
 	if not _battle_is_campaign:
 		return
 	var sector_id: StringName = _battle_sector
-	if Campaign.has_boss(sector_id):
+	var perfect: bool = lives == _battle_lives_start
+	var bonus_score: int = Tuning.CAMPAIGN_PERFECT_SCORE_BONUS if perfect else 0
+	var bonus_energy: int = Tuning.CAMPAIGN_PERFECT_ENERGY_BONUS if perfect else 0
+	if bonus_energy > 0:
+		SaveData.add_energy(bonus_energy)
+	var life_gained: bool = false
+	if Campaign.has_boss(sector_id) and lives < max_lives:
 		lives = mini(lives + Tuning.CAMPAIGN_BOSS_LIFE_BONUS, max_lives)
-	SaveData.record_campaign_progress(sector_id, lives, SaveData.campaign_score + score)
+		life_gained = true
+	SaveData.record_campaign_progress(sector_id, lives, SaveData.campaign_score + score + bonus_score)
+	_battle_summary = {
+		"sector_name": Campaign.title(sector_id),
+		"waves": spawner.wave,
+		"waves_total": Campaign.wave_count(sector_id),
+		"kills": _battle_kills,
+		"score": score + bonus_score,
+		"energy": run_energy + bonus_energy,
+		"perfect": perfect,
+		"bonus_score": bonus_score,
+		"bonus_energy": bonus_energy,
+		"life_gained": life_gained,
+		"campaign_complete": false,
+	}
 	_battle_is_campaign = false
 	_battle_sector = &""
+	GameState.change_state(GameState.State.BATTLE_WON)
+
+
+func _on_battle_won_continue() -> void:
+	AudioManager.play_sfx("ui_click")
 	GameState.change_state(GameState.State.MAP)
 
 

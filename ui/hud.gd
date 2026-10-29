@@ -15,6 +15,7 @@ signal resume_requested
 signal restart_requested
 signal menu_requested
 signal upgrade_requested(kind: StringName)
+signal battle_won_continue
 
 const PANEL_FADE_SECONDS: float = 0.18
 const PANEL_SLIDE_PIXELS: float = 16.0
@@ -42,6 +43,12 @@ const COMBO_DECAY_ALPHA: float = 0.4
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _game_over_panel: Control = $Root/GameOverPanel
 @onready var _help_panel: Control = $Root/HelpPanel
+@onready var _victory_panel: Control = $Root/VictoryPanel
+@onready var _victory_title: Label = $Root/VictoryPanel/Box/Title
+@onready var _victory_sector: Label = $Root/VictoryPanel/Box/SectorLabel
+@onready var _victory_stats: Label = $Root/VictoryPanel/Box/StatsLabel
+@onready var _victory_bonus: Label = $Root/VictoryPanel/Box/BonusLabel
+@onready var _victory_continue: Button = $Root/VictoryPanel/Box/ContinueButton
 @onready var _shop_overlay: Control = $Root/ShopOverlay
 @onready var _shop: ShopPanel = $Root/ShopOverlay/Card
 
@@ -79,6 +86,7 @@ func _ready() -> void:
 	$Root/GameOverPanel/Box/RetryButton.pressed.connect(restart_requested.emit)
 	$Root/GameOverPanel/Box/MenuButton.pressed.connect(menu_requested.emit)
 	$Root/GameOverPanel/Box/ShopButton.pressed.connect(_on_shop_pressed.bind(_game_over_panel))
+	_victory_continue.pressed.connect(battle_won_continue.emit)
 	_touch_controls.pause_requested.connect(_on_pause_pressed)
 	_shop.buy_requested.connect(_on_shop_buy_requested)
 	_shop.close_requested.connect(_on_shop_closed)
@@ -217,6 +225,33 @@ func show_game_over(
 	_show_only(_game_over_panel)
 
 
+## Sector cleared. `summary` is built by the manager: sector name, waves done,
+## kills, score and energy (bonus included), plus the perfect/boss-life flags.
+func show_battle_won(summary: Dictionary) -> void:
+	var complete: bool = bool(summary.get("campaign_complete", false))
+	_victory_title.text = "CAMPAIGN COMPLETE" if complete else "SECTOR CLEARED"
+	_victory_sector.text = String(summary.get("sector_name", ""))
+	_victory_stats.text = "WAVES %d/%d\nENEMIES %d\nSCORE %d\nENERGY +%d" % [
+		int(summary.get("waves", 0)),
+		int(summary.get("waves_total", 0)),
+		int(summary.get("kills", 0)),
+		int(summary.get("score", 0)),
+		int(summary.get("energy", 0)),
+	]
+	var lines := PackedStringArray()
+	if bool(summary.get("perfect", false)):
+		lines.append("PERFECT VICTORY  +%d SCORE  +%d ENERGY" % [
+			int(summary.get("bonus_score", 0)),
+			int(summary.get("bonus_energy", 0)),
+		])
+	if bool(summary.get("life_gained", false)):
+		lines.append("HULL REPAIRED  +1 LIFE")
+	_victory_bonus.text = "\n".join(lines)
+	_victory_bonus.visible = not lines.is_empty()
+	_victory_continue.text = "FINISH" if complete else "CONTINUE"
+	_show_only(_victory_panel)
+
+
 ## Floating "x3 COMBO". Pops on every chained kill, then fades over the combo
 ## window so the decay itself shows how long the chain has left.
 func show_combo(multiplier: int, window: float) -> void:
@@ -286,7 +321,7 @@ func _on_banner_timeout() -> void:
 func _show_only(panel: Control) -> void:
 	if panel != _help_panel:
 		GameState.back_handler = Callable()
-	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel, _shop_overlay]:
+	for candidate: Control in [_menu_panel, _pause_panel, _game_over_panel, _help_panel, _shop_overlay, _victory_panel]:
 		if candidate == panel:
 			_fade_in(candidate)
 		elif candidate.visible:
