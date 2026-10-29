@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="7_hud"]
 [ext_resource type="Script" path="res://entities/effects/shake_camera.gd" id="8_camera"]
 [ext_resource type="Script" path="res://entities/effects/starfield.gd" id="9_stars"]
+[ext_resource type="PackedScene" path="res://ui/campaign_map.tscn" id="10_map"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_htemk"]
 size = Vector2(400, 16)
@@ -58,3 +59,5 @@ texture = ExtResource("3_o2178")
 script = ExtResource("5_shwjl")
 
 [node name="HUD" parent="." instance=ExtResource("7_hud")]
+
+[node name="CampaignMap" parent="." instance=ExtResource("10_map")]

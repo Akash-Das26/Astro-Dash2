@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/campaign_map.gd" id="1_map"]
+[ext_resource type="Script" path="res://ui/campaign_map_view.gd" id="2_view"]
+
+[node name="CampaignMap" type="CanvasLayer"]
+process_mode = 3
+visible = false
+layer = 11
+script = ExtResource("1_map")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MapView" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_view")
+
+[node name="TopBar" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="EnergyLabel" type="Label" parent="Root/TopBar"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 190.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "ENERGY 0"
+
+[node name="PlanetsLabel" type="Label" parent="Root/TopBar"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 50.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "PLANETS 0/9"
+horizontal_alignment = 1
+
+[node name="LivesLabel" type="Label" parent="Root/TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 8.0
+offset_right = -14.0
+offset_bottom = 28.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "LIVES 3"
+horizontal_alignment = 2
+
+[node name="ConfirmCard" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/ConfirmCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 0.74)
+
+[node name="Box" type="VBoxContainer" parent="Root/ConfirmCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -142.0
+offset_right = 150.0
+offset_bottom = 142.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="Root/ConfirmCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "SECTOR"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Detail" type="Label" parent="Root/ConfirmCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "TIER 1    1 WAVE    NO BOSS"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Note" type="Label" parent="Root/ConfirmCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "LIVES CARRY OVER"
+horizontal_alignment = 1
+
+[node name="BattleButton" type="Button" parent="Root/ConfirmCard/Box"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "BATTLE"
+
+[node name="CancelButton" type="Button" parent="Root/ConfirmCard/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "CANCEL"

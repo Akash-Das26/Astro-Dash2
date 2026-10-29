@@ -34,6 +34,7 @@ const DEBUG_PICKUP_OFFSET: float = 70.0
 @onready var shake_camera: ShakeCamera = $ShakeCamera
 @onready var spawner: EnemySpawner = $EnemySpawner
 @onready var hud: HUD = $HUD
+@onready var campaign_map: CampaignMap = $CampaignMap
 
 var score: int = 0
 ## Lives for this run: the base count plus whatever the hull upgrade adds.
@@ -47,6 +48,9 @@ var best_combo_chain: int = 0
 
 var _combo_chain: int = 0
 var _combo_time_left: float = 0.0
+## Campaign battle in flight. An empty sector id means the arcade mode.
+var _battle_sector: StringName = &""
+var _battle_is_campaign: bool = false
 
 var _bullet_scene: PackedScene = preload("res://entities/bullet/bullet.tscn")
 var _enemy_bullet_scene: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
@@ -65,6 +69,7 @@ func _ready() -> void:
 	spawner.wave_started.connect(_on_wave_started)
 	hud.play_requested.connect(_start_run)
 	hud.campaign_requested.connect(_on_campaign_requested)
+	campaign_map.battle_requested.connect(_on_map_battle_requested)
 	hud.upgrade_requested.connect(_on_upgrade_requested)
 	hud.pause_requested.connect(_on_pause_requested)
 	hud.restart_requested.connect(_start_run)
@@ -86,14 +91,19 @@ func _process(delta: float) -> void:
 
 func _on_state_changed(new_state: int) -> void:
 	# Tree pausing is owned by GameState; this only reacts to it.
+	if new_state != GameState.State.MAP:
+		campaign_map.hide_map()
 	match new_state:
 		GameState.State.MENU:
+			_battle_is_campaign = false
+			_battle_sector = &""
 			spawner.stop_run()
 			_clear_playfield()
 			_reset_run()
 			hud.show_menu(SaveData.high_score)
 		GameState.State.MAP:
 			hud.show_map()
+			campaign_map.show_map()
 		GameState.State.BATTLE_WON:
 			pass
 		GameState.State.PLAYING:
@@ -142,6 +152,21 @@ func _on_campaign_requested() -> void:
 	_begin_campaign()
 
 
+## A sector was confirmed on the map. The battle itself is wired to the
+## spawner in the next step; this already carries the campaign lives in.
+func _on_map_battle_requested(sector_id: StringName) -> void:
+	if not Campaign.exists(sector_id):
+		return
+	AudioManager.play_music("music")
+	AudioManager.play_sfx("ui_click")
+	_battle_sector = sector_id
+	_battle_is_campaign = true
+	_clear_playfield()
+	_reset_run(SaveData.campaign_lives)
+	spawner.start_run()
+	GameState.change_state(GameState.State.PLAYING)
+
+
 func _begin_campaign() -> void:
 	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
 	SaveData.begin_campaign(int(stats["lives"]))
@@ -181,11 +206,13 @@ func _end_run() -> void:
 	GameState.change_state(GameState.State.GAME_OVER)
 
 
-func _reset_run() -> void:
+## lives_override < 0 means a full tank (arcade); a campaign passes the lives
+## carried over from its previous battle.
+func _reset_run(lives_override: int = -1) -> void:
 	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
 	score = 0
 	max_lives = int(stats["lives"])
-	lives = max_lives
+	lives = max_lives if lives_override < 0 else clampi(lives_override, 1, max_lives)
 	run_energy = 0
 	best_combo_multiplier = 1
 	best_combo_chain = 0
