@@ -114,8 +114,9 @@ Masks are bit values, so "layers 3 and 5" is `4 + 16 = 20`.
 
 ## Exporting
 
-All three presets live in `export_presets.cfg`. Icons come from `icon.svg`
-(Godot converts it for Windows and reuses it for the Web and Android builds).
+All three presets live in `export_presets.cfg`. The Windows and Web builds use
+`icon.svg` (Godot converts SVG to ICO for the executable); Android uses the
+pre-rendered `icon-192.png`, because its launcher icon field wants a bitmap.
 
 ### Windows
 
