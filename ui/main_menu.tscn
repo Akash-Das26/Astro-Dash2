@@ -1,0 +1,295 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
+[ext_resource type="Script" path="res://ui/menu_backdrop.gd" id="3_backdrop"]
+[ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="4_settings"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
+bg_color = Color(0.45, 0.12, 0.14, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.55, 0.5, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger_hover"]
+bg_color = Color(0.62, 0.18, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.7, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="MainMenu" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.012, 0.018, 0.045, 1)
+
+[node name="Starfield" type="Node2D" parent="."]
+script = ExtResource("2_stars")
+
+[node name="Backdrop" type="Node2D" parent="."]
+script = ExtResource("3_backdrop")
+
+[node name="Veil" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.01, 0.015, 0.04, 0.5)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 62.0
+offset_top = 48.0
+offset_right = 880.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.86, 0.13, 0.16, 1)
+theme_override_colors/font_outline_color = Color(1, 0.85, 0.2, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 52
+text = "ASTRO DASH 2"
+
+[node name="Subtitle" type="Label" parent="."]
+layout_mode = 0
+offset_left = 66.0
+offset_top = 140.0
+offset_right = 700.0
+offset_bottom = 166.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.62, 0.72, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "THE GALAXY WON'T TAKE ITSELF"
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 236.0
+offset_right = 388.0
+offset_bottom = 500.0
+theme_override_constants/separation = 12
+
+[node name="NewGame" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "NEW GAME"
+alignment = 0
+
+[node name="Continue" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "CONTINUE"
+alignment = 0
+
+[node name="Settings" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "SETTINGS"
+alignment = 0
+
+[node name="Quit" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "QUIT"
+alignment = 0
+
+[node name="Footer" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 66.0
+offset_top = -46.0
+offset_right = -20.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.55, 0.63, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "ENERGY 0      BEST 0 PLANETS      HIGH SCORE 0"
+
+[node name="SettingsCard" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="SettingsCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.04, 0.74)
+
+[node name="Panel" type="PanelContainer" parent="SettingsCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -210.0
+offset_right = 260.0
+offset_bottom = 210.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="SettingsCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="Box" type="VBoxContainer" parent="SettingsCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SettingsCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="SettingsCard/Panel/Margin/Box/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "SETTINGS"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="SettingsCard/Panel/Margin/Box/Header"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "X"
+
+[node name="SettingsPanel" parent="SettingsCard/Panel/Margin/Box" instance=ExtResource("4_settings")]
+layout_mode = 2
+
+[node name="Hint" type="Label" parent="SettingsCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.68, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "ESC / B CLOSES"
+horizontal_alignment = 1
+
+[node name="ConfirmCard" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ConfirmCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.04, 0.76)
+
+[node name="Panel" type="PanelContainer" parent="ConfirmCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -130.0
+offset_right = 270.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="ConfirmCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="Box" type="VBoxContainer" parent="ConfirmCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.45, 1)
+theme_override_font_sizes/font_size = 24
+text = "ABANDON THIS RUN?"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Your map, conquests and hull will be replaced by a new galaxy.
+Energy and upgrades are kept."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="StartButton" type="Button" parent="ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.88, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_danger")
+theme_override_styles/hover = SubResource("StyleBoxFlat_danger_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_danger")
+theme_override_styles/focus = SubResource("StyleBoxFlat_danger_hover")
+text = "NEW RUN"
+
+[node name="CancelButton" type="Button" parent="ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 17
+text = "CANCEL"

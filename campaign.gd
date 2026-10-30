@@ -25,14 +25,6 @@ static func galaxy() -> Galaxy:
 	return _galaxy
 
 
-## Called by the map on entry. The front end that offers NEW / CONTINUE arrives
-## with the next stage, so until then the map is always inside a live campaign.
-static func ensure_run() -> Galaxy:
-	if not SaveData.campaign_active:
-		begin_run()
-	return galaxy()
-
-
 ## Fresh seed, fresh conquests; energy and upgrades are kept.
 static func begin_run() -> void:
 	var fresh_seed: int = int(Time.get_unix_time_from_system()) ^ randi()

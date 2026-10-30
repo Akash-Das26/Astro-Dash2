@@ -8,6 +8,7 @@ extends Control
 ## and everything on this screen (markers included) keeps animating.
 
 const BATTLE_SCENE: String = "res://battle_game.tscn"
+const MENU_SCENE: String = "res://ui/main_menu.tscn"
 const DEFAULT_HINT: String = "DRAG TO PAN   |   TAP A GLOWING WORLD   |   LEFT/RIGHT CYCLE   |   ENTER ATTACK"
 const BANNER_SECONDS: float = 2.6
 ## Screen margin the keyboard cursor keeps between itself and the map edge.
@@ -59,7 +60,13 @@ func _ready() -> void:
 	_result_button.pressed.connect(_on_result_pressed)
 	# A finished battle leaves its summary behind for this screen to show.
 	var result: Dictionary = Campaign.take_result()
-	_galaxy = Campaign.galaxy() if not result.is_empty() else Campaign.ensure_run()
+	if result.is_empty() and not SaveData.campaign_active:
+		# Only an active run (or the summary of a finished campaign) has a map
+		# to show; otherwise the front end keeps the player.
+		get_tree().change_scene_to_file(MENU_SCENE)
+		return
+	UITheme.apply(self)
+	_galaxy = Campaign.galaxy()
 	_links.setup(_galaxy)
 	_build_markers()
 	_center_on(_galaxy.home_id)
@@ -449,6 +456,8 @@ func _handle_back() -> void:
 		return
 	if _confirm_card.visible:
 		_close_card()
+		return
+	get_tree().change_scene_to_file(MENU_SCENE)
 
 
 # --- Banner -----------------------------------------------------------------
