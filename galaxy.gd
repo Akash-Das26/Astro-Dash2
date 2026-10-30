@@ -123,8 +123,8 @@ func band_row(body_id: StringName) -> Dictionary:
 
 
 func trait_row(body_id: StringName) -> Dictionary:
-	var trait: StringName = body(body_id).get("trait", &"minor")
-	return Tuning.GALAXY_TRAITS.get(trait, Tuning.GALAXY_TRAITS[&"minor"])
+	var body_trait: StringName = body(body_id).get("trait", &"minor")
+	return Tuning.GALAXY_TRAITS.get(body_trait, Tuning.GALAXY_TRAITS[&"minor"])
 
 
 ## What the tooltip says about a body right now.
@@ -148,21 +148,21 @@ func status_of(body_id: StringName, conquered: Array[StringName]) -> String:
 func battle_for(body_id: StringName) -> Battle:
 	var data: Dictionary = body(body_id)
 	var band: Dictionary = band_row(body_id)
-	var trait: Dictionary = trait_row(body_id)
+	var body_trait: Dictionary = trait_row(body_id)
 	var battle := Battle.new()
 	battle.title = String(data.get("name", "UNKNOWN"))
 	battle.waves = maxi(int(band["waves"]), 1)
-	battle.enemies_per_wave = maxi(int(band["enemies"]) + int(trait["enemies_delta"]), 3)
+	battle.enemies_per_wave = maxi(int(band["enemies"]) + int(body_trait["enemies_delta"]), 3)
 	var mix: Dictionary = (band["mix"] as Dictionary).duplicate()
-	var bonus: Dictionary = trait["mix_bonus"]
+	var bonus: Dictionary = body_trait["mix_bonus"]
 	for kind: StringName in bonus:
 		mix[kind] = int(mix.get(kind, 0)) + int(bonus[kind])
 	battle.enemy_mix = mix
-	battle.asteroid_density = maxf(float(band["density"]) * float(trait["density_scale"]), 0.0)
+	battle.asteroid_density = maxf(float(band["density"]) * float(body_trait["density_scale"]), 0.0)
 	battle.background = band["background"]
-	battle.hp_scale = float(band["hp_scale"]) * float(trait["hp_scale"])
+	battle.hp_scale = float(band["hp_scale"]) * float(body_trait["hp_scale"])
 	battle.fire_interval_scale = float(band["interval_scale"])
-	var payout: int = roundi(float(Tuning.GALAXY_CONQUEST_ENERGY) * float(trait["energy_scale"]))
+	var payout: int = roundi(float(Tuning.GALAXY_CONQUEST_ENERGY) * float(body_trait["energy_scale"]))
 	if is_gate(body_id):
 		battle.waves = maxi(battle.waves, 3)
 		payout += Tuning.GALAXY_GATE_ENERGY

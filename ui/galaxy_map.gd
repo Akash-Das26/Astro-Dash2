@@ -255,12 +255,12 @@ func _hide_tooltip() -> void:
 
 func _tooltip_text(body_id: StringName) -> String:
 	var data: Dictionary = _galaxy.body(body_id)
-	var trait: Dictionary = _galaxy.trait_row(body_id)
+	var body_trait: Dictionary = _galaxy.trait_row(body_id)
 	var band: Dictionary = _galaxy.band_row(body_id)
 	var battle: Battle = _galaxy.battle_for(body_id)
 	var lines: PackedStringArray = []
 	lines.append(String(data.get("name", "UNKNOWN")))
-	lines.append("%s   |   %s" % [String(trait.get("title", "")), String(band.get("label", ""))])
+	lines.append("%s   |   %s" % [String(body_trait.get("title", "")), String(band.get("label", ""))])
 	lines.append("%d WAVE%s   |   %d ENEMIES EACH" % [
 		battle.waves, "" if battle.waves == 1 else "S", battle.enemies_per_wave,
 	])
@@ -373,12 +373,12 @@ func _open_card(body_id: StringName) -> void:
 		return
 	_card_id = body_id
 	var data: Dictionary = _galaxy.body(body_id)
-	var trait: Dictionary = _galaxy.trait_row(body_id)
+	var body_trait: Dictionary = _galaxy.trait_row(body_id)
 	var battle: Battle = _galaxy.battle_for(body_id)
 	_confirm_title.text = "CONQUER %s?" % String(data.get("name", "THIS WORLD"))
 	var lines: PackedStringArray = []
 	lines.append("%s   |   %s" % [
-		String(trait.get("title", "")), String(_galaxy.band_row(body_id).get("label", "")),
+		String(body_trait.get("title", "")), String(_galaxy.band_row(body_id).get("label", "")),
 	])
 	lines.append("%d WAVE%s   |   %d ENEMIES EACH" % [
 		battle.waves, "" if battle.waves == 1 else "S", battle.enemies_per_wave,
