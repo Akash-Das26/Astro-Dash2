@@ -349,6 +349,8 @@ func _on_enemy_shot_requested(origin: Vector2, direction: Vector2) -> void:
 	var bullet := ENEMY_BULLET_SCENE.instantiate() as EnemyBullet
 	bullet.position = origin
 	bullet.direction = direction
+	bullet.high_contrast = SaveData.high_contrast_bullets
+	bullet.hot_backdrop = battle != null and battle.hot_backdrop
 	enemy_bullets.add_child(bullet)
 
 

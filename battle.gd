@@ -15,6 +15,9 @@ extends Resource
 @export var enemy_mix: Dictionary = {}
 @export var asteroid_density: float = 0.5
 @export var background: Texture2D
+## True for the red band, where enemy shots switch to a yellow-white outline so
+## they stay readable against the backdrop.
+@export var hot_backdrop: bool = false
 ## Difficulty from the body's distance band and trait: fighter HP and the gap
 ## between enemy shots. 1.0/1.0 is the baseline.
 @export var hp_scale: float = 1.0

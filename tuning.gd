@@ -73,6 +73,22 @@ const ENEMY_BULLET_DAMAGE: int = 12
 const ENEMY_BULLET_SPEED: float = 260.0
 const ENEMY_BULLET_LIFE: float = 4.0
 const ENEMY_BULLET_RADIUS: float = 5.0
+## Enemy shots are drawn shapes, not sprites: a hot diamond with a white core, a
+## pulsing halo and a short trail, so they never read as a player laser. The
+## hitbox stays a little smaller than the art so near misses feel fair.
+const ENEMY_BULLET_HITBOX_RADIUS: float = 8.0
+const ENEMY_BULLET_VISUAL_RADIUS: float = 10.0
+const ENEMY_BULLET_CORE_RADIUS: float = 3.4
+const ENEMY_BULLET_TRAIL_SEGMENTS: int = 4
+const ENEMY_BULLET_TRAIL_SPACING: float = 6.0
+const ENEMY_BULLET_GLOW_PULSE: float = 6.0
+const ENEMY_BULLET_BODY: Color = Color(0.96, 0.22, 0.18)
+const ENEMY_BULLET_CORE: Color = Color(1.0, 0.97, 0.9)
+const ENEMY_BULLET_OUTLINE: Color = Color(1.0, 0.42, 0.28)
+## On the red band the outline turns yellow-white so the shot keeps its edge.
+const ENEMY_BULLET_OUTLINE_HOT: Color = Color(1.0, 0.95, 0.5)
+const ENEMY_BULLET_OUTLINE_WIDTH: float = 2.0
+const ENEMY_BULLET_OUTLINE_WIDTH_HIGH: float = 3.5
 ## How far past the ship a fighter starts to swing onto its orbit.
 const ENEMY_APPROACH_SLACK: float = 40.0
 ## Sideways speed relative to `speed` while orbiting.

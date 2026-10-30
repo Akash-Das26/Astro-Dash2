@@ -15,6 +15,7 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _mute_check: CheckButton = $MuteCheck
 @onready var _motion_check: CheckButton = $MotionCheck
 @onready var _auto_fire_check: CheckButton = $AutoFireCheck
+@onready var _contrast_check: CheckButton = $ContrastCheck
 @onready var _save_timer: Timer = $SaveTimer
 
 ## True while the controls are being filled in, so echoed values neither
@@ -32,6 +33,7 @@ func _ready() -> void:
 	_mute_check.toggled.connect(_on_mute_toggled)
 	_motion_check.toggled.connect(_on_motion_toggled)
 	_auto_fire_check.toggled.connect(_on_auto_fire_toggled)
+	_contrast_check.toggled.connect(_on_contrast_toggled)
 	AudioManager.settings_changed.connect(_sync_from_settings)
 	_sync_from_settings()
 
@@ -43,6 +45,7 @@ func _sync_from_settings() -> void:
 	_mute_check.button_pressed = SaveData.muted
 	_motion_check.button_pressed = SaveData.reduce_motion
 	_auto_fire_check.button_pressed = SaveData.auto_fire
+	_contrast_check.button_pressed = SaveData.high_contrast_bullets
 	_syncing = false
 
 
@@ -86,6 +89,13 @@ func _on_auto_fire_toggled(enabled: bool) -> void:
 	if _syncing:
 		return
 	SaveData.auto_fire = enabled
+	_save_timer.start()
+
+
+func _on_contrast_toggled(enabled: bool) -> void:
+	if _syncing:
+		return
+	SaveData.high_contrast_bullets = enabled
 	_save_timer.start()
 
 

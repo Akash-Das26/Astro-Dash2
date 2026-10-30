@@ -160,6 +160,7 @@ func battle_for(body_id: StringName) -> Battle:
 	battle.enemy_mix = mix
 	battle.asteroid_density = maxf(float(band["density"]) * float(body_trait["density_scale"]), 0.0)
 	battle.background = band["background"]
+	battle.hot_backdrop = band_index_of(body_id) >= Tuning.GALAXY_BANDS.size() - 1
 	battle.hp_scale = float(band["hp_scale"]) * float(body_trait["hp_scale"])
 	battle.fire_interval_scale = float(band["interval_scale"])
 	var payout: int = roundi(float(Tuning.GALAXY_CONQUEST_ENERGY) * float(body_trait["energy_scale"]))

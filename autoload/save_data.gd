@@ -17,6 +17,7 @@ const KEY_MUSIC_VOLUME: String = "music_volume"
 const KEY_SFX_VOLUME: String = "sfx_volume"
 const KEY_MUTED: String = "muted"
 const KEY_AUTO_FIRE: String = "auto_fire"
+const KEY_HIGH_CONTRAST: String = "high_contrast_bullets"
 const KEY_CAMPAIGN_ACTIVE: String = "active"
 const KEY_CAMPAIGN_SEED: String = "seed"
 const KEY_CAMPAIGN_SCORE: String = "score"
@@ -53,6 +54,8 @@ var reduce_motion: bool = false
 ## Touch only: fire while a finger is on the screen. On by default because a
 ## phone has no fire key.
 var auto_fire: bool = true
+## Enemy bullets get a thicker outline and a brighter halo when this is on.
+var high_contrast_bullets: bool = true
 
 
 func _ready() -> void:
@@ -163,6 +166,7 @@ func load_data() -> void:
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
 	auto_fire = bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true))
+	high_contrast_bullets = bool(config.get_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, true))
 	campaign_active = bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false))
 	campaign_seed = int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, 0))
 	campaign_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0)), 0)
@@ -196,6 +200,7 @@ func save_data() -> void:
 	config.set_value(SECTION_AUDIO, KEY_MUTED, muted)
 	config.set_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, reduce_motion)
 	config.set_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, auto_fire)
+	config.set_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, high_contrast_bullets)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, campaign_active)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, campaign_seed)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, campaign_score)

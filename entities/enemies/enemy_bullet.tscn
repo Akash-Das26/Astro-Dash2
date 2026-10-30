@@ -1,19 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/enemies/enemy_bullet.gd" id="1_bullet"]
-[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_red.png" id="2_laser"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_enemy_bullet"]
-radius = 5.0
+radius = 8.0
 
 [node name="EnemyBullet" type="Area2D"]
 collision_layer = 16
 collision_mask = 0
 script = ExtResource("1_bullet")
-
-[node name="Sprite" type="Sprite2D" parent="."]
-scale = Vector2(0.12, 0.12)
-texture = ExtResource("2_laser")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_enemy_bullet")
