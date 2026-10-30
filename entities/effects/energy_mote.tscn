@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://entities/effects/energy_mote.gd" id="1_mote"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png" id="2_blue"]
+
+[node name="EnergyMote" type="Node2D"]
+script = ExtResource("1_mote")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("2_blue")
