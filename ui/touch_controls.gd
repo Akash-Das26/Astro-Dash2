@@ -1,197 +1,183 @@
 class_name TouchControls
 extends Control
-## On-screen controls for touch devices. It only presses and releases the
-## InputMap actions the keyboard and gamepad already use, so Player never
-## learns that touch exists and gameplay stays in one place.
+## Landscape touch controls. A virtual stick on the left half drives the
+## move_up/down/left/right actions; a finger on the right half aims from the
+## ship towards itself and holds `shoot`. Both only ever press the InputMap
+## actions, so the ship never learns that touch exists.
 ##
-## Steering is relative: horizontal drag is banked and then spent at the ship's
-## own speed, so the hull never jumps under the finger and the thumb can stay
-## on the empty lower half instead of covering the ship. The whole layer only
-## appears once a touchscreen (or a first touch event) is detected.
+## The stick is drawn with primitives and appears under the finger that owns it,
+## which is why the left half can be used anywhere instead of one fixed spot.
 
 signal pause_requested
+signal aim_changed(direction: Vector2)
 
+const STICK_RADIUS: float = 76.0
+const KNOB_RADIUS: float = 30.0
 const MIN_TOUCH_TARGET: float = 48.0
-## The fire button only exists while auto-fire is off, so it gets a thumb-sized
-## target rather than the minimum.
-const FIRE_TARGET: float = 72.0
-## Drag pixels banked at most, so a fast flick cannot keep the ship moving for
-## seconds after the finger lifted.
-const MAX_PENDING_DRAG: float = 96.0
+## Below this drag length the stick counts as centred.
+const STICK_DEADZONE: float = 0.16
+## A right-zone tap closer than this to the ship keeps the last aim.
+const AIM_DEADZONE: float = 14.0
 
-## Should match Player.move_speed: how fast banked drag is spent.
-@export var follow_speed: float = 300.0
-## Fraction of the screen height where the steering area begins.
-@export var steer_zone_top: float = 0.5
+## The ship the right zone aims from; the HUD passes it in.
+var aim_origin: Node2D
 
 @onready var _pause_button: Button = $PauseButton
-@onready var _fire_button: Button = $FireButton
 
 var _touch_seen: bool = false
-var _finger_index: int = -1
-var _pending_drag: float = 0.0
-var _applied_axis: float = 0.0
-var _shooting: bool = false
-var _fire_held: bool = false
+var _move_index: int = -1
+var _aim_index: int = -1
+var _stick_origin: Vector2 = Vector2.ZERO
+var _stick_vector: Vector2 = Vector2.ZERO
+var _aim_point: Vector2 = Vector2.ZERO
+var _aim_vector: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
 	_pause_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
-	_fire_button.custom_minimum_size = Vector2(FIRE_TARGET, FIRE_TARGET)
 	_pause_button.pressed.connect(_on_pause_pressed)
-	_fire_button.button_down.connect(_on_fire_down)
-	_fire_button.button_up.connect(_on_fire_up)
 	GameState.state_changed.connect(_on_state_changed)
 	_touch_seen = DisplayServer.is_touchscreen_available()
-	_refresh_buttons()
+	_refresh_visibility()
 
 
-func _process(delta: float) -> void:
-	_refresh_buttons()
-	if _finger_index < 0:
-		return
-	if _shooting and not SaveData.auto_fire:
-		_stop_auto_fire()
-	var max_step: float = follow_speed * delta
-	if max_step <= 0.0 or is_zero_approx(_pending_drag):
-		_apply_axis(0.0)
-		return
-	var step: float = clampf(_pending_drag, -max_step, max_step)
-	_pending_drag -= step
-	if absf(_pending_drag) < 0.001:
-		_pending_drag = 0.0
-	# Strength is the fraction of a full speed step, so a slow drag crawls.
-	_apply_axis(step / max_step)
+func _process(_delta: float) -> void:
+	if _move_index >= 0 or _aim_index >= 0:
+		queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		var touch: InputEventScreenTouch = event
-		_note_touch_device()
+		_note_touch()
+		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			_begin_steer(touch)
+			_begin_touch(touch)
 		else:
-			_end_steer(touch)
+			_end_touch(touch)
 	elif event is InputEventScreenDrag:
-		_bank_drag(event as InputEventScreenDrag)
+		var drag := event as InputEventScreenDrag
+		if drag.index == _move_index:
+			_update_stick(drag.position)
+		elif drag.index == _aim_index:
+			_update_aim(drag.position)
 
 
-## Pauses only while a run is live; the pause panel owns the rest.
+func _begin_touch(touch: InputEventScreenTouch) -> void:
+	if not GameState.is_playing():
+		return
+	if _pause_button.visible and _pause_button.get_global_rect().has_point(touch.position):
+		return
+	if touch.position.x < size.x * 0.5:
+		if _move_index >= 0:
+			return
+		_move_index = touch.index
+		_stick_origin = touch.position
+		_update_stick(touch.position)
+		return
+	if _aim_index >= 0:
+		return
+	_aim_index = touch.index
+	_update_aim(touch.position)
+	Input.action_press("shoot")
+
+
+func _end_touch(touch: InputEventScreenTouch) -> void:
+	if touch.index == _move_index:
+		_move_index = -1
+		_stick_vector = Vector2.ZERO
+		_stick_origin = Vector2.ZERO
+		_apply_stick(Vector2.ZERO)
+		queue_redraw()
+	elif touch.index == _aim_index:
+		_aim_index = -1
+		_aim_vector = Vector2.ZERO
+		aim_changed.emit(Vector2.ZERO)
+		Input.action_release("shoot")
+		queue_redraw()
+
+
+func _update_stick(at: Vector2) -> void:
+	var offset: Vector2 = at - _stick_origin
+	_stick_vector = (offset / STICK_RADIUS).limit_length(1.0)
+	_apply_stick(_stick_vector)
+	queue_redraw()
+
+
+## The right zone aims from the ship towards the finger, so a tap anywhere on
+## that half points the nose there.
+func _update_aim(at: Vector2) -> void:
+	_aim_point = at
+	if aim_origin == null or not is_instance_valid(aim_origin):
+		return
+	var origin: Vector2 = aim_origin.get_global_transform_with_canvas().origin
+	var to_finger: Vector2 = at - origin
+	if to_finger.length() < AIM_DEADZONE:
+		_aim_vector = Vector2.ZERO
+	else:
+		_aim_vector = to_finger.normalized()
+	aim_changed.emit(_aim_vector)
+	queue_redraw()
+
+
+func _apply_stick(vector: Vector2) -> void:
+	_press_axis("move_left", "move_right", vector.x)
+	_press_axis("move_up", "move_down", vector.y)
+
+
+func _press_axis(negative: StringName, positive: StringName, value: float) -> void:
+	var amount: float = absf(value)
+	if amount <= STICK_DEADZONE:
+		Input.action_release(negative)
+		Input.action_release(positive)
+		return
+	if value < 0.0:
+		Input.action_release(positive)
+		Input.action_press(negative, amount)
+	else:
+		Input.action_release(negative)
+		Input.action_press(positive, amount)
+
+
 func _on_pause_pressed() -> void:
 	pause_requested.emit()
 
 
 func _on_state_changed(_new_state: int) -> void:
 	_release_all()
-	_refresh_buttons()
+	_refresh_visibility()
 
 
-func _note_touch_device() -> void:
+## Never leave an action stuck down when the battle pauses or restarts.
+func _release_all() -> void:
+	_move_index = -1
+	_aim_index = -1
+	_stick_vector = Vector2.ZERO
+	_stick_origin = Vector2.ZERO
+	_aim_vector = Vector2.ZERO
+	_apply_stick(Vector2.ZERO)
+	aim_changed.emit(Vector2.ZERO)
+	Input.action_release("shoot")
+	queue_redraw()
+
+
+func _note_touch() -> void:
 	if _touch_seen:
 		return
 	_touch_seen = true
-	_refresh_buttons()
+	_refresh_visibility()
 
 
-func _begin_steer(touch: InputEventScreenTouch) -> void:
-	if _finger_index != -1 or not GameState.is_playing():
-		return
-	if not _is_in_steer_zone(touch.position):
-		return
-	if _is_on_pause_button(touch.position) or _is_on_fire_button(touch.position):
-		return
-	_finger_index = touch.index
-	_pending_drag = 0.0
-	_start_auto_fire()
+func _refresh_visibility() -> void:
+	_pause_button.visible = _touch_seen and GameState.is_playing()
 
 
-func _end_steer(touch: InputEventScreenTouch) -> void:
-	if touch.index != _finger_index:
-		return
-	_finger_index = -1
-	_pending_drag = 0.0
-	_apply_axis(0.0)
-	_stop_auto_fire()
-
-
-func _bank_drag(drag: InputEventScreenDrag) -> void:
-	if drag.index != _finger_index:
-		return
-	_pending_drag = clampf(_pending_drag + drag.relative.x, -MAX_PENDING_DRAG, MAX_PENDING_DRAG)
-
-
-## Relative drag -> the move_left / move_right actions the ship already reads.
-func _apply_axis(axis: float) -> void:
-	if is_equal_approx(axis, _applied_axis):
-		return
-	_applied_axis = axis
-	if axis > 0.0:
-		Input.action_release("move_left")
-		Input.action_press("move_right", axis)
-	elif axis < 0.0:
-		Input.action_release("move_right")
-		Input.action_press("move_left", -axis)
-	else:
-		Input.action_release("move_left")
-		Input.action_release("move_right")
-
-
-func _start_auto_fire() -> void:
-	if _shooting or not SaveData.auto_fire:
-		return
-	_shooting = true
-	Input.action_press("shoot")
-
-
-func _stop_auto_fire() -> void:
-	if not _shooting:
-		return
-	_shooting = false
-	Input.action_release("shoot")
-
-
-## Hold-to-fire, only shown while auto-fire is turned off.
-func _on_fire_down() -> void:
-	_fire_held = true
-	Input.action_press("shoot")
-
-
-func _on_fire_up() -> void:
-	_stop_fire_button()
-
-
-func _stop_fire_button() -> void:
-	if not _fire_held:
-		return
-	_fire_held = false
-	Input.action_release("shoot")
-
-
-## Never leave an action stuck down when the run stops or the app is paused.
-func _release_all() -> void:
-	_finger_index = -1
-	_pending_drag = 0.0
-	_apply_axis(0.0)
-	_stop_auto_fire()
-	_stop_fire_button()
-
-
-## Called every frame: the auto-fire toggle can change from the pause menu.
-func _refresh_buttons() -> void:
-	var playing: bool = GameState.is_playing()
-	_pause_button.visible = _touch_seen and playing
-	_fire_button.visible = _touch_seen and playing and not SaveData.auto_fire
-	if not _fire_button.visible:
-		_stop_fire_button()
-
-
-func _is_in_steer_zone(at: Vector2) -> bool:
-	return at.y >= size.y * steer_zone_top
-
-
-func _is_on_pause_button(at: Vector2) -> bool:
-	return _pause_button.visible and _pause_button.get_global_rect().has_point(at)
-
-
-func _is_on_fire_button(at: Vector2) -> bool:
-	return _fire_button.visible and _fire_button.get_global_rect().has_point(at)
+func _draw() -> void:
+	if _move_index >= 0:
+		var knob: Vector2 = _stick_origin + _stick_vector * STICK_RADIUS
+		draw_circle(_stick_origin, STICK_RADIUS, Color(0.6, 0.8, 1.0, 0.10))
+		draw_arc(_stick_origin, STICK_RADIUS, 0.0, TAU, 32, Color(0.7, 0.9, 1.0, 0.5), 2.0, true)
+		draw_circle(knob, KNOB_RADIUS, Color(0.75, 0.9, 1.0, 0.30))
+		draw_arc(knob, KNOB_RADIUS, 0.0, TAU, 24, Color(0.85, 0.95, 1.0, 0.75), 2.0, true)
+	if _aim_index >= 0:
+		draw_arc(_aim_point, 26.0, 0.0, TAU, 24, Color(1.0, 0.55, 0.45, 0.8), 2.0, true)
+		draw_circle(_aim_point, 4.0, Color(1.0, 0.7, 0.5, 0.9))

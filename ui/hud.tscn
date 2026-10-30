@@ -1,14 +1,15 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/hud.gd" id="1_hudg"]
-[ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="2_settings"]
-[ext_resource type="Script" path="res://ui/touch_controls.gd" id="3_touch"]
-[ext_resource type="PackedScene" path="res://ui/shop_panel.tscn" id="4_shop"]
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/touch_controls.gd" id="2_touch"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png" id="3_grey"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png" id="4_green"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png" id="5_blue"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
-layer = 10
-script = ExtResource("1_hudg")
+layer = 5
+script = ExtResource("1_hud")
 
 [node name="Root" type="Control" parent="."]
 layout_mode = 3
@@ -19,100 +20,239 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ScoreLabel" type="Label" parent="Root"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 6.0
-offset_right = 220.0
-offset_bottom = 32.0
-theme_override_font_sizes/font_size = 20
-text = "SCORE 0"
+[node name="TopBar" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 24.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
 
-[node name="BestLabel" type="Label" parent="Root"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 30.0
-offset_right = 220.0
-offset_bottom = 48.0
-theme_override_font_sizes/font_size = 12
-text = "BEST 0"
-
-[node name="LivesLabel" type="Label" parent="Root"]
+[node name="EnergyLabel" type="Label" parent="Root/TopBar"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -152.0
-offset_top = 6.0
-offset_right = -12.0
-offset_bottom = 32.0
+offset_left = -470.0
+offset_top = 3.0
+offset_right = -270.0
+offset_bottom = 21.0
 grow_horizontal = 0
-theme_override_font_sizes/font_size = 20
-text = "LIVES 3/3"
-horizontal_alignment = 2
-
-[node name="EnergyLabel" type="Label" parent="Root"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -152.0
-offset_top = 34.0
-offset_right = -12.0
-offset_bottom = 52.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 12
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
 text = "ENERGY 0"
 horizontal_alignment = 2
 
-[node name="PowerupLabel" type="Label" parent="Root"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 70.0
-offset_right = 320.0
-offset_bottom = 88.0
-theme_override_font_sizes/font_size = 12
-text = ""
+[node name="ScoreLabel" type="Label" parent="Root/TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 3.0
+offset_right = -12.0
+offset_bottom = 21.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "SCORE 0"
+horizontal_alignment = 2
 
-[node name="DebugLabel" type="Label" parent="Root"]
-visible = false
+[node name="ComboLabel" type="Label" parent="Root/TopBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = -9.0
+offset_right = 110.0
+offset_bottom = 9.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 15
+text = "COMBO x2.0"
+horizontal_alignment = 1
+
+[node name="BottomBar" type="ColorRect" parent="Root"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = -20.0
-offset_right = -8.0
-offset_bottom = -4.0
+offset_top = -24.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 10
-text = ""
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="WaveLabel" type="Label" parent="Root/BottomBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 3.0
+offset_right = 220.0
+offset_bottom = 21.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "WAVE 1/1"
+
+[node name="EnemiesLabel" type="Label" parent="Root/BottomBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -280.0
+offset_top = 3.0
+offset_right = -12.0
+offset_bottom = 21.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "ENEMIES 0/0"
+horizontal_alignment = 2
+
+[node name="HpBar" type="TextureProgressBar" parent="Root/BottomBar"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -18.0
+offset_right = 100.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+max_value = 100.0
+value = 100.0
+texture_under = ExtResource("3_grey")
+texture_progress = ExtResource("4_green")
+
+[node name="ShieldBar" type="TextureProgressBar" parent="Root/BottomBar"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 110.0
+offset_top = -16.0
+offset_right = 170.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+max_value = 3.0
+value = 0.0
+texture_under = ExtResource("3_grey")
+texture_progress = ExtResource("5_blue")
 
 [node name="BannerLabel" type="Label" parent="Root"]
 visible = false
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 96.0
-offset_bottom = 142.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -110.0
+offset_right = 300.0
+offset_bottom = -70.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 28
-text = "WAVE 1"
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.85, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "WAVE 1/1"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ComboLabel" type="Label" parent="Root"]
+[node name="EndCard" type="Control" parent="Root"]
 visible = false
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_top = 150.0
-offset_bottom = 190.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 22
-text = "x2 COMBO"
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="Root/EndCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.02, 0.08, 0.62)
+
+[node name="Title" type="Label" parent="Root/EndCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -62.0
+offset_right = 320.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.55, 1, 0.7, 1)
+theme_override_font_sizes/font_size = 32
+text = "VICTORY"
 horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Detail" type="Label" parent="Root/EndCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = 0.0
+offset_right = 320.0
+offset_bottom = 28.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "ALL WAVES CLEARED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="Root/EndCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = 36.0
+offset_right = 320.0
+offset_bottom = 58.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "R RESTARTS THE BATTLE"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="TouchControls" type="Control" parent="Root"]
 layout_mode = 1
@@ -122,131 +262,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("3_touch")
+script = ExtResource("2_touch")
 
 [node name="PauseButton" type="Button" parent="Root/TouchControls"]
-visible = false
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -60.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 60.0
+offset_top = 32.0
+offset_right = -12.0
+offset_bottom = 80.0
 grow_horizontal = 0
-focus_mode = 0
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "II"
-
-[node name="FireButton" type="Button" parent="Root/TouchControls"]
-visible = false
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -80.0
-offset_top = -80.0
-offset_right = -8.0
-offset_bottom = -8.0
-grow_horizontal = 0
-grow_vertical = 0
-focus_mode = 0
-theme_override_font_sizes/font_size = 16
-text = "FIRE"
-
-[node name="MenuPanel" type="Control" parent="Root"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/MenuPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.02, 0.08, 0.82)
-
-[node name="Box" type="VBoxContainer" parent="Root/MenuPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -280.0
-offset_right = 150.0
-offset_bottom = 280.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/MenuPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "ASTRO DASH 2"
-horizontal_alignment = 1
-
-[node name="Tagline" type="Label" parent="Root/MenuPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 13
-text = "SURVIVE - SHOOT - SCORE"
-horizontal_alignment = 1
-
-[node name="BestValueLabel" type="Label" parent="Root/MenuPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "BEST 0"
-horizontal_alignment = 1
-
-[node name="Actions" type="HBoxContainer" parent="Root/MenuPanel/Box"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="PlayButton" type="Button" parent="Root/MenuPanel/Box/Actions"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 18
-text = "ARCADE"
-
-[node name="CampaignButton" type="Button" parent="Root/MenuPanel/Box/Actions"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 15
-text = "CAMPAIGN"
-
-[node name="NewCampaignButton" type="Button" parent="Root/MenuPanel/Box"]
-visible = false
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "NEW CAMPAIGN"
-
-[node name="ShopButton" type="Button" parent="Root/MenuPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "UPGRADES"
-
-[node name="HowToButton" type="Button" parent="Root/MenuPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "HOW TO PLAY"
-
-[node name="SettingsPanel" parent="Root/MenuPanel/Box" instance=ExtResource("2_settings")]
-layout_mode = 2
 
 [node name="PausePanel" type="Control" parent="Root"]
 visible = false
@@ -264,7 +293,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.02, 0.08, 0.72)
+color = Color(0.01, 0.01, 0.05, 0.72)
 
 [node name="Box" type="VBoxContainer" parent="Root/PausePanel"]
 layout_mode = 1
@@ -274,12 +303,12 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -225.0
+offset_top = -110.0
 offset_right = 150.0
-offset_bottom = 225.0
+offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 16
 alignment = 1
 
 [node name="Title" type="Label" parent="Root/PausePanel/Box"]
@@ -291,361 +320,15 @@ horizontal_alignment = 1
 [node name="ResumeButton" type="Button" parent="Root/PausePanel/Box"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "RESUME"
 
 [node name="RestartButton" type="Button" parent="Root/PausePanel/Box"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "RESTART"
-
-[node name="MenuButton" type="Button" parent="Root/PausePanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "MAIN MENU"
-
-[node name="SettingsPanel" parent="Root/PausePanel/Box" instance=ExtResource("2_settings")]
-layout_mode = 2
-
-[node name="GameOverPanel" type="Control" parent="Root"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/GameOverPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.08, 0.0, 0.02, 0.78)
-
-[node name="Box" type="VBoxContainer" parent="Root/GameOverPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -162.0
-offset_top = -240.0
-offset_right = 162.0
-offset_bottom = 240.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "GAME OVER"
-horizontal_alignment = 1
-
-[node name="FinalScoreLabel" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "SCORE 0"
-horizontal_alignment = 1
-
-[node name="GameOverBestLabel" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "BEST 0"
-horizontal_alignment = 1
-
-[node name="NewBestLabel" type="Label" parent="Root/GameOverPanel/Box"]
-visible = false
-layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "NEW HIGH SCORE!"
-horizontal_alignment = 1
-
-[node name="WaveLabel" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "WAVE 0"
-horizontal_alignment = 1
-
-[node name="ComboValueLabel" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "BEST COMBO -"
-horizontal_alignment = 1
-
-[node name="EnergyValueLabel" type="Label" parent="Root/GameOverPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "ENERGY +0"
-horizontal_alignment = 1
-
-[node name="ShopButton" type="Button" parent="Root/GameOverPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "UPGRADES"
-
-[node name="RetryButton" type="Button" parent="Root/GameOverPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "RETRY"
-
-[node name="MenuButton" type="Button" parent="Root/GameOverPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "MAIN MENU"
-
-[node name="NewCampaignPanel" type="Control" parent="Root"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/NewCampaignPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.02, 0.08, 0.88)
-
-[node name="Box" type="VBoxContainer" parent="Root/NewCampaignPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -140.0
-offset_right = 160.0
-offset_bottom = 140.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 14
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/NewCampaignPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "START A NEW CAMPAIGN?"
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="Body" type="Label" parent="Root/NewCampaignPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Sector progress and lives reset.\nEnergy and upgrades are kept."
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="StartButton" type="Button" parent="Root/NewCampaignPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "START"
-
-[node name="CancelButton" type="Button" parent="Root/NewCampaignPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "CANCEL"
-
-[node name="VictoryPanel" type="Control" parent="Root"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/VictoryPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.08, 0.06, 0.82)
-
-[node name="Box" type="VBoxContainer" parent="Root/VictoryPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -190.0
-offset_right = 160.0
-offset_bottom = 190.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/VictoryPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 26
-text = "SECTOR CLEARED"
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="SectorLabel" type="Label" parent="Root/VictoryPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-text = "SECTOR"
-horizontal_alignment = 1
-
-[node name="StatsLabel" type="Label" parent="Root/VictoryPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "WAVES 0/0"
-horizontal_alignment = 1
-
-[node name="BonusLabel" type="Label" parent="Root/VictoryPanel/Box"]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = ""
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="ContinueButton" type="Button" parent="Root/VictoryPanel/Box"]
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "CONTINUE"
-
-[node name="HelpPanel" type="Control" parent="Root"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/HelpPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.02, 0.08, 0.9)
-
-[node name="Box" type="VBoxContainer" parent="Root/HelpPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -166.0
-offset_top = -262.0
-offset_right = 166.0
-offset_bottom = 262.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 26
-text = "HOW TO PLAY"
-horizontal_alignment = 1
-
-[node name="GoalLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-autowrap_mode = 3
-text = "Shoot the incoming ships before they cross the blue line.\nA boss arrives every fifth arcade wave."
-
-[node name="ModesLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-text = "MODES\nARCADE: endless waves, chase a high score.\nCAMPAIGN: clear a planet's waves to open the next.\nLives carry over; a boss planet gives one back.\nArrows / left stick pick, launch to fight."
-
-[node name="KeyboardLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-text = "KEYBOARD\nA / D or Left / Right   move\nSpace   fire\nP or Esc   pause"
-
-[node name="GamepadLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-text = "GAMEPAD\nLeft stick   move\nA / Cross   fire\nStart   pause"
-
-[node name="TouchLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-text = "TOUCH\nDrag anywhere on the lower half to steer.\nThe ship fires while your finger is down.\nWith auto-fire off, hold FIRE in the corner.\nThe II button in the top right pauses."
-
-[node name="PickupLabel" type="Label" parent="Root/HelpPanel/Box"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-text = "PICKUPS\nR rapid fire   S spread shot   H shield   B bomb"
-
-[node name="BackButton" type="Button" parent="Root/HelpPanel/Box"]
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "BACK"
-
-[node name="ShopOverlay" type="Control" parent="Root"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Root/ShopOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.02, 0.08, 0.9)
-
-[node name="Card" parent="Root/ShopOverlay" instance=ExtResource("4_shop")]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -170.0
-offset_top = -215.0
-offset_right = 170.0
-offset_bottom = 215.0
-grow_horizontal = 2
-grow_vertical = 2
+text = "RESTART BATTLE"
 
 [node name="BannerTimer" type="Timer" parent="."]
-wait_time = 1.5
+wait_time = 1.4
 one_shot = true
