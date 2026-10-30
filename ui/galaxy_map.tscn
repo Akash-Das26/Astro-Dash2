@@ -1,0 +1,383 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/galaxy_map.gd" id="1_map"]
+[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
+[ext_resource type="Script" path="res://entities/map/galaxy_links.gd" id="3_links"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
+bg_color = Color(0.04, 0.06, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.65, 0.5, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.04, 0.06, 0.12, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.8, 0.6, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_battle"]
+bg_color = Color(0.12, 0.4, 0.22, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 1, 0.6, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_battle_hover"]
+bg_color = Color(0.18, 0.58, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 1, 0.75, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cancel"]
+bg_color = Color(0.45, 0.12, 0.14, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.55, 0.5, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cancel_hover"]
+bg_color = Color(0.62, 0.18, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.7, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="GalaxyMap" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_map")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.02, 0.05, 1)
+
+[node name="Starfield" type="Node2D" parent="."]
+script = ExtResource("2_stars")
+
+[node name="View" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="World" type="Node2D" parent="View"]
+
+[node name="Links" type="Node2D" parent="View/World"]
+script = ExtResource("3_links")
+
+[node name="Bodies" type="Node2D" parent="View/World"]
+
+[node name="TopBar" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 28.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="PlanetsLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 5.0
+offset_right = 280.0
+offset_bottom = 24.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "PLANETS 1/56"
+
+[node name="ScoreLabel" type="Label" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.0
+offset_top = 5.0
+offset_right = 140.0
+offset_bottom = 24.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "SCORE 0"
+horizontal_alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 5.0
+offset_right = -12.0
+offset_bottom = 24.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "ENERGY 0"
+horizontal_alignment = 2
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -27.0
+offset_right = -12.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.58, 0.68, 0.84, 1)
+theme_override_font_sizes/font_size = 11
+text = "DRAG TO PAN   |   TAP A GLOWING WORLD   |   LEFT/RIGHT CYCLE   |   ENTER ATTACK"
+
+[node name="Banner" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -380.0
+offset_top = 40.0
+offset_right = 380.0
+offset_bottom = 70.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.75, 1)
+theme_override_font_sizes/font_size = 20
+text = "SECTOR CONQUERED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Tooltip" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 24.0
+offset_top = 60.0
+offset_right = 282.0
+offset_bottom = 168.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tooltip")
+
+[node name="Label" type="Label" parent="Tooltip"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "NAME
+TRAIT   |   NEAR SPACE
+1 WAVE   |   6 ENEMIES EACH
+READY TO ATTACK"
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="ConfirmCard" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ConfirmCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.05, 0.72)
+
+[node name="Panel" type="PanelContainer" parent="ConfirmCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -150.0
+offset_right = 280.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Margin" type="MarginContainer" parent="ConfirmCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="Box" type="VBoxContainer" parent="ConfirmCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 1, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+text = "CONQUER VELOS?"
+horizontal_alignment = 1
+
+[node name="Info" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "RESOURCE RICH   |   BLUE VEIL
+2 WAVES   |   9 ENEMIES EACH
+CONQUEST BONUS   |   +36 ENERGY
+CITADELS 0/3"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BattleButton" type="Button" parent="ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 1, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_battle")
+theme_override_styles/hover = SubResource("StyleBoxFlat_battle_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_battle")
+theme_override_styles/focus = SubResource("StyleBoxFlat_battle_hover")
+text = "BATTLE"
+
+[node name="CancelButton" type="Button" parent="ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.88, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_cancel")
+theme_override_styles/hover = SubResource("StyleBoxFlat_cancel_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_cancel")
+theme_override_styles/focus = SubResource("StyleBoxFlat_cancel_hover")
+text = "CANCEL"
+
+[node name="ResultCard" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ResultCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.05, 0.78)
+
+[node name="Panel" type="PanelContainer" parent="ResultCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -120.0
+offset_right = 280.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Margin" type="MarginContainer" parent="ResultCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="Box" type="VBoxContainer" parent="ResultCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="ResultCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 1, 0.7, 1)
+theme_override_font_sizes/font_size = 28
+text = "CAMPAIGN OVER"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="ResultCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "PLANETS 4/56   |   CITADELS 1/5
+SCORE 2400   |   BEST 5100"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ActionButton" type="Button" parent="ResultCard/Panel/Margin/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 1, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_battle")
+theme_override_styles/hover = SubResource("StyleBoxFlat_battle_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_battle")
+theme_override_styles/focus = SubResource("StyleBoxFlat_battle_hover")
+text = "RETRY"
