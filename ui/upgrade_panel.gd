@@ -28,6 +28,11 @@ const LASER_COLORS: Array[Color] = [
 	Color(0.6, 1.0, 0.7),
 	Color(1.0, 0.88, 0.35),
 ]
+const WEAPON_CARD_HEIGHT: float = 46.0
+
+## The panel has two views: ship upgrades plus hull skins, or the weapon rack.
+## Both share the left column preview.
+enum Tab { HULL, WEAPONS }
 
 @onready var _energy_label: Label = $Panel/Margin/Box/Header/EnergyLabel
 @onready var _close_button: Button = $Panel/Margin/Box/Header/CloseButton
@@ -40,10 +45,26 @@ const LASER_COLORS: Array[Color] = [
 @onready var _equip_button: Button = $Panel/Margin/Box/Body/Stats/EquipButton
 @onready var _skin_row: HBoxContainer = $Panel/Margin/Box/Skins/Row
 @onready var _skin_hint: Label = $Panel/Margin/Box/Skins/Hint
+@onready var _hull_tab: Button = $Panel/Margin/Box/Tabs/HullTab
+@onready var _weapon_tab: Button = $Panel/Margin/Box/Tabs/WeaponTab
+@onready var _grid: GridContainer = $Panel/Margin/Box/Body/Grid
+@onready var _skins: VBoxContainer = $Panel/Margin/Box/Skins
+@onready var _weapon_box: VBoxContainer = $Panel/Margin/Box/Body/Weapons
+@onready var _weapon_row: VBoxContainer = $Panel/Margin/Box/Body/Weapons/Row
+@onready var _weapon_hint: Label = $Panel/Margin/Box/Body/Weapons/Hint
+@onready var _weapon_icon: TextureRect = $Panel/Margin/Box/Body/Stats/WeaponIcon
+@onready var _buy_button: Button = $Panel/Margin/Box/Body/Stats/BuyButton
+@onready var _equip_primary_button: Button = $Panel/Margin/Box/Body/Stats/EquipPrimaryButton
+@onready var _equip_secondary_button: Button = $Panel/Margin/Box/Body/Stats/EquipSecondaryButton
 
 ## Hull shown in the preview. Picking a skin only previews it; EQUIP commits.
 var _preview_id: StringName = Skins.DEFAULT_ID
+## Weapon shown in the preview while the WEAPONS tab is open. Picking a card
+## only previews it; the three buttons commit buy / equip.
+var _preview_weapon: StringName = Weapons.DEFAULT_ID
+var _tab: int = Tab.HULL
 var _skin_buttons: Dictionary = {}
+var _weapon_buttons: Dictionary = {}
 var _style_normal: StyleBoxFlat
 var _style_preview: StyleBoxFlat
 var _style_equipped: StyleBoxFlat
@@ -51,18 +72,30 @@ var _style_equipped: StyleBoxFlat
 
 func _ready() -> void:
 	_preview_id = Skins.selected()
+	_preview_weapon = SaveData.weapon_primary
 	_close_button.pressed.connect(close)
 	_equip_button.pressed.connect(_on_equip_pressed)
+	_hull_tab.pressed.connect(_select_tab.bind(Tab.HULL))
+	_weapon_tab.pressed.connect(_select_tab.bind(Tab.WEAPONS))
+	_buy_button.pressed.connect(_on_buy_pressed)
+	_equip_primary_button.pressed.connect(_on_equip_weapon_pressed.bind(0))
+	_equip_secondary_button.pressed.connect(_on_equip_weapon_pressed.bind(1))
+	_laser_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		var card := get_node(CARD_ROOT[kind]) as Button
 		card.pressed.connect(_on_card_pressed.bind(kind))
 	_build_skins()
+	_build_weapons()
+	_apply_tab_visibility()
 	refresh()
 
 
 func open() -> void:
 	visible = true
 	_preview_id = Skins.selected()
+	_preview_weapon = SaveData.weapon_primary
+	_tab = Tab.HULL
+	_apply_tab_visibility()
 	refresh()
 	AudioManager.play_sfx("ui_click")
 	var first: Button = get_node(CARD_ROOT[&"hull"]) as Button
@@ -82,6 +115,7 @@ func refresh() -> void:
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		_render_card(kind)
 	_refresh_skins()
+	_refresh_weapons()
 	_refresh_preview()
 
 
@@ -94,13 +128,13 @@ func _render_stats() -> void:
 		if SaveData.campaign_hp > 0:
 			hp = clampi(SaveData.campaign_hp, 1, max_hp)
 		shields = SaveData.campaign_shields
-	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %d/%d\nFIRE       %dx" % [
+	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %d/%d\nFIRE       %d%%" % [
 		hp,
 		max_hp,
 		roundi(float(stats["move_speed"])),
 		shields,
 		Tuning.MAX_SHIELD_CHARGES,
-		int(stats["bullet_damage"]),
+		roundi(float(stats["damage_mult"]) * 100.0),
 	]
 
 
@@ -168,7 +202,18 @@ func _input(event: InputEvent) -> void:
 	if not visible:
 		return
 	var focused: Control = get_viewport().gui_get_focus_owner()
-	if focused == null or not _skin_buttons.values().has(focused):
+	if focused == null:
+		return
+	# Up/down walks the weapon rack, left/right walks the hull row.
+	if _tab == Tab.WEAPONS and _weapon_buttons.values().has(focused):
+		if event.is_action_pressed("ui_up"):
+			_step_weapon(-1)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_down"):
+			_step_weapon(1)
+			get_viewport().set_input_as_handled()
+		return
+	if not _skin_buttons.values().has(focused):
 		return
 	if event.is_action_pressed("ui_left"):
 		_step_skin(-1)
@@ -237,6 +282,9 @@ func _refresh_skins() -> void:
 ## The preview under CURRENT STATS: hull large, thruster lit, and exactly what
 ## it takes to wear it. Locked hulls are dimmed rather than hidden.
 func _refresh_preview() -> void:
+	if _tab == Tab.WEAPONS:
+		_refresh_weapon_preview()
+		return
 	var id: StringName = _preview_id
 	var unlocked: bool = Skins.is_unlocked(id)
 	var equipped: bool = id == Skins.selected()
@@ -272,6 +320,195 @@ func _refresh_preview() -> void:
 	_laser_label.add_theme_color_override("font_color", LASER_COLORS[tier])
 	_equip_button.text = "EQUIPPED" if equipped else "EQUIP"
 	_equip_button.disabled = equipped or not unlocked
+
+
+# --- Weapons ----------------------------------------------------------------
+
+## One button per weapon, built in code so the Tuning table stays the single
+## source of truth for how many weapons exist.
+func _build_weapons() -> void:
+	for id: StringName in Weapons.ids():
+		var card := Button.new()
+		card.name = "Weapon_%s" % String(id)
+		card.custom_minimum_size = Vector2(0.0, WEAPON_CARD_HEIGHT)
+		card.tooltip_text = Weapons.description(id)
+		var box := VBoxContainer.new()
+		box.name = "Box"
+		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		box.offset_left = 10.0
+		box.offset_top = 3.0
+		box.offset_right = -10.0
+		box.offset_bottom = -3.0
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_theme_constant_override("separation", 0)
+		for row_name: String in ["Name", "Stats", "Status"]:
+			var label := Label.new()
+			label.name = row_name
+			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			label.add_theme_font_size_override("font_size", 15 if row_name == "Name" else 10)
+			box.add_child(label)
+		card.add_child(box)
+		card.pressed.connect(_on_weapon_pressed.bind(id))
+		_weapon_row.add_child(card)
+		_weapon_buttons[id] = card
+
+
+func _on_weapon_pressed(id: StringName) -> void:
+	_preview_weapon = id
+	AudioManager.play_sfx("ui_click")
+	_refresh_weapons()
+	_refresh_weapon_preview()
+
+
+func _step_weapon(step: int) -> void:
+	var ids: Array[StringName] = Weapons.ids()
+	var index: int = ids.find(_preview_weapon)
+	if index < 0:
+		index = 0
+	_preview_weapon = ids[posmod(index + step, ids.size())]
+	(_weapon_buttons[_preview_weapon] as Button).grab_focus()
+	_refresh_weapons()
+	_refresh_weapon_preview()
+
+
+func _weapon_stats() -> Dictionary:
+	return Upgrades.stats_for(SaveData.upgrade_levels)
+
+
+func _on_buy_pressed() -> void:
+	if not SaveData.buy_weapon(_preview_weapon):
+		return
+	AudioManager.play_sfx("ui_click")
+	changed.emit()
+	refresh()
+
+
+func _on_equip_weapon_pressed(slot: int) -> void:
+	if not SaveData.equip_weapon(_preview_weapon, slot):
+		return
+	AudioManager.play_sfx("ui_click")
+	changed.emit()
+	refresh()
+
+
+## HULL & SHIP swaps the 2x2 upgrade grid and the skin row for the weapon rack.
+func _select_tab(tab: int) -> void:
+	if _tab == tab:
+		return
+	_tab = tab
+	AudioManager.play_sfx("ui_click")
+	_apply_tab_visibility()
+	refresh()
+	if tab == Tab.WEAPONS:
+		(_weapon_buttons[_preview_weapon] as Button).grab_focus()
+	else:
+		(get_node(CARD_ROOT[&"hull"]) as Button).grab_focus()
+
+
+func _apply_tab_visibility() -> void:
+	var hull: bool = _tab == Tab.HULL
+	_grid.visible = hull
+	_skins.visible = hull
+	_weapon_box.visible = not hull
+	_equip_button.visible = hull
+	_preview_ship.visible = hull
+	_preview_thruster.visible = hull
+	_weapon_icon.visible = not hull
+	_buy_button.visible = not hull
+	_equip_primary_button.visible = not hull
+	_equip_secondary_button.visible = not hull
+	_hull_tab.modulate = Color.WHITE if hull else Color(0.65, 0.7, 0.85)
+	_weapon_tab.modulate = Color(0.65, 0.7, 0.85) if hull else Color.WHITE
+
+
+func _refresh_weapons() -> void:
+	var stats: Dictionary = _weapon_stats()
+	for id: StringName in Weapons.ids():
+		var card: Button = _weapon_buttons[id]
+		var data: Dictionary = Weapons.entry(id)
+		var name_label: Label = card.get_node("Box/Name") as Label
+		var numbers: Label = card.get_node("Box/Stats") as Label
+		var status: Label = card.get_node("Box/Status") as Label
+		var owned: bool = Weapons.owned(id)
+		var unlocked: bool = Weapons.is_unlocked(id)
+		name_label.text = Weapons.title(id)
+		name_label.add_theme_color_override(
+			"font_color", Weapons.color(id) if unlocked else UITheme.COLOR_MUTED
+		)
+		numbers.text = "DMG %d   RATE %.1f/s   SPD %d   DPS %.0f" % [
+			Weapons.damage(id, stats),
+			float(data["count"]) / Weapons.interval(id, stats),
+			int(data["speed"]),
+			Weapons.dps(id, stats),
+		]
+		if not unlocked:
+			status.text = "UNLOCKS AT %d PLANETS" % Weapons.unlock_planets(id)
+			status.add_theme_color_override("font_color", UITheme.COLOR_WARN)
+		elif not owned:
+			status.text = "COST %d ENERGY" % Weapons.cost(id)
+			status.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
+		elif SaveData.weapon_primary == id:
+			status.text = "PRIMARY"
+			status.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
+		elif SaveData.weapon_secondary == id:
+			status.text = "SECONDARY"
+			status.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
+		else:
+			status.text = "OWNED"
+			status.add_theme_color_override("font_color", UITheme.COLOR_TEXT)
+		var equipped: bool = SaveData.weapon_primary == id or SaveData.weapon_secondary == id
+		var style: StyleBoxFlat = _style_normal
+		if equipped:
+			style = _style_equipped
+		elif id == _preview_weapon:
+			style = _style_preview
+		card.add_theme_stylebox_override("normal", style)
+		card.add_theme_stylebox_override("hover", style)
+		card.add_theme_stylebox_override("pressed", style)
+		card.modulate.a = 1.0 if unlocked else 0.5
+	var secondary_text: String = "EMPTY"
+	if SaveData.weapon_secondary != &"":
+		secondary_text = Weapons.title(SaveData.weapon_secondary)
+	_weapon_hint.text = "PRIMARY %s   |   SECONDARY %s" % [
+		Weapons.title(SaveData.weapon_primary), secondary_text,
+	]
+
+
+## Projectile preview: the art large and in its own colour, then exactly what it
+## takes to own and equip it.
+func _refresh_weapon_preview() -> void:
+	var id: StringName = _preview_weapon
+	var data: Dictionary = Weapons.entry(id)
+	if data.is_empty():
+		return
+	var owned: bool = Weapons.owned(id)
+	var unlocked: bool = Weapons.is_unlocked(id)
+	var price: int = Weapons.cost(id)
+	var tint: Color = Weapons.color(id)
+	_weapon_icon.texture = Weapons.texture(id)
+	_weapon_icon.modulate = tint if unlocked else Color(0.55, 0.58, 0.7)
+	_preview_name.text = Weapons.title(id)
+	_preview_name.add_theme_color_override(
+		"font_color", tint if unlocked else UITheme.COLOR_MUTED
+	)
+	_laser_label.text = Weapons.description(id)
+	_laser_label.add_theme_color_override("font_color", UITheme.COLOR_MUTED)
+	if not unlocked:
+		_preview_status.text = "UNLOCKS AT %d PLANETS" % Weapons.unlock_planets(id)
+		_preview_status.add_theme_color_override("font_color", UITheme.COLOR_WARN)
+	elif owned:
+		_preview_status.text = "OWNED"
+		_preview_status.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
+	else:
+		_preview_status.text = "COST %d ENERGY" % price
+		_preview_status.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
+	_buy_button.text = "OWNED" if owned else "BUY %d" % price
+	_buy_button.disabled = owned or not unlocked or SaveData.energy < price
+	_equip_primary_button.disabled = not owned or not unlocked or SaveData.weapon_primary == id
+	_equip_primary_button.text = "PRIMARY" if SaveData.weapon_primary == id else "EQUIP PRIMARY"
+	_equip_secondary_button.disabled = not owned or not unlocked \
+		or SaveData.weapon_primary == id or SaveData.weapon_secondary == id
+	_equip_secondary_button.text = "SECONDARY" if SaveData.weapon_secondary == id else "EQUIP SECONDARY"
 
 
 func _skin_style(fill: Color, border: Color) -> StyleBoxFlat:

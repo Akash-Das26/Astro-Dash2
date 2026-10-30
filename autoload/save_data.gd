@@ -9,6 +9,7 @@ const SECTION_AUDIO: String = "audio"
 const SECTION_GAMEPLAY: String = "gameplay"
 const SECTION_UPGRADES: String = "upgrades"
 const SECTION_CAMPAIGN: String = "campaign"
+const SECTION_WEAPONS: String = "weapons"
 const KEY_HIGH_SCORE: String = "high_score"
 const KEY_ENERGY: String = "energy"
 const KEY_SKIN: String = "skin"
@@ -26,6 +27,9 @@ const KEY_CAMPAIGN_SHIELDS: String = "shields"
 const KEY_CAMPAIGN_CONQUERED: String = "conquered"
 const KEY_CAMPAIGN_BEST_SCORE: String = "best_score"
 const KEY_CAMPAIGN_BEST_PLANETS: String = "best_planets"
+const KEY_WEAPONS_OWNED: String = "owned"
+const KEY_WEAPON_PRIMARY: String = "primary"
+const KEY_WEAPON_SECONDARY: String = "secondary"
 
 var high_score: int = 0
 ## Spendable currency, earned by killing enemies and spent in the upgrade shop.
@@ -47,6 +51,12 @@ var campaign_shields: int = 0
 ## Best campaign ever finished, for the summaries and the menu.
 var campaign_best_score: int = 0
 var campaign_best_planets: int = 0
+## Weapons are meta-progression: bought once with energy, kept across campaigns.
+## The pulse laser is always owned, so an old save with no weapon keys works.
+var weapons_owned: Array[StringName] = [Weapons.DEFAULT_ID]
+var weapon_primary: StringName = Weapons.DEFAULT_ID
+## Empty means the secondary hardpoint has no gun equipped yet.
+var weapon_secondary: StringName = &""
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -94,6 +104,45 @@ func buy_upgrade(kind: StringName) -> bool:
 		return false
 	energy -= price
 	upgrade_levels[kind] = level_of(kind) + 1
+	save_data()
+	return true
+
+
+func owns_weapon(id: StringName) -> bool:
+	return weapons_owned.has(id)
+
+
+## Buys a weapon with energy. The planet gate is checked here as well, so a
+## purchase can never outrun the campaign that unlocked it.
+func buy_weapon(id: StringName) -> bool:
+	if not Weapons.exists(id) or owns_weapon(id) or not Weapons.is_unlocked(id):
+		return false
+	var price: int = Weapons.cost(id)
+	if price <= 0 or energy < price:
+		return false
+	energy -= price
+	weapons_owned.append(id)
+	save_data()
+	return true
+
+
+## Equips an owned, unlocked weapon in slot 0 (primary) or 1 (secondary). A
+## weapon may not sit in both slots, so equipping it in the other one frees it.
+func equip_weapon(id: StringName, slot: int) -> bool:
+	if not Weapons.usable(id):
+		return false
+	if slot == 0:
+		if weapon_primary == id:
+			return false
+		if weapon_secondary == id:
+			weapon_secondary = &""
+		weapon_primary = id
+	elif slot == 1:
+		if weapon_secondary == id or weapon_primary == id:
+			return false
+		weapon_secondary = id
+	else:
+		return false
 	save_data()
 	return true
 
@@ -186,6 +235,27 @@ func load_data() -> void:
 	# instead of showing a map that does not match the conquests.
 	if campaign_active and campaign_seed == 0:
 		campaign_active = false
+	weapons_owned.clear()
+	var owned_weapons: PackedStringArray = config.get_value(
+		SECTION_WEAPONS, KEY_WEAPONS_OWNED, PackedStringArray([String(Weapons.DEFAULT_ID)])
+	)
+	for weapon: String in owned_weapons:
+		var id := StringName(weapon)
+		if Weapons.exists(id) and not weapons_owned.has(id):
+			weapons_owned.append(id)
+	if not weapons_owned.has(Weapons.DEFAULT_ID):
+		weapons_owned.append(Weapons.DEFAULT_ID)
+	var stored_primary := StringName(
+		String(config.get_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(Weapons.DEFAULT_ID)))
+	)
+	weapon_primary = stored_primary if weapons_owned.has(stored_primary) else Weapons.DEFAULT_ID
+	var stored_secondary := StringName(
+		String(config.get_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, ""))
+	)
+	if stored_secondary == weapon_primary or not weapons_owned.has(stored_secondary):
+		weapon_secondary = &""
+	else:
+		weapon_secondary = stored_secondary
 
 
 func save_data() -> void:
@@ -212,6 +282,12 @@ func save_data() -> void:
 	for sector: StringName in campaign_conquered:
 		conquered.append(String(sector))
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, conquered)
+	var owned_weapons := PackedStringArray()
+	for weapon: StringName in weapons_owned:
+		owned_weapons.append(String(weapon))
+	config.set_value(SECTION_WEAPONS, KEY_WEAPONS_OWNED, owned_weapons)
+	config.set_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(weapon_primary))
+	config.set_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, String(weapon_secondary))
 	var error: Error = config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save data to %s (error %d)." % [SAVE_PATH, error])

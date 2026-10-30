@@ -451,6 +451,73 @@ const GALAXY_GATE_ENERGY: int = 250
 const PERFECT_BONUS_SCORE: int = 500
 const PERFECT_BONUS_ENERGY: int = 25
 
+# --- Weapons ----------------------------------------------------------------
+## Two hardpoints on the hull, left and right of the nose, so the primary and
+## the secondary visibly fire from different places.
+const WEAPON_MUZZLE_SIDE: float = 13.0
+## FIRE POWER multiplies every weapon's damage and shortens every cooldown;
+## these two constants are the whole upgrade curve.
+const FIRE_DAMAGE_PER_LEVEL: float = 0.12
+const FIRE_COOLDOWN_PER_LEVEL: float = 0.03
+const MIN_FIRE_COOLDOWN_MULT: float = 0.55
+## Weapons are bought with energy and also gated behind planets conquered.
+const WEAPON_ORDER: Array[StringName] = [&"pulse", &"cannon", &"scatter", &"rail", &"missile"]
+const WEAPONS: Dictionary = {
+	&"pulse": {
+		"title": "PULSE LASER",
+		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_blue.png"),
+		"color": Color(0.55, 0.78, 1.0),
+		"damage": 3.0, "interval": 0.14, "speed": 780.0, "count": 1,
+		"spread": 0.0, "pierce": 0, "life": 1.3, "scale": 0.36,
+		"homing": 0.0, "area": 0.0, "knockback": 0.0,
+		"cost": 0, "unlock": 0,
+		"desc": "Fast, accurate, unlimited. The laser colour follows FIRE POWER.",
+	},
+	&"cannon": {
+		"title": "HEAVY CANNON",
+		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png"),
+		"color": Color(0.85, 0.92, 1.0),
+		"damage": 9.0, "interval": 0.8, "speed": 620.0, "count": 1,
+		"spread": 0.0, "pierce": 0, "life": 1.2, "scale": 0.62,
+		"homing": 0.0, "area": 0.0, "knockback": 240.0,
+		"cost": 45, "unlock": 3,
+		"desc": "Slow slug, heavy damage and a shove that pushes fighters back.",
+	},
+	&"scatter": {
+		"title": "SCATTER SHOT",
+		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_green.png"),
+		"color": Color(0.65, 1.0, 0.6),
+		"damage": 2.0, "interval": 0.6, "speed": 640.0, "count": 4,
+		"spread": 0.2, "pierce": 0, "life": 0.5, "scale": 0.26,
+		"homing": 0.0, "area": 0.0, "knockback": 0.0,
+		"cost": 80, "unlock": 6,
+		"desc": "Four pellets in a fan. Ruinous up close, useless at range.",
+	},
+	&"rail": {
+		"title": "RAIL LASER",
+		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png"),
+		"color": Color(1.0, 0.9, 0.4),
+		"damage": 12.0, "interval": 1.4, "speed": 1500.0, "count": 1,
+		"spread": 0.0, "pierce": 4, "life": 0.9, "scale": 0.44,
+		"homing": 0.0, "area": 0.0, "knockback": 0.0,
+		"cost": 130, "unlock": 12,
+		"desc": "A piercing lance. Lines of fighters fall to one shot.",
+	},
+	&"missile": {
+		"title": "HOMING MISSILE",
+		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_red.png"),
+		"color": Color(1.0, 0.62, 0.3),
+		"damage": 7.0, "interval": 1.1, "speed": 320.0, "count": 1,
+		"spread": 0.0, "pierce": 0, "life": 2.4, "scale": 0.34,
+		"homing": 3.4, "area": 74.0, "knockback": 60.0,
+		"cost": 200, "unlock": 18,
+		"desc": "Steers onto the nearest fighter and bursts on impact.",
+	},
+}
+## Explosion tint for an area burst, shared by the battle.
+const WEAPON_BURST_COLOR: Color = Color(1.0, 0.7, 0.35)
+const WEAPON_BURST_PARTICLES: int = 10
+
 # --- Citadel boss -----------------------------------------------------------
 const BOSS_HP: int = 140
 const BOSS_HP_PER_DISTANCE: int = 9

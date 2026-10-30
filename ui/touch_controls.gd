@@ -23,6 +23,7 @@ const AIM_DEADZONE: float = 14.0
 var aim_origin: Node2D
 
 @onready var _pause_button: Button = $PauseButton
+@onready var _alt_fire_button: Button = $AltFireButton
 
 var _touch_seen: bool = false
 var _move_index: int = -1
@@ -36,6 +37,11 @@ var _aim_vector: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	_pause_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
 	_pause_button.pressed.connect(_on_pause_pressed)
+	# Second hardpoint: hold to fire the secondary weapon, exactly like the
+	# right mouse button or the left trigger on a gamepad.
+	_alt_fire_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
+	_alt_fire_button.button_down.connect(_on_alt_fire_down)
+	_alt_fire_button.button_up.connect(_on_alt_fire_up)
 	GameState.state_changed.connect(_on_state_changed)
 	_touch_seen = DisplayServer.is_touchscreen_available()
 	_refresh_visibility()
@@ -66,6 +72,8 @@ func _begin_touch(touch: InputEventScreenTouch) -> void:
 	if not GameState.is_playing():
 		return
 	if _pause_button.visible and _pause_button.get_global_rect().has_point(touch.position):
+		return
+	if _alt_fire_button.visible and _alt_fire_button.get_global_rect().has_point(touch.position):
 		return
 	if touch.position.x < size.x * 0.5:
 		if _move_index >= 0:
@@ -142,6 +150,14 @@ func _on_pause_pressed() -> void:
 	pause_requested.emit()
 
 
+func _on_alt_fire_down() -> void:
+	Input.action_press("shoot_alt")
+
+
+func _on_alt_fire_up() -> void:
+	Input.action_release("shoot_alt")
+
+
 func _on_state_changed(_new_state: int) -> void:
 	_release_all()
 	_refresh_visibility()
@@ -157,6 +173,7 @@ func _release_all() -> void:
 	_apply_stick(Vector2.ZERO)
 	aim_changed.emit(Vector2.ZERO)
 	Input.action_release("shoot")
+	Input.action_release("shoot_alt")
 	queue_redraw()
 
 
@@ -168,7 +185,9 @@ func _note_touch() -> void:
 
 
 func _refresh_visibility() -> void:
-	_pause_button.visible = _touch_seen and GameState.is_playing()
+	var playing: bool = _touch_seen and GameState.is_playing()
+	_pause_button.visible = playing
+	_alt_fire_button.visible = playing
 
 
 func _draw() -> void:

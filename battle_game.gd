@@ -71,7 +71,7 @@ func _ready() -> void:
 	# The root keeps running while the tree is paused so R works on the end
 	# card; World is explicitly pausable, so the arena freezes as usual.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	ship.shot_fired.connect(_on_ship_shot_fired)
+	ship.weapon_fired.connect(_on_ship_weapon_fired)
 	ship.hurt.connect(_on_ship_hurt)
 	ship.hp_changed.connect(hud.set_hp)
 	ship.shields_changed.connect(hud.set_shields)
@@ -105,6 +105,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not GameState.is_playing() or not _running:
 		return
+	hud.set_weapon_cooldowns(
+		ship.weapon_cooldown_ratio(0), ship.weapon_cooldown_ratio(1)
+	)
 	if _combo_time_left <= 0.0:
 		return
 	_combo_time_left -= delta
@@ -140,12 +143,15 @@ func _start_fight(fight: Battle) -> void:
 	if _campaign:
 		# Hull and shield charges carry from the previous battle of the run.
 		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
+	ship.apply_loadout(SaveData.weapon_primary, SaveData.weapon_secondary)
 	_hp_at_start = ship.hp
 	hud.reset(battle)
 	hud.set_energy(energy)
 	hud.set_score(score)
 	hud.set_hp(ship.hp, ship.max_hp)
 	hud.set_shields(ship.shields)
+	hud.set_weapons(ship.weapon_id(0), ship.weapon_id(1))
+	hud.set_weapon_cooldowns(0.0, 0.0)
 	director.start(battle, ship)
 	hazards.start(battle.asteroid_density)
 	GameState.change_state(GameState.State.PLAYING)
@@ -299,14 +305,71 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- Ship signals -----------------------------------------------------------
 
-func _on_ship_shot_fired(origin: Vector2, direction: Vector2) -> void:
+## One hardpoint fired. The weapon table decides how many projectiles, how they
+## spread and everything the projectile does on contact.
+func _on_ship_weapon_fired(slot: int, origin: Vector2, direction: Vector2) -> void:
+	var id: StringName = ship.weapon_id(slot)
+	var data: Dictionary = Weapons.entry(id)
+	if data.is_empty():
+		return
 	AudioManager.play_sfx("shoot")
-	var bullet := BULLET_SCENE.instantiate() as Bullet
-	bullet.position = origin
-	bullet.direction = direction
-	bullet.damage = ship.bullet_damage
-	bullet.tier = ship.bullet_tier
-	bullets.add_child(bullet)
+	var stats: Dictionary = ship.run_stats
+	var damage: int = Weapons.damage(id, stats)
+	var count: int = maxi(1, int(data["count"]))
+	var spread: float = float(data["spread"])
+	var middle: float = (float(count) - 1.0) * 0.5
+	for index: int in count:
+		var bullet := BULLET_SCENE.instantiate() as Bullet
+		bullet.position = origin
+		bullet.direction = direction.rotated((float(index) - middle) * spread)
+		bullet.speed = float(data["speed"])
+		bullet.damage = damage
+		bullet.life_time = float(data["life"])
+		bullet.tier = int(stats.get("bullet_tier", 0))
+		bullet.texture_override = data["texture"]
+		bullet.tint = Weapons.color(id)
+		bullet.scale_factor = float(data["scale"])
+		bullet.pierce = int(data["pierce"])
+		bullet.homing = float(data["homing"])
+		bullet.knockback = float(data["knockback"])
+		bullet.area_radius = float(data["area"])
+		if bullet.homing > 0.0:
+			bullet.homing_target = _nearest_enemy(origin)
+		bullet.area_hit.connect(_on_bullet_area_hit)
+		bullets.add_child(bullet)
+
+
+## Homing shots steer to the closest live fighter; the station counts too.
+func _nearest_enemy(from: Vector2) -> Node2D:
+	var best: Node2D = null
+	var best_distance: float = INF
+	for child: Node in enemies.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var body := child as Node2D
+		var distance: float = body.global_position.distance_squared_to(from)
+		if distance < best_distance:
+			best_distance = distance
+			best = body
+	return best
+
+
+## A burst weapon landed: splash every other fighter inside the radius for half
+## the damage. The direct target already took the full shot.
+func _on_bullet_area_hit(at: Vector2, radius: float, damage: int) -> void:
+	_spawn_explosion(
+		at, Tuning.WEAPON_BURST_COLOR, Tuning.WEAPON_BURST_PARTICLES, 1.2, 0.3
+	)
+	_spawn_shockwave(at, Tuning.WEAPON_BURST_COLOR)
+	_shake(0.15)
+	var splash: int = maxi(roundi(damage * 0.5), 1)
+	for child: Node in enemies.get_children():
+		if child.is_queued_for_deletion() or not child is Node2D:
+			continue
+		var body := child as Node2D
+		if body.global_position.distance_to(at) > radius:
+			continue
+		child.call("take_damage", splash)
 
 
 func _on_ship_hurt(_amount: int) -> void:

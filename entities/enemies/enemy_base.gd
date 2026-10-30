@@ -243,6 +243,14 @@ func _update_fire(delta: float, to_target: Vector2) -> void:
 
 # --- Damage -----------------------------------------------------------------
 
+## A shove from a heavy slug. It nudges the current velocity only, so the AI
+## keeps flying and nothing can push a fighter through the arena bounds.
+func apply_knockback(direction: Vector2, strength: float) -> void:
+	if direction.length() < 0.01:
+		return
+	_velocity += direction.normalized() * strength
+
+
 func take_damage(amount: int) -> void:
 	if not _active:
 		return

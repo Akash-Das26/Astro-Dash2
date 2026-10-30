@@ -248,6 +248,106 @@ value = 0.0
 texture_under = ExtResource("3_grey")
 texture_progress = ExtResource("5_blue")
 
+[node name="PrimarySlot" type="Control" parent="Root/BottomBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = -76.0
+offset_right = 150.0
+offset_bottom = -30.0
+mouse_filter = 2
+
+[node name="Back" type="ColorRect" parent="Root/BottomBar/PrimarySlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Icon" type="TextureRect" parent="Root/BottomBar/PrimarySlot"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 30.0
+offset_bottom = 30.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Root/BottomBar/PrimarySlot"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = 4.0
+offset_right = 134.0
+offset_bottom = 22.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 10
+text = "EMPTY"
+
+[node name="Cooldown" type="TextureProgressBar" parent="Root/BottomBar/PrimarySlot"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 33.0
+offset_right = 136.0
+offset_bottom = 39.0
+mouse_filter = 2
+max_value = 1.0
+value = 0.0
+texture_under = ExtResource("3_grey")
+texture_progress = ExtResource("5_blue")
+
+[node name="SecondarySlot" type="Control" parent="Root/BottomBar"]
+layout_mode = 0
+offset_left = 158.0
+offset_top = -76.0
+offset_right = 296.0
+offset_bottom = -30.0
+mouse_filter = 2
+
+[node name="Back" type="ColorRect" parent="Root/BottomBar/SecondarySlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Icon" type="TextureRect" parent="Root/BottomBar/SecondarySlot"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 30.0
+offset_bottom = 30.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Root/BottomBar/SecondarySlot"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = 4.0
+offset_right = 134.0
+offset_bottom = 22.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 10
+text = "EMPTY"
+
+[node name="Cooldown" type="TextureProgressBar" parent="Root/BottomBar/SecondarySlot"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 33.0
+offset_right = 136.0
+offset_bottom = 39.0
+mouse_filter = 2
+max_value = 1.0
+value = 0.0
+texture_under = ExtResource("3_grey")
+texture_progress = ExtResource("4_green")
+
 [node name="ShieldLabel" type="Label" parent="Root/BottomBar"]
 layout_mode = 1
 anchors_preset = 7
@@ -402,6 +502,23 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_touch")
+
+[node name="AltFireButton" type="Button" parent="Root/TouchControls"]
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -164.0
+offset_top = -136.0
+offset_right = -92.0
+offset_bottom = -64.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 13
+text = "FIRE II"
 
 [node name="PauseButton" type="Button" parent="Root/TouchControls"]
 layout_mode = 1

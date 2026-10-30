@@ -3,16 +3,20 @@ extends Node2D
 ## The player ship. Free flight with a little inertia, a hull that swings onto
 ## the aim, HP plus shield charges, and a thruster that follows the speed.
 ##
-## It only broadcasts: `shot_fired` when the muzzle opens, `hurt` and HP changes
+## It only broadcasts: `weapon_fired` when a muzzle opens, `hurt` and HP changes
 ## when damage lands. The battle decides what a shot spawns and what a hit
 ## costs. Everything it reads comes from the InputMap actions, so keyboard,
 ## gamepad and the on-screen stick all drive the same code.
 
-signal shot_fired(origin: Vector2, direction: Vector2)
+## slot 0 is the primary hardpoint, slot 1 the secondary. The battle decides
+## what a shot spawns; the ship only knows when each gun is ready.
+signal weapon_fired(slot: int, origin: Vector2, direction: Vector2)
 signal hurt(amount: int)
 signal hp_changed(hp: int, max_hp: int)
 signal shields_changed(charges: int)
 signal died
+
+const SHOOT_ACTIONS: Array[StringName] = [&"shoot", &"shoot_alt"]
 
 @export var max_hp: int = Tuning.SHIP_MAX_HP
 @export var move_speed: float = Tuning.SHIP_MAX_SPEED
@@ -36,9 +40,15 @@ var alive: bool = true
 ## Unit vector the nose is following.
 var aim: Vector2 = Vector2.UP
 
+## The upgrade totals for this battle, so a weapon can read its multipliers.
+var run_stats: Dictionary = {}
+## Two equipped weapons; an empty id is an empty hardpoint.
+var weapon_ids: Array[StringName] = [Weapons.DEFAULT_ID, &""]
+
+var _weapon_intervals: Array[float] = [0.0, 0.0]
+var _weapon_cooldowns: Array[float] = [0.0, 0.0]
 var _velocity: Vector2 = Vector2.ZERO
 var _thrust: float = 0.0
-var _shoot_cooldown: float = 0.0
 var _invulnerable_left: float = 0.0
 ## 0..1 bubble flash after a charge is spent or picked up.
 var _shield_flash: float = 0.0
@@ -87,6 +97,7 @@ func _apply_skin() -> void:
 
 ## Totals from the upgrade shop, applied at the start of a battle.
 func apply_run_stats(stats: Dictionary) -> void:
+	run_stats = stats.duplicate()
 	max_hp = int(stats["max_hp"])
 	move_speed = float(stats["move_speed"])
 	bullet_damage = int(stats["bullet_damage"])
@@ -95,6 +106,34 @@ func apply_run_stats(stats: Dictionary) -> void:
 	shield_recharge_time = float(stats.get("shield_recharge", 0.0))
 	revive()
 	set_shields(int(stats["shield_charges"]))
+
+
+## The two equipped weapons, from SaveData. An empty or unknown id leaves that
+## hardpoint silent, which is how the secondary starts before the first buy.
+func apply_loadout(primary: StringName, secondary: StringName) -> void:
+	weapon_ids[0] = primary
+	weapon_ids[1] = secondary
+	for slot: int in 2:
+		_weapon_intervals[slot] = 0.0
+		_weapon_cooldowns[slot] = 0.0
+		if Weapons.exists(weapon_ids[slot]):
+			_weapon_intervals[slot] = Weapons.interval(weapon_ids[slot], run_stats)
+
+
+func weapon_id(slot: int) -> StringName:
+	if slot < 0 or slot >= weapon_ids.size():
+		return &""
+	return weapon_ids[slot]
+
+
+## 1 right after firing, 0 when ready; the HUD bars read this.
+func weapon_cooldown_ratio(slot: int) -> float:
+	if slot < 0 or slot >= _weapon_intervals.size():
+		return 0.0
+	var total: float = _weapon_intervals[slot]
+	if total <= 0.0:
+		return 0.0
+	return clampf(_weapon_cooldowns[slot] / total, 0.0, 1.0)
 
 
 ## Hull and shield charges left over from the previous campaign battle. Applied
@@ -113,7 +152,8 @@ func revive() -> void:
 	hp = max_hp
 	_velocity = Vector2.ZERO
 	_thrust = 0.0
-	_shoot_cooldown = 0.0
+	_weapon_cooldowns[0] = 0.0
+	_weapon_cooldowns[1] = 0.0
 	_invulnerable_left = 0.0
 	_blink_timer = 0.0
 	_shield_flash = 0.0
@@ -217,12 +257,25 @@ func _update_aim(delta: float) -> void:
 	rotation = lerp_angle(rotation, aim.angle() + PI * 0.5, clampf(Tuning.SHIP_TURN_LERP * delta, 0.0, 1.0))
 
 
+## Both hardpoints fire along the same aim, each on its own cooldown. A slot
+## with no weapon has a zero interval and simply never fires.
 func _update_shooting(delta: float) -> void:
-	_shoot_cooldown = maxf(_shoot_cooldown - delta, 0.0)
-	if _shoot_cooldown > 0.0 or not Input.is_action_pressed("shoot"):
-		return
-	_shoot_cooldown = fire_interval
-	shot_fired.emit(global_position + aim * Tuning.SHIP_MUZZLE_OFFSET, aim)
+	for slot: int in 2:
+		_weapon_cooldowns[slot] = maxf(_weapon_cooldowns[slot] - delta, 0.0)
+		if _weapon_intervals[slot] <= 0.0 or _weapon_cooldowns[slot] > 0.0:
+			continue
+		if not Input.is_action_pressed(SHOOT_ACTIONS[slot]):
+			continue
+		_weapon_cooldowns[slot] = _weapon_intervals[slot]
+		weapon_fired.emit(slot, _muzzle(slot), aim)
+
+
+## The hardpoints sit on either side of the nose, so two simultaneous shots
+## visibly come from two different guns.
+func _muzzle(slot: int) -> Vector2:
+	var side: float = -1.0 if slot == 0 else 1.0
+	var lateral: Vector2 = aim.rotated(PI * 0.5) * side * Tuning.WEAPON_MUZZLE_SIDE
+	return global_position + aim * Tuning.SHIP_MUZZLE_OFFSET + lateral
 
 
 func _unhandled_input(event: InputEvent) -> void:

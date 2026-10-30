@@ -41,6 +41,12 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 		"shield_charges": mini(shield_steps, Tuning.MAX_SHIELD_CHARGES),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + damage_steps,
 		"bullet_tier": mini(damage_steps, 2),
+		"fire_level": fire,
+		"damage_mult": 1.0 + float(fire) * Tuning.FIRE_DAMAGE_PER_LEVEL,
+		"cooldown_mult": maxf(
+			Tuning.MIN_FIRE_COOLDOWN_MULT,
+			1.0 - float(fire) * Tuning.FIRE_COOLDOWN_PER_LEVEL
+		),
 		"shield_recharge": shield_recharge(shield),
 		"fire_interval": maxf(
 			Tuning.MIN_FIRE_INTERVAL,
@@ -90,8 +96,10 @@ static func tooltip(kind: StringName) -> String:
 				shield_recharge(MAX_LEVEL),
 			]
 		&"fire":
-			return "+1 bullet damage every %d levels; the laser turns green at level %d and yellow at level %d." % [
-				Tuning.FIRE_LEVELS_PER_DAMAGE,
+			return "+%d%% damage and -%d%% cooldown per level for BOTH weapon slots (cooldown floors at -%d%%). The PULSE LASER turns green at level %d and yellow at level %d." % [
+				roundi(Tuning.FIRE_DAMAGE_PER_LEVEL * 100.0),
+				roundi(Tuning.FIRE_COOLDOWN_PER_LEVEL * 100.0),
+				roundi((1.0 - Tuning.MIN_FIRE_COOLDOWN_MULT) * 100.0),
 				Tuning.FIRE_LEVELS_PER_DAMAGE,
 				Tuning.FIRE_LEVELS_PER_DAMAGE * 2,
 			]
@@ -113,7 +121,7 @@ static func effect_text(kind: StringName, level: int) -> String:
 		&"shield":
 			return "SHIELDS %d" % int(stats["shield_charges"])
 		&"fire":
-			return "DMG %d  %.1f/s" % [int(stats["bullet_damage"]), 1.0 / float(stats["fire_interval"])]
+			return "DAMAGE %d%%" % roundi(float(stats["damage_mult"]) * 100.0)
 		_:
 			return ""
 

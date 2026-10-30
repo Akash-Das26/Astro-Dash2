@@ -32,6 +32,13 @@ const HP_YELLOW_ABOVE: float = 0.25
 ## Below this multiplier the combo readout stays hidden; a single kill is not
 ## a combo yet.
 const COMBO_MIN_SHOWN: float = 1.25
+const WEAPON_SLOT_PATHS: Array[String] = [
+	"Root/BottomBar/PrimarySlot", "Root/BottomBar/SecondarySlot",
+]
+
+var _weapon_icons: Array[TextureRect] = []
+var _weapon_names: Array[Label] = []
+var _weapon_cooldowns: Array[TextureProgressBar] = []
 
 @onready var _score_label: Label = $Root/TopBar/ScoreLabel
 @onready var _energy_label: Label = $Root/TopBar/EnergyLabel
@@ -88,6 +95,11 @@ func _ready() -> void:
 	_combo_label.visible = false
 	_banner_label.visible = false
 	_boss_panel.visible = false
+	for path: String in WEAPON_SLOT_PATHS:
+		var slot: Control = get_node(path) as Control
+		_weapon_icons.append(slot.get_node("Icon") as TextureRect)
+		_weapon_names.append(slot.get_node("Name") as Label)
+		_weapon_cooldowns.append(slot.get_node("Cooldown") as TextureProgressBar)
 
 
 ## The ship the touch zone aims from; the battle sets it once at boot.
@@ -104,6 +116,7 @@ func reset(battle: Battle) -> void:
 	set_enemies(0, battle.enemy_total())
 	hide_boss()
 	hide_end()
+	set_weapon_cooldowns(0.0, 0.0)
 	show_playing()
 	_banner_label.visible = false
 
@@ -159,6 +172,37 @@ func set_shields(charges: int) -> void:
 	else:
 		_shield_label.text = "NO SHIELD"
 		_shield_label.add_theme_color_override("font_color", UITheme.COLOR_MUTED)
+
+
+## Two weapon readouts: icon, name in the weapon's own colour, and a cooldown
+## bar that drains back to empty as the gun cools.
+func set_weapons(primary: StringName, secondary: StringName) -> void:
+	_render_weapon_slot(0, primary)
+	_render_weapon_slot(1, secondary)
+
+
+func set_weapon_cooldowns(primary: float, secondary: float) -> void:
+	if _weapon_cooldowns.size() < 2:
+		return
+	_weapon_cooldowns[0].value = clampf(primary, 0.0, 1.0)
+	_weapon_cooldowns[1].value = clampf(secondary, 0.0, 1.0)
+
+
+func _render_weapon_slot(slot: int, id: StringName) -> void:
+	var data: Dictionary = Weapons.entry(id)
+	var icon: TextureRect = _weapon_icons[slot]
+	var name_label: Label = _weapon_names[slot]
+	if data.is_empty():
+		icon.texture = null
+		name_label.text = "EMPTY"
+		name_label.add_theme_color_override("font_color", UITheme.COLOR_MUTED)
+		_weapon_cooldowns[slot].modulate.a = 0.35
+		return
+	icon.texture = Weapons.texture(id)
+	name_label.text = Weapons.title(id)
+	name_label.add_theme_color_override("font_color", Weapons.color(id))
+	_weapon_cooldowns[slot].texture_progress = BAR_BLUE if slot == 0 else BAR_GREEN
+	_weapon_cooldowns[slot].modulate.a = 1.0
 
 
 ## Citadel bar: the station name and the red HP bar under the top readout.
