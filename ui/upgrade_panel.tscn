@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/upgrade_panel.gd" id="1_panel"]
+[ext_resource type="PackedScene" path="res://entities/fx/thruster.tscn" id="2_thruster"]
 
 [node name="UpgradePanel" type="Control"]
 visible = false
@@ -29,18 +30,18 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -430.0
-offset_top = -262.0
+offset_top = -292.0
 offset_right = 430.0
-offset_bottom = 262.0
+offset_bottom = 292.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 2
 theme_override_constants/margin_left = 22
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 22
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_bottom = 14
 
 [node name="Box" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
@@ -77,7 +78,7 @@ theme_override_constants/separation = 18
 [node name="Stats" type="VBoxContainer" parent="Panel/Margin/Box/Body"]
 custom_minimum_size = Vector2(210, 0)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="Panel/Margin/Box/Body/Stats"]
 layout_mode = 2
@@ -87,12 +88,47 @@ text = "CURRENT STATS"
 
 [node name="Value" type="Label" parent="Panel/Margin/Box/Body/Stats"]
 layout_mode = 2
-theme_override_constants/line_spacing = 8
-theme_override_font_sizes/font_size = 15
+theme_override_constants/line_spacing = 2
+theme_override_font_sizes/font_size = 13
 text = "HEALTH    100/100
 SPEED      400
 SHIELDS   0/3
 FIRE       1x"
+
+[node name="Preview" type="Control" parent="Panel/Margin/Box/Body/Stats"]
+custom_minimum_size = Vector2(210, 130)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Thruster" parent="Panel/Margin/Box/Body/Stats/Preview" instance=ExtResource("2_thruster")]
+position = Vector2(105, 108)
+
+[node name="ShipSprite" type="Sprite2D" parent="Panel/Margin/Box/Body/Stats/Preview"]
+position = Vector2(105, 62)
+
+[node name="PreviewName" type="Label" parent="Panel/Margin/Box/Body/Stats"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "CRIMSON"
+horizontal_alignment = 1
+
+[node name="PreviewStatus" type="Label" parent="Panel/Margin/Box/Body/Stats"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "EQUIPPED"
+horizontal_alignment = 1
+
+[node name="LaserLabel" type="Label" parent="Panel/Margin/Box/Body/Stats"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "LASER BLUE"
+horizontal_alignment = 1
+
+[node name="EquipButton" type="Button" parent="Panel/Margin/Box/Body/Stats"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "EQUIP"
 
 [node name="Grid" type="GridContainer" parent="Panel/Margin/Box/Body"]
 layout_mode = 2
@@ -279,10 +315,3 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.76, 0.9, 1)
 theme_override_font_sizes/font_size = 12
 text = "WEARING CRIMSON   |   NEXT SKIN AT 5 PLANETS"
-
-[node name="Footer" type="Label" parent="Panel/Margin/Box"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.63, 0.8, 1)
-theme_override_font_sizes/font_size = 11
-text = "ENTER BUYS   |   ESC / B CLOSES"
-horizontal_alignment = 1
