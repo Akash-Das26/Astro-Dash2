@@ -1,11 +1,12 @@
 class_name Battle
 extends Resource
 ## One battle: how many waves, how many enemies in each, which kinds, how busy
-## the asteroid field is and which background the arena uses. The campaign map
-## will build these per sector; the debug harness builds one from a preset.
+## the asteroid field is and which background the arena uses. The galaxy map
+## builds these per body; the debug harness builds one from a preset.
 ##
 ## Presets live in Tuning.BATTLES as plain dictionaries so they stay easy to
-## edit while balancing.
+## edit while balancing. The extra fields below are only filled in by the
+## campaign and keep their neutral defaults for a preset.
 
 @export var title: String = ""
 @export var waves: int = 1
@@ -14,6 +15,16 @@ extends Resource
 @export var enemy_mix: Dictionary = {}
 @export var asteroid_density: float = 0.5
 @export var background: Texture2D
+## Difficulty from the body's distance band and trait: fighter HP and the gap
+## between enemy shots. 1.0/1.0 is the baseline.
+@export var hp_scale: float = 1.0
+@export var fire_interval_scale: float = 1.0
+## Citadel boss guarding this body. An empty colour means no boss.
+@export var boss_color: StringName = &""
+@export var boss_title: String = ""
+@export var boss_hp: int = 0
+## Flat energy banked on victory, on top of the orbs dropped in the fight.
+@export var reward_energy: int = 0
 
 
 ## Builds a battle from a Tuning.BATTLES row. Unknown keys fall back to the
@@ -28,6 +39,10 @@ static func preset(key: StringName) -> Battle:
 	battle.asteroid_density = maxf(float(row.get("asteroid_density", 0.0)), 0.0)
 	battle.background = row.get("background", null) as Texture2D
 	return battle
+
+
+func has_boss() -> bool:
+	return boss_color != &""
 
 
 ## Enemies the whole battle will spawn, for the HUD's "killed / total" readout.

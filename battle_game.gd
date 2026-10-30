@@ -24,6 +24,10 @@ const EXPLOSION_SCENE: PackedScene = preload("res://entities/effects/explosion.t
 const ORB_SCENE: PackedScene = preload("res://entities/effects/energy_mote.tscn")
 const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/effects/shockwave.gd")
 const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/effects/float_text.gd")
+const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
+const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
+## How long the end card stays up after a campaign battle before the map returns.
+const RETURN_SECONDS: float = 2.2
 
 const HIT_SHAKE: float = 0.5
 const KILL_SHAKE: float = 0.1
@@ -51,7 +55,12 @@ var energy: int = 0
 var kills: int = 0
 var victory: bool = false
 
+## Body fought in this battle; empty means the debug harness.
+var planet_id: StringName = &""
+var _campaign: bool = false
 var _current_key: StringName = Tuning.DEFAULT_BATTLE
+var _boss: BossStation
+var _returning: bool = false
 var _running: bool = false
 var _combo_chain: int = 0
 var _combo_time_left: float = 0.0
@@ -70,7 +79,7 @@ func _ready() -> void:
 	director.enemy_spawned.connect(_on_enemy_spawned)
 	director.wave_started.connect(_on_wave_started)
 	director.wave_cleared.connect(_on_wave_cleared)
-	director.battle_won.connect(_on_battle_won)
+	director.battle_won.connect(_on_waves_cleared)
 	hazards.asteroid_spawned.connect(_add_rock)
 	hud.resume_requested.connect(_resume)
 	hud.restart_requested.connect(_restart)
@@ -78,9 +87,14 @@ func _ready() -> void:
 	hud.aim_changed.connect(ship.set_aim_override)
 	hud.set_aim_origin(ship)
 	GameState.state_changed.connect(_on_state_changed)
-	# A debug build boots straight into the one-wave harness, so the arena can
-	# be tested without the campaign map.
-	_start_battle(Tuning.DEBUG_BATTLE if OS.is_debug_build() else Tuning.DEFAULT_BATTLE)
+	# The map picks the body and hands it over; with nothing pending (the scene
+	# opened directly, or F9 from the map) a debug build boots the harness.
+	planet_id = Campaign.take_pending_id()
+	_campaign = planet_id != &""
+	if _campaign:
+		_start_fight(Campaign.battle_for(planet_id))
+	else:
+		_start_battle(Tuning.DEBUG_BATTLE if OS.is_debug_build() else Tuning.DEFAULT_BATTLE)
 
 
 func _process(delta: float) -> void:
@@ -97,8 +111,16 @@ func _process(delta: float) -> void:
 
 func _start_battle(key: StringName) -> void:
 	_current_key = key
-	battle = Battle.preset(key)
+	_start_fight(Battle.preset(key))
+
+
+## One fight: a galaxy body or a preset. Resets the run totals, the hull, the
+## wave director and the rock field, and freezes the arena into PLAYING.
+func _start_fight(fight: Battle) -> void:
+	battle = fight
 	_clear_playfield()
+	_boss = null
+	_returning = false
 	score = 0
 	energy = 0
 	kills = 0
@@ -111,6 +133,9 @@ func _start_battle(key: StringName) -> void:
 		backdrop.texture = battle.background
 	ship.position = Tuning.SHIP_SPAWN_POSITION
 	ship.apply_run_stats(Upgrades.stats_for(SaveData.upgrade_levels))
+	if _campaign:
+		# Hull and shield charges carry from the previous battle of the run.
+		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
 	hud.reset(battle)
 	hud.set_energy(energy)
 	hud.set_score(score)
@@ -129,27 +154,60 @@ func _end_battle(won: bool) -> void:
 	director.stop()
 	hazards.stop()
 	hud.set_combo(0, 1.0)
+	hud.hide_boss()
 	_break_combo()
+	var result: Dictionary = {}
+	if _campaign:
+		if won:
+			result = Campaign.award_victory(
+				planet_id, score, ship.hp, ship.shields, battle.reward_energy
+			)
+		else:
+			result = Campaign.record_defeat(planet_id, score)
 	if won:
 		AudioManager.play_sfx("wave")
 		_shake(VICTORY_SHAKE)
-		hud.show_end(
-			"VICTORY",
-			"ALL WAVES CLEARED   SCORE %d   ENERGY +%d" % [score, energy],
-			"R RESTARTS THE BATTLE"
-		)
+		var win_detail: String = "ALL WAVES CLEARED   SCORE %d   ENERGY +%d" % [score, energy]
+		var win_hint: String = "R RESTARTS THE BATTLE"
+		if _campaign:
+			win_detail = "%s SECURED   SCORE %d   ENERGY +%d" % [
+				battle.title, score, int(result.get("energy", 0)),
+			]
+			win_hint = "RETURNING TO THE GALAXY MAP"
+		hud.show_end("VICTORY", win_detail, win_hint)
 	else:
 		AudioManager.play_sfx("game_over")
 		_shake(DEATH_SHAKE)
-		hud.show_end(
-			"DEFEATED",
-			"SCORE %d   WAVE %d/%d" % [score, maxi(director.wave, 1), battle.waves],
-			END_HINT_TOUCH
-		)
+		var loss_detail: String = "SCORE %d   WAVE %d/%d" % [
+			score, maxi(director.wave, 1), battle.waves,
+		]
+		var loss_hint: String = END_HINT_TOUCH
+		if _campaign:
+			loss_detail = "CAMPAIGN OVER   PLANETS %d   SCORE %d" % [
+				int(result.get("planets", 0)), score,
+			]
+			loss_hint = "RETURNING TO THE GALAXY MAP"
+		hud.show_end("DEFEATED", loss_detail, loss_hint)
 	GameState.change_state(GameState.State.GAME_OVER)
+	if _campaign:
+		_returning = true
+		# A tree timer, not an await: it keeps ticking while the tree is paused.
+		var timer := get_tree().create_timer(RETURN_SECONDS, true, false, true)
+		timer.timeout.connect(_return_to_map)
+
+
+## Back to the map with the result already banked by Campaign.
+func _return_to_map() -> void:
+	if not _returning:
+		return
+	_returning = false
+	get_tree().change_scene_to_file(GALAXY_SCENE)
 
 
 func _restart() -> void:
+	if _campaign:
+		_start_fight(Campaign.battle_for(planet_id))
+		return
 	if battle == null:
 		_start_battle(Tuning.DEFAULT_BATTLE)
 		return
@@ -176,9 +234,13 @@ func _on_state_changed(new_state: int) -> void:
 			GameState.back_handler = _resume
 			hud.show_paused()
 		GameState.State.MENU:
-			# No menu in this stage yet: a menu request starts a fresh battle.
+			# No menu in this stage yet: leaving a campaign battle goes back to
+			# the map (progress already saved), the harness just restarts.
 			GameState.back_handler = Callable()
-			_restart()
+			if _campaign:
+				get_tree().change_scene_to_file(GALAXY_SCENE)
+			else:
+				_restart()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -189,11 +251,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	match key_event.physical_keycode:
 		KEY_R:
-			if GameState.state != GameState.State.GAME_OVER:
+			if _campaign or GameState.state != GameState.State.GAME_OVER:
 				return
 			_restart()
 		KEY_F9:
-			if not OS.is_debug_build():
+			if not OS.is_debug_build() or _campaign:
 				return
 			_start_battle(Tuning.DEBUG_BATTLE)
 		_:
@@ -269,7 +331,56 @@ func _on_wave_cleared(index: int) -> void:
 	hud.show_banner("WAVE %d CLEARED" % index)
 
 
-func _on_battle_won() -> void:
+## The wave director cleared its last wave. A citadel sends its station in
+## first; everything else is a victory.
+func _on_waves_cleared() -> void:
+	if battle != null and battle.has_boss() and _boss == null:
+		_spawn_boss()
+		return
+	_end_battle(true)
+
+
+func _spawn_boss() -> void:
+	var boss := BOSS_SCENE.instantiate() as BossStation
+	if boss == null:
+		_end_battle(true)
+		return
+	boss.configure(
+		battle.boss_color,
+		battle.boss_hp,
+		Vector2(Tuning.VIEW_SIZE.x * 0.5, Tuning.ARENA_TOP + 170.0),
+		ship
+	)
+	boss.hp_changed.connect(hud.set_boss_hp)
+	boss.damaged.connect(_on_boss_damaged)
+	boss.died.connect(_on_boss_died)
+	boss.shot_requested.connect(_on_enemy_shot_requested)
+	enemies.add_child(boss)
+	_boss = boss
+	hud.show_boss(battle.boss_title, boss.hp, boss.max_hp)
+	hud.show_banner("CITADEL %s" % battle.boss_title)
+	AudioManager.play_sfx("wave")
+	_shake(0.6)
+
+
+func _on_boss_damaged(at: Vector2) -> void:
+	_spawn_explosion(at, Color(1.0, 0.6, 0.4), 6, 0.7, 0.22)
+
+
+func _on_boss_died(points: int) -> void:
+	var at: Vector2 = _boss.global_position if _boss != null else Tuning.VIEW_SIZE * 0.5
+	AudioManager.play_sfx("enemy_death")
+	kills += 1
+	score += points
+	hud.set_score(score)
+	hud.set_enemies(kills, battle.enemy_total() + 1)
+	hud.hide_boss()
+	_spawn_explosion(
+		at, Color(1.0, 0.6, 0.4), Tuning.EXPLOSION_PARTICLES, 1.8, Tuning.EXPLOSION_LIFE
+	)
+	_spawn_shockwave(at, Color(1.0, 0.7, 0.4))
+	_shake(DEATH_SHAKE)
+	_boss = null
 	_end_battle(true)
 
 

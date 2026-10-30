@@ -66,6 +66,9 @@ var target: Ship
 
 var _velocity: Vector2 = Vector2.ZERO
 var _heading: Vector2 = Vector2.DOWN
+## Battle scale from the body's distance band and trait; set by configure().
+var _hp_scale: float = 1.0
+var _fire_scale: float = 1.0
 var _warp_left: float = 0.0
 var _fire_cooldown: float = 0.0
 var _orbit_sign: float = 1.0
@@ -90,12 +93,21 @@ func _ready() -> void:
 	_warp_left = Tuning.ENEMY_WARP_TIME
 
 
-## Called before the fighter enters the tree: kind, arena position and target.
-## Everything that needs child nodes waits for _ready().
-func configure(fighter_kind: StringName, spawn_position: Vector2, ship: Ship) -> void:
+## Called before the fighter enters the tree: kind, arena position, target and
+## the battle's difficulty scales. Everything that needs child nodes waits for
+## _ready().
+func configure(
+	fighter_kind: StringName,
+	spawn_position: Vector2,
+	ship: Ship,
+	hp_scale: float = 1.0,
+	fire_scale: float = 1.0
+) -> void:
 	kind = fighter_kind
 	target = ship
 	position = spawn_position
+	_hp_scale = maxf(hp_scale, 0.1)
+	_fire_scale = maxf(fire_scale, 0.2)
 
 
 func _apply_kind() -> void:
@@ -109,7 +121,10 @@ func _apply_kind() -> void:
 	bullet_speed = float(row["bullet_speed"])
 	aim_error = float(row["aim_error"])
 	effect_color = row["effect_color"]
+	max_hp = maxi(roundi(float(max_hp) * _hp_scale), 1)
 	hp = max_hp
+	if fire_interval > 0.0:
+		fire_interval *= _fire_scale
 	var art: Dictionary = SPRITES.get(kind, SPRITES[&"scout"])
 	var texture: Texture2D = art["texture"]
 	var art_scale: float = float(art["scale"])

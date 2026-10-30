@@ -94,7 +94,7 @@ func _spawn(kind: StringName) -> void:
 	var enemy := FIGHTER_SCENE.instantiate() as EnemyBase
 	if enemy == null:
 		return
-	enemy.configure(kind, _spawn_point(), _ship)
+	enemy.configure(kind, _spawn_point(), _ship, _battle.hp_scale, _battle.fire_interval_scale)
 	# Connect before the fighter reaches the tree, so every exit is counted.
 	enemy.tree_exited.connect(_on_enemy_exited)
 	_active += 1
