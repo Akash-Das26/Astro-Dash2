@@ -42,6 +42,9 @@ var _galaxy: Galaxy
 var _markers: Dictionary = {}
 var _focused: StringName = &""
 var _hovered: StringName = &""
+## Set when Esc/Back dismissed a tooltip, so the still-hovered pointer does not
+## bring it straight back. Cleared when the pointer leaves the body or pans.
+var _hover_suppressed: bool = false
 var _card_id: StringName = &""
 var _dragging: bool = false
 var _drag_moved: bool = false
@@ -197,6 +200,7 @@ func _begin_drag(point: Vector2) -> void:
 	_dragging = true
 	_drag_moved = false
 	_drag_start = point
+	_hover_suppressed = false
 
 
 func _drag_by(relative: Vector2) -> void:
@@ -230,6 +234,10 @@ func _end_drag(point: Vector2) -> void:
 func _update_hover() -> void:
 	if _dragging:
 		return
+	if _hover_suppressed:
+		if _body_at(_to_world(get_global_mouse_position())) == &"":
+			_hover_suppressed = false
+		return
 	var found: StringName = _body_at(_to_world(get_global_mouse_position()))
 	if found != _hovered:
 		_hovered = found
@@ -248,9 +256,10 @@ func _show_tooltip(body_id: StringName) -> void:
 	_place_tooltip(body_id)
 
 
-func _hide_tooltip() -> void:
+func _hide_tooltip(persistent: bool = false) -> void:
 	_tooltip.visible = false
 	_hovered = &""
+	_hover_suppressed = persistent
 
 
 func _tooltip_text(body_id: StringName) -> String:
@@ -298,12 +307,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _result_card.visible:
 		return
 	if _upgrade_panel.visible:
-		if event.is_action_pressed("ui_cancel"):
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			_upgrade_panel.close()
 			get_viewport().set_input_as_handled()
 		return
 	if _confirm_card.visible:
-		if event.is_action_pressed("ui_cancel"):
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			_close_card()
 			get_viewport().set_input_as_handled()
 		return
@@ -317,8 +326,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _focused != &"" and _galaxy.attackable(SaveData.campaign_conquered).has(_focused):
 			_open_card(_focused)
 			get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel"):
-		# The menu arrives with the next stage; until then Back stays here.
+	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		# Back out one layer at a time: first the tooltip, then the front end.
+		if _tooltip.visible:
+			_hide_tooltip(true)
+		else:
+			_open_menu()
 		get_viewport().set_input_as_handled()
 
 
@@ -478,6 +491,14 @@ func _on_result_pressed() -> void:
 	_reload_map()
 
 
+## Leave for the front end. Every conquest and the carried hull are already in
+## the save, so the menu's CONTINUE comes back to this exact galaxy.
+func _open_menu() -> void:
+	AudioManager.play_sfx("ui_click")
+	GameState.back_handler = Callable()
+	get_tree().change_scene_to_file(MENU_SCENE)
+
+
 func _handle_back() -> void:
 	# Always re-arm: GameState consumes the handler on every request.
 	GameState.back_handler = _handle_back
@@ -489,7 +510,10 @@ func _handle_back() -> void:
 	if _confirm_card.visible:
 		_close_card()
 		return
-	get_tree().change_scene_to_file(MENU_SCENE)
+	if _tooltip.visible:
+		_hide_tooltip(true)
+		return
+	_open_menu()
 
 
 # --- Banner -----------------------------------------------------------------

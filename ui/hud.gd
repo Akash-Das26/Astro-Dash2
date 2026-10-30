@@ -16,6 +16,7 @@ signal aim_changed(direction: Vector2)
 signal end_continue_requested
 signal end_retry_requested
 signal end_quit_requested
+signal menu_requested
 
 const BAR_GREY: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png")
 const BAR_GREEN: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png")
@@ -49,6 +50,12 @@ const COMBO_MIN_SHOWN: float = 1.25
 @onready var _quit_button: Button = $Root/EndCard/Panel/Margin/Box/Buttons/QuitButton
 @onready var _pause_button: Button = $Root/TouchControls/PauseButton
 @onready var _pause_panel: Control = $Root/PausePanel
+@onready var _resume_button: Button = $Root/PausePanel/Box/ResumeButton
+@onready var _menu_button: Button = $Root/PausePanel/Box/MenuButton
+@onready var _pause_confirm_label: Label = $Root/PausePanel/Box/ConfirmLabel
+@onready var _pause_confirm_row: HBoxContainer = $Root/PausePanel/Box/ConfirmRow
+@onready var _pause_confirm_yes: Button = $Root/PausePanel/Box/ConfirmRow/ConfirmMenuButton
+@onready var _pause_confirm_no: Button = $Root/PausePanel/Box/ConfirmRow/CancelMenuButton
 @onready var _banner_timer: Timer = $BannerTimer
 @onready var _touch_controls: TouchControls = $Root/TouchControls
 @onready var _boss_panel: Control = $Root/BossPanel
@@ -61,8 +68,11 @@ var _end_is_victory: bool = false
 
 
 func _ready() -> void:
-	$Root/PausePanel/Box/ResumeButton.pressed.connect(resume_requested.emit)
+	_resume_button.pressed.connect(resume_requested.emit)
 	$Root/PausePanel/Box/RestartButton.pressed.connect(restart_requested.emit)
+	_menu_button.pressed.connect(_show_menu_confirm)
+	_pause_confirm_yes.pressed.connect(menu_requested.emit)
+	_pause_confirm_no.pressed.connect(_hide_menu_confirm)
 	_touch_controls.pause_requested.connect(pause_requested.emit)
 	_touch_controls.aim_changed.connect(aim_changed.emit)
 	_end_button.pressed.connect(_on_end_button_pressed)
@@ -259,8 +269,35 @@ func hide_end() -> void:
 
 
 func show_paused() -> void:
+	_hide_menu_confirm()
 	_pause_panel.visible = true
+	_resume_button.grab_focus()
 
 
 func show_playing() -> void:
 	_pause_panel.visible = false
+	_hide_menu_confirm()
+
+
+## MAIN MENU abandons the battle, so it asks once: one line, two buttons, and
+## CANCEL puts the pause card back.
+func _show_menu_confirm() -> void:
+	_menu_button.visible = false
+	_pause_confirm_label.visible = true
+	_pause_confirm_row.visible = true
+	_pause_confirm_yes.grab_focus()
+
+
+func _hide_menu_confirm() -> void:
+	_pause_confirm_label.visible = false
+	_pause_confirm_row.visible = false
+	_menu_button.visible = true
+	if _pause_panel.visible:
+		_menu_button.grab_focus()
+
+
+## Gamepad B (ui_cancel) on the pause card resumes, like Android Back and Esc.
+func _unhandled_input(event: InputEvent) -> void:
+	if _pause_panel.visible and event.is_action_pressed("ui_cancel"):
+		resume_requested.emit()
+		get_viewport().set_input_as_handled()

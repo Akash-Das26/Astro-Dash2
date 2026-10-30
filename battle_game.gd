@@ -86,6 +86,7 @@ func _ready() -> void:
 	hud.end_continue_requested.connect(_on_end_continue)
 	hud.end_retry_requested.connect(_on_retry_campaign)
 	hud.end_quit_requested.connect(_go_to_menu)
+	hud.menu_requested.connect(_go_to_menu)
 	hud.set_aim_origin(ship)
 	UITheme.apply(get_node("HUD/Root") as Control)
 	GameState.state_changed.connect(_on_state_changed)
@@ -225,6 +226,9 @@ func _on_retry_campaign() -> void:
 
 
 func _go_to_menu() -> void:
+	# Only this battle is abandoned: the campaign, the hull from the last victory
+	# and the energy already banked stay in the save, so CONTINUE is offered.
+	GameState.back_handler = Callable()
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 

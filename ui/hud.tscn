@@ -424,10 +424,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -110.0
-offset_right = 150.0
-offset_bottom = 110.0
+offset_left = -180.0
+offset_top = -200.0
+offset_right = 180.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -450,6 +450,40 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "RESTART BATTLE"
+
+[node name="MenuButton" type="Button" parent="Root/PausePanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "MAIN MENU"
+
+[node name="ConfirmLabel" type="Label" parent="Root/PausePanel/Box"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "ABANDON THIS BATTLE? THE RUN KEEPS ITS LAST SAVED HULL."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmRow" type="HBoxContainer" parent="Root/PausePanel/Box"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ConfirmMenuButton" type="Button" parent="Root/PausePanel/Box/ConfirmRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "LEAVE BATTLE"
+
+[node name="CancelMenuButton" type="Button" parent="Root/PausePanel/Box/ConfirmRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "CANCEL"
 
 [node name="BannerTimer" type="Timer" parent="."]
 wait_time = 1.4

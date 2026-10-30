@@ -88,7 +88,9 @@ func _quit() -> void:
 	get_tree().quit()
 
 
-## Back closes whatever overlay is open, then quits from the bare menu.
+## Back closes whatever overlay is open. On the bare menu it does nothing:
+## quitting is the QUIT button's job, so a stray Back/Esc cannot drop the player
+## out of the game.
 func _handle_back() -> void:
 	GameState.back_handler = _handle_back
 	if _settings_card.visible:
@@ -96,5 +98,9 @@ func _handle_back() -> void:
 		return
 	if _confirm_card.visible:
 		_close_confirm()
-		return
-	_quit()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_handle_back()
+		get_viewport().set_input_as_handled()
