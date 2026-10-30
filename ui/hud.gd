@@ -13,6 +13,9 @@ signal resume_requested
 signal restart_requested
 signal pause_requested
 signal aim_changed(direction: Vector2)
+signal end_continue_requested
+signal end_retry_requested
+signal end_quit_requested
 
 const BAR_GREY: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png")
 const BAR_GREEN: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png")
@@ -38,9 +41,13 @@ const COMBO_MIN_SHOWN: float = 1.25
 @onready var _shield_bar: TextureProgressBar = $Root/BottomBar/ShieldBar
 @onready var _banner_label: Label = $Root/BannerLabel
 @onready var _end_card: Control = $Root/EndCard
-@onready var _end_title: Label = $Root/EndCard/Title
-@onready var _end_detail: Label = $Root/EndCard/Detail
-@onready var _end_hint: Label = $Root/EndCard/Hint
+@onready var _end_title: Label = $Root/EndCard/Panel/Margin/Box/Title
+@onready var _end_subtitle: Label = $Root/EndCard/Panel/Margin/Box/Subtitle
+@onready var _end_detail: Label = $Root/EndCard/Panel/Margin/Box/Detail
+@onready var _end_hint: Label = $Root/EndCard/Panel/Margin/Box/Hint
+@onready var _end_button: Button = $Root/EndCard/Panel/Margin/Box/Buttons/EndButton
+@onready var _quit_button: Button = $Root/EndCard/Panel/Margin/Box/Buttons/QuitButton
+@onready var _pause_button: Button = $Root/TouchControls/PauseButton
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _banner_timer: Timer = $BannerTimer
 @onready var _touch_controls: TouchControls = $Root/TouchControls
@@ -49,6 +56,8 @@ const COMBO_MIN_SHOWN: float = 1.25
 @onready var _boss_bar: TextureProgressBar = $Root/BossPanel/Bar
 
 var _banner_tween: Tween
+## The end card's primary button continues after a win and retries after a loss.
+var _end_is_victory: bool = false
 
 
 func _ready() -> void:
@@ -56,6 +65,8 @@ func _ready() -> void:
 	$Root/PausePanel/Box/RestartButton.pressed.connect(restart_requested.emit)
 	_touch_controls.pause_requested.connect(pause_requested.emit)
 	_touch_controls.aim_changed.connect(aim_changed.emit)
+	_end_button.pressed.connect(_on_end_button_pressed)
+	_quit_button.pressed.connect(end_quit_requested.emit)
 	_banner_timer.timeout.connect(_on_banner_timeout)
 	_hp_bar.texture_under = BAR_GREY
 	_hp_bar.texture_progress = BAR_GREEN
@@ -170,17 +181,81 @@ func _on_banner_timeout() -> void:
 	_banner_tween.tween_callback(_banner_label.hide)
 
 
-## End of a battle: victory or defeat card over the frozen arena.
-func show_end(title: String, detail: String, hint: String) -> void:
-	_end_title.text = title
-	_end_detail.text = detail
-	_end_hint.text = hint
-	_end_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7) if title == "VICTORY" else Color(1.0, 0.45, 0.4))
+## Victory card: planet, waves, kills, the score this battle and the campaign
+## total, plus the no-damage bonus line when it was earned.
+func show_victory(data: Dictionary) -> void:
+	_end_is_victory = true
+	_end_title.text = "VICTORY"
+	_end_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7))
+	_end_subtitle.text = String(data.get("name", ""))
+	_end_subtitle.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
+	var lines: PackedStringArray = []
+	lines.append("WAVES %d/%d   |   ENEMIES %d/%d" % [
+		int(data.get("wave", 1)), int(data.get("waves", 1)),
+		int(data.get("kills", 0)), int(data.get("total", 0)),
+	])
+	lines.append("SCORE +%d   |   CAMPAIGN TOTAL %d" % [
+		int(data.get("score", 0)), int(data.get("total_score", 0)),
+	])
+	if bool(data.get("perfect", false)):
+		lines.append("PERFECT VICTORY   +%d SCORE   +%d ENERGY" % [
+			Tuning.PERFECT_BONUS_SCORE, Tuning.PERFECT_BONUS_ENERGY,
+		])
+	else:
+		lines.append("ENERGY +%d" % int(data.get("energy", 0)))
+	_end_detail.text = "\n".join(lines)
+	_end_hint.text = "ENTER CONTINUES"
+	_end_button.text = "CONTINUE"
+	_quit_button.visible = false
+	_present_end()
+
+
+## Game-over card: the run's final score against the record, the worlds taken
+## and the deepest band reached.
+func show_game_over(data: Dictionary) -> void:
+	_end_is_victory = false
+	_end_title.text = "GAME OVER"
+	_end_title.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
+	var new_high: bool = bool(data.get("new_high", false))
+	_end_subtitle.text = "NEW HIGH SCORE!" if new_high else "CAMPAIGN OVER"
+	_end_subtitle.add_theme_color_override(
+		"font_color", UITheme.COLOR_GOLD if new_high else UITheme.COLOR_WARN
+	)
+	var lines: PackedStringArray = []
+	lines.append("FINAL SCORE %d" % int(data.get("score", 0)))
+	lines.append("HIGH SCORE %d" % int(data.get("high", 0)))
+	var planets: int = int(data.get("planets", 0))
+	var bodies: int = int(data.get("bodies", 0))
+	if bodies > 0:
+		lines.append("PLANETS %d/%d   |   DEEPEST %s" % [
+			planets, bodies, String(data.get("band", "")),
+		])
+	else:
+		lines.append("PLANETS %d   |   WAVE %d" % [planets, int(data.get("wave", 1))])
+	_end_detail.text = "\n".join(lines)
+	_end_hint.text = "TRY AGAIN STARTS A FRESH CAMPAIGN"
+	_end_button.text = "TRY AGAIN"
+	_quit_button.visible = true
+	_present_end()
+
+
+func _present_end() -> void:
 	_end_card.visible = true
+	# The end card owns the screen; a stray pause tap behind it would fight it.
+	_pause_button.visible = false
+	_end_button.grab_focus()
+
+
+func _on_end_button_pressed() -> void:
+	if _end_is_victory:
+		end_continue_requested.emit()
+	else:
+		end_retry_requested.emit()
 
 
 func hide_end() -> void:
 	_end_card.visible = false
+	_pause_button.visible = true
 
 
 func show_paused() -> void:

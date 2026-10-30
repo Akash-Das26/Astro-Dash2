@@ -26,14 +26,12 @@ const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/effects/shockwave.gd"
 const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/effects/float_text.gd")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
 const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
-## How long the end card stays up after a campaign battle before the map returns.
-const RETURN_SECONDS: float = 2.2
+const MENU_SCENE: String = "res://ui/main_menu.tscn"
 
 const HIT_SHAKE: float = 0.5
 const KILL_SHAKE: float = 0.1
 const DEATH_SHAKE: float = 0.9
 const VICTORY_SHAKE: float = 0.3
-const END_HINT_TOUCH: String = "RESTART FROM THE PAUSE BUTTON OR R"
 
 @onready var ship: Ship = $World/Ship
 @onready var bullets: Node2D = $World/Bullets
@@ -60,7 +58,7 @@ var planet_id: StringName = &""
 var _campaign: bool = false
 var _current_key: StringName = Tuning.DEFAULT_BATTLE
 var _boss: BossStation
-var _returning: bool = false
+var _hp_at_start: int = 0
 var _running: bool = false
 var _combo_chain: int = 0
 var _combo_time_left: float = 0.0
@@ -85,7 +83,11 @@ func _ready() -> void:
 	hud.restart_requested.connect(_restart)
 	hud.pause_requested.connect(_pause)
 	hud.aim_changed.connect(ship.set_aim_override)
+	hud.end_continue_requested.connect(_on_end_continue)
+	hud.end_retry_requested.connect(_on_retry_campaign)
+	hud.end_quit_requested.connect(_go_to_menu)
 	hud.set_aim_origin(ship)
+	UITheme.apply(get_node("HUD/Root") as Control)
 	GameState.state_changed.connect(_on_state_changed)
 	# The map picks the body and hands it over; with nothing pending (the scene
 	# opened directly, or F9 from the map) a debug build boots the harness.
@@ -120,7 +122,6 @@ func _start_fight(fight: Battle) -> void:
 	battle = fight
 	_clear_playfield()
 	_boss = null
-	_returning = false
 	score = 0
 	energy = 0
 	kills = 0
@@ -136,6 +137,7 @@ func _start_fight(fight: Battle) -> void:
 	if _campaign:
 		# Hull and shield charges carry from the previous battle of the run.
 		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
+	_hp_at_start = ship.hp
 	hud.reset(battle)
 	hud.set_energy(energy)
 	hud.set_score(score)
@@ -156,52 +158,74 @@ func _end_battle(won: bool) -> void:
 	hud.set_combo(0, 1.0)
 	hud.hide_boss()
 	_break_combo()
+	# No hull point lost this battle is a Perfect Victory. Damage carried into
+	# the battle does not count against it.
+	var perfect: bool = won and ship.hp >= _hp_at_start
+	var bonus_energy: int = 0
+	if won and perfect:
+		score += Tuning.PERFECT_BONUS_SCORE
+		bonus_energy = Tuning.PERFECT_BONUS_ENERGY
+		energy += bonus_energy
 	var result: Dictionary = {}
 	if _campaign:
 		if won:
 			result = Campaign.award_victory(
-				planet_id, score, ship.hp, ship.shields, battle.reward_energy
+				planet_id, score, ship.hp, ship.shields, battle.reward_energy + bonus_energy
 			)
 		else:
 			result = Campaign.record_defeat(planet_id, score)
+	elif won and perfect:
+		# The harness has no campaign to bank the bonus, so bank it here.
+		SaveData.add_energy(bonus_energy)
+	hud.set_score(score)
+	hud.set_energy(energy)
 	if won:
 		AudioManager.play_sfx("wave")
 		_shake(VICTORY_SHAKE)
-		var win_detail: String = "ALL WAVES CLEARED   SCORE %d   ENERGY +%d" % [score, energy]
-		var win_hint: String = "R RESTARTS THE BATTLE"
-		if _campaign:
-			win_detail = "%s SECURED   SCORE %d   ENERGY +%d" % [
-				battle.title, score, int(result.get("energy", 0)),
-			]
-			win_hint = "RETURNING TO THE GALAXY MAP"
-		hud.show_end("VICTORY", win_detail, win_hint)
+		hud.show_victory({
+			"name": String(result.get("name", battle.title)) if _campaign else battle.title,
+			"wave": maxi(director.wave, 1),
+			"waves": battle.waves,
+			"kills": kills,
+			"total": battle.enemy_total(),
+			"score": score,
+			"energy": (battle.reward_energy if _campaign else 0) + bonus_energy,
+			"total_score": SaveData.campaign_score if _campaign else score,
+			"perfect": perfect,
+		})
 	else:
 		AudioManager.play_sfx("game_over")
 		_shake(DEATH_SHAKE)
-		var loss_detail: String = "SCORE %d   WAVE %d/%d" % [
-			score, maxi(director.wave, 1), battle.waves,
-		]
-		var loss_hint: String = END_HINT_TOUCH
-		if _campaign:
-			loss_detail = "CAMPAIGN OVER   PLANETS %d   SCORE %d" % [
-				int(result.get("planets", 0)), score,
-			]
-			loss_hint = "RETURNING TO THE GALAXY MAP"
-		hud.show_end("DEFEATED", loss_detail, loss_hint)
-	GameState.change_state(GameState.State.GAME_OVER)
+		hud.show_game_over({
+			"score": SaveData.campaign_score if _campaign else score,
+			"high": SaveData.high_score,
+			"new_high": bool(result.get("new_high", false)),
+			"planets": int(result.get("planets", 1 if _campaign else 0)),
+			"bodies": Campaign.galaxy().body_count() if _campaign else 0,
+			"band": String(result.get("band", "")),
+			"wave": maxi(director.wave, 1),
+		})
+	GameState.change_state(
+		GameState.State.BATTLE_WON if won else GameState.State.GAME_OVER
+	)
+
+
+## Victory card's CONTINUE: back to the map, or a fresh harness battle.
+func _on_end_continue() -> void:
 	if _campaign:
-		_returning = true
-		# A tree timer, not an await: it keeps ticking while the tree is paused.
-		var timer := get_tree().create_timer(RETURN_SECONDS, true, false, true)
-		timer.timeout.connect(_return_to_map)
-
-
-## Back to the map with the result already banked by Campaign.
-func _return_to_map() -> void:
-	if not _returning:
+		get_tree().change_scene_to_file(GALAXY_SCENE)
 		return
-	_returning = false
+	_restart()
+
+
+## A lost campaign starts over from a fresh galaxy; energy and upgrades stay.
+func _on_retry_campaign() -> void:
+	Campaign.begin_run()
 	get_tree().change_scene_to_file(GALAXY_SCENE)
+
+
+func _go_to_menu() -> void:
+	get_tree().change_scene_to_file(MENU_SCENE)
 
 
 func _restart() -> void:
@@ -233,6 +257,10 @@ func _on_state_changed(new_state: int) -> void:
 			# Android Back resumes instead of leaving a screen with no menu on it.
 			GameState.back_handler = _resume
 			hud.show_paused()
+		GameState.State.GAME_OVER:
+			GameState.back_handler = _go_to_menu
+		GameState.State.BATTLE_WON:
+			GameState.back_handler = _on_end_continue
 		GameState.State.MENU:
 			# No menu in this stage yet: leaving a campaign battle goes back to
 			# the map (progress already saved), the harness just restarts.

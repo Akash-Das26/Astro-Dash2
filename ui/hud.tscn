@@ -7,6 +7,66 @@
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png" id="5_blue"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_red.png" id="6_red"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end"]
+bg_color = Color(0.035, 0.05, 0.1, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.8, 0.6, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end_action"]
+bg_color = Color(0.12, 0.4, 0.22, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 1, 0.6, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end_action_hover"]
+bg_color = Color(0.18, 0.58, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 1, 0.75, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end_quit"]
+bg_color = Color(0.38, 0.11, 0.13, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.55, 0.5, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end_quit_hover"]
+bg_color = Color(0.55, 0.16, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.7, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
 layer = 5
@@ -229,65 +289,92 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.02, 0.02, 0.08, 0.62)
 
-[node name="Title" type="Label" parent="Root/EndCard"]
+[node name="Panel" type="PanelContainer" parent="Root/EndCard"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -62.0
-offset_right = 320.0
-offset_bottom = -18.0
+offset_left = -330.0
+offset_top = -172.0
+offset_right = 330.0
+offset_bottom = 172.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_end")
+
+[node name="Margin" type="MarginContainer" parent="Root/EndCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="Box" type="VBoxContainer" parent="Root/EndCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root/EndCard/Panel/Margin/Box"]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 1, 0.7, 1)
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 30
 text = "VICTORY"
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="Detail" type="Label" parent="Root/EndCard"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = 0.0
-offset_right = 320.0
-offset_bottom = 28.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 16
-text = "ALL WAVES CLEARED"
+[node name="Subtitle" type="Label" parent="Root/EndCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 19
+text = "KEPLER REACH"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="Root/EndCard/Panel/Margin/Box"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.93, 1, 1)
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 14
+text = "WAVES 2/2   |   ENEMIES 17/18
+SCORE +1250   |   CAMPAIGN TOTAL 4320
+PERFECT VICTORY   +500 SCORE   +25 ENERGY"
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 2
 
-[node name="Hint" type="Label" parent="Root/EndCard"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = 36.0
-offset_right = 320.0
-offset_bottom = 58.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
-theme_override_font_sizes/font_size = 11
-text = "R RESTARTS THE BATTLE"
+[node name="Hint" type="Label" parent="Root/EndCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.67, 0.82, 1)
+theme_override_font_sizes/font_size = 10
+text = "ENTER CONTINUES   |   ESC PAUSES"
 horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Root/EndCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EndButton" type="Button" parent="Root/EndCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 1, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_end_action")
+theme_override_styles/hover = SubResource("StyleBoxFlat_end_action_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_end_action")
+theme_override_styles/focus = SubResource("StyleBoxFlat_end_action_hover")
+text = "CONTINUE"
+
+[node name="QuitButton" type="Button" parent="Root/EndCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.88, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_end_quit")
+theme_override_styles/hover = SubResource("StyleBoxFlat_end_quit_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_end_quit")
+theme_override_styles/focus = SubResource("StyleBoxFlat_end_quit_hover")
+text = "QUIT"
 
 [node name="TouchControls" type="Control" parent="Root"]
 layout_mode = 1

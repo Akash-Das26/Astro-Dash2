@@ -95,6 +95,7 @@ static func award_victory(
 		"completed": completed,
 	}
 	if completed:
+		SaveData.submit_score(SaveData.campaign_score)
 		SaveData.finish_campaign()
 	last_result = result
 	return result
@@ -106,6 +107,7 @@ static func record_defeat(body_id: StringName, score: int) -> Dictionary:
 	var map: Galaxy = galaxy()
 	var data: Dictionary = map.body(body_id)
 	SaveData.campaign_score += maxi(score, 0)
+	var new_high: bool = SaveData.submit_score(SaveData.campaign_score)
 	var result: Dictionary = {
 		"won": false,
 		"name": String(data.get("name", "")),
@@ -113,10 +115,26 @@ static func record_defeat(body_id: StringName, score: int) -> Dictionary:
 		"planets": planets_conquered(),
 		"citadels": citadels_conquered(),
 		"best": maxi(SaveData.campaign_best_score, SaveData.campaign_score),
+		"high": SaveData.high_score,
+		"new_high": new_high,
+		"band": deepest_band(),
 	}
 	SaveData.finish_campaign()
 	last_result = result
 	return result
+
+
+## Label of the deepest band the run reached, for the game-over card.
+static func deepest_band() -> String:
+	var map: Galaxy = galaxy()
+	var deepest: StringName = map.home_id
+	var best: int = -1
+	for body_id: StringName in SaveData.campaign_conquered:
+		var hops: int = map.distance_of(body_id)
+		if hops > best:
+			best = hops
+			deepest = body_id
+	return String(map.band_row(deepest).get("label", ""))
 
 
 ## Reads the pending summary (empty when there is none).
