@@ -4,7 +4,6 @@ extends RefCounted
 ## Tuning.UPGRADES, so the shop card and the ship can never disagree about what
 ## a level is worth.
 
-## +1 life every 3 levels: 3 / 6 / 9 -> 4 / 5 / 6 lives; 10 is the last level.
 const MAX_LEVEL: int = Tuning.UPGRADE_MAX_LEVEL
 
 
@@ -29,7 +28,7 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 	var shield: int = level_of(levels, &"shield")
 	var fire: int = level_of(levels, &"fire")
 	return {
-		"lives": Tuning.BASE_LIVES + hull / Tuning.HULL_LEVELS_PER_LIFE,
+		"max_hp": Tuning.BASE_MAX_HP + (hull / Tuning.HULL_LEVELS_PER_STEP) * Tuning.HP_PER_HULL_STEP,
 		"move_speed": Tuning.BASE_MOVE_SPEED + float(speed) * Tuning.SPEED_PER_LEVEL,
 		"shield_charges": mini(shield / Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + fire / Tuning.FIRE_LEVELS_PER_DAMAGE,
@@ -37,21 +36,17 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 			Tuning.MIN_FIRE_INTERVAL,
 			Tuning.BASE_FIRE_INTERVAL - float(fire) * Tuning.FIRE_INTERVAL_PER_LEVEL
 		),
-		"rapid_interval": maxf(
-			Tuning.MIN_RAPID_INTERVAL,
-			Tuning.BASE_RAPID_INTERVAL - float(fire) * Tuning.RAPID_INTERVAL_PER_LEVEL
-		),
 	}
 
 
-## What one track gives at this level, e.g. "LIVES 4" or "DMG 2  3.6/s".
+## What one track gives at this level, e.g. "HP 120" or "DMG 2  5.0/s".
 static func effect_text(kind: StringName, level: int) -> String:
 	var levels: Dictionary = {}
 	levels[kind] = level
 	var stats: Dictionary = stats_for(levels)
 	match kind:
 		&"hull":
-			return "LIVES %d" % int(stats["lives"])
+			return "HP %d" % int(stats["max_hp"])
 		&"speed":
 			var percent: int = roundi((float(stats["move_speed"]) / Tuning.BASE_MOVE_SPEED - 1.0) * 100.0)
 			return "SPEED +%d%%" % percent

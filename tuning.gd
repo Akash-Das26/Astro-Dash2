@@ -1,155 +1,218 @@
 class_name Tuning
 extends RefCounted
-## One place for the numbers that decide pacing, the economy and the combo.
-## Nothing in the game logic depends on the exact values, so this file is meant
-## to be edited while balancing; see the "Balancing" section of the README.
+## One place for the numbers that decide the arena, the pacing, the economy
+## and the combo. Nothing in the game logic depends on the exact values, so
+## this file is meant to be edited while balancing; see the "Balancing"
+## section of the README.
 
-# --- Run rules --------------------------------------------------------------
-const BASE_LIVES: int = 3
-const PICKUP_DROP_CHANCE: float = 0.1
-const POWERUP_DURATION: float = 8.0
-## Hard cap on particle emitters so a bomb chain cannot flood a phone.
-const MAX_LIVE_EXPLOSIONS: int = 12
-const BOSS_EXPLOSION_COUNT: int = 30
+# --- Screen and arena -------------------------------------------------------
+## Design resolution of the landscape canvas. Everything is authored at this
+## size and stretched with canvas_items + keep.
+const VIEW_SIZE: Vector2 = Vector2(960.0, 600.0)
+## Translucent readout bars at the very top and bottom of the screen.
+const HUD_BAR_HEIGHT: float = 24.0
+const ARENA_LEFT: float = 0.0
+const ARENA_RIGHT: float = VIEW_SIZE.x
+const ARENA_TOP: float = HUD_BAR_HEIGHT
+const ARENA_BOTTOM: float = VIEW_SIZE.y - HUD_BAR_HEIGHT
+## Keep-out band inside the arena, so nothing spawns half off screen.
+const ARENA_MARGIN: float = 36.0
+
+# --- Ship -------------------------------------------------------------------
+const SHIP_MAX_HP: int = 100
+const SHIP_ACCELERATION: float = 1500.0
+const SHIP_MAX_SPEED: float = 400.0
+## Higher coasts less: the ship keeps a little inertia but stops in ~0.4s.
+const SHIP_DRAG: float = 3.4
+## How fast the hull swings onto the aim direction (per second, 0..1 lerp).
+const SHIP_TURN_LERP: float = 12.0
+const SHIP_FIRE_INTERVAL: float = 0.14
+const SHIP_BULLET_SPEED: float = 720.0
+const SHIP_BULLET_DAMAGE: int = 1
+const SHIP_BULLET_LIFE: float = 1.4
+const SHIP_SPAWN_POSITION: Vector2 = Vector2(480.0, 480.0)
+const SHIP_RADIUS: float = 14.0
+## Distance from the hull centre where a shot leaves the muzzle.
+const SHIP_MUZZLE_OFFSET: float = 24.0
+const SHIP_INVULNERABILITY: float = 0.9
+const SHIP_SHIELD_GRACE: float = 0.4
+const SHIP_BLINK_INTERVAL: float = 0.08
+const SHIP_BLINK_ALPHA: float = 0.3
+const MAX_SHIELD_CHARGES: int = 3
+
+# --- Thrusters --------------------------------------------------------------
+const THRUSTER_FRAME_FPS: float = 18.0
+## Exhaust size and brightness at idle and at full speed.
+const THRUSTER_IDLE_SCALE: float = 0.7
+const THRUSTER_FULL_SCALE: float = 1.35
+const THRUSTER_MIN_VISIBLE: float = 0.06
+
+# --- Enemies ----------------------------------------------------------------
+## One row per fighter type. `orbit_radius` is how far it tries to sit from the
+## ship, `fire_interval` 0 means it never shoots, and `aim_error` is the random
+## spread (radians) added to each shot so a gunner is not a sniper.
+const ENEMY_TYPES: Dictionary = {
+	&"scout": {
+		"hp": 2, "speed": 200.0, "points": 20, "radius": 11.0,
+		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
+		"aim_error": 0.0, "effect_color": Color(0.45, 0.8, 1.0),
+	},
+	&"gunner": {
+		"hp": 4, "speed": 130.0, "points": 35, "radius": 14.0,
+		"orbit_radius": 230.0, "fire_interval": 1.7, "bullet_speed": 260.0,
+		"aim_error": 0.12, "effect_color": Color(1.0, 0.5, 0.35),
+	},
+	&"heavy": {
+		"hp": 12, "speed": 85.0, "points": 80, "radius": 20.0,
+		"orbit_radius": 280.0, "fire_interval": 2.3, "bullet_speed": 220.0,
+		"aim_error": 0.2, "effect_color": Color(0.85, 0.55, 1.0),
+	},
+}
+const ENEMY_CONTACT_DAMAGE: int = 20
+const ENEMY_BULLET_DAMAGE: int = 12
+const ENEMY_BULLET_SPEED: float = 260.0
+const ENEMY_BULLET_LIFE: float = 4.0
+const ENEMY_BULLET_RADIUS: float = 5.0
+## How far past the ship a fighter starts to swing onto its orbit.
+const ENEMY_APPROACH_SLACK: float = 40.0
+## Sideways speed relative to `speed` while orbiting.
+const ENEMY_ORBIT_SPEED_RATIO: float = 0.75
+## Time the warpgate plays before a fighter is solid and can act.
+const ENEMY_WARP_TIME: float = 0.45
+## The 200px warpgate sprite is drawn at this scale (~48px).
+const WARP_SCALE: float = 0.24
+const WARP_FRAME_FPS: float = 12.0
+
+# --- Asteroids --------------------------------------------------------------
+const ASTEROID_LARGE_SCALE: float = 0.72
+const ASTEROID_TINY_SCALE: float = 0.6
+const ASTEROID_LARGE_RADIUS: float = 32.0
+const ASTEROID_TINY_RADIUS: float = 9.0
+const ASTEROID_LARGE_HP: int = 3
+const ASTEROID_CONTACT_DAMAGE: int = 15
+const ASTEROID_SPEED_MIN: float = 34.0
+const ASTEROID_SPEED_MAX: float = 96.0
+const ASTEROID_SPIN_MIN: float = -1.1
+const ASTEROID_SPIN_MAX: float = 1.1
+## A large rock breaks into this many tiny ones when shot down.
+const ASTEROID_SPLIT_MIN: int = 2
+const ASTEROID_SPLIT_MAX: int = 3
+const ASTEROID_MAX_LIVE: int = 16
+## Seconds between drift-in rocks at density 1.0; higher density = shorter.
+const ASTEROID_SPAWN_INTERVAL: float = 2.4
+## Rocks start this far outside the screen edge.
+const ASTEROID_SPAWN_OFFSET: float = 70.0
 
 # --- Waves ------------------------------------------------------------------
-## Wave number -> { enemy key: how many }. Past the last entry the last mix is
-## reused; the spawn interval keeps shrinking to its floor. Keys are
-## "straight", "zigzag" and "tank".
-const WAVE_TABLE: Dictionary = {
-	1: {"straight": 4},
-	2: {"straight": 5, "zigzag": 3},
-	3: {"zigzag": 5, "tank": 1},
-	4: {"straight": 4, "zigzag": 4, "tank": 2},
-}
-## Every Nth wave is a single boss instead of a mix.
-const BOSS_EVERY: int = 5
-## Seconds between spawns on wave 1, shrunk per wave down to the floor.
-const FIRST_WAVE_INTERVAL: float = 1.4
-const MIN_SPAWN_INTERVAL: float = 0.45
-const INTERVAL_STEP: float = 0.08
-## Beat between "wave cleared" and the next wave.
-const WAVE_GAP: float = 2.0
+const WAVE_GAP: float = 2.2
+## Gap between two fighters of the same wave.
+const SPAWN_STAGGER: float = 0.4
+## A fighter spends this long between its own decision updates.
+const ENEMY_THINK_INTERVAL: float = 0.25
 
-# --- Energy -----------------------------------------------------------------
-## Energy per kill = score points / this (integer division, floored at the
-## minimum): straight 10 -> 1, zigzag 20 -> 2, tank 50 -> 5, boss 500 -> 50.
-const SCORE_POINTS_PER_ENERGY: int = 10
-const MIN_ENERGY_PER_KILL: int = 1
-## A kill's energy is split between at most this many motes.
-const MAX_MOTES_PER_KILL: int = 3
-## The ship pulls a mote in from this distance.
-const MOTE_MAGNET_RADIUS: float = 90.0
-## How fast a mote drifts down before it is pulled in.
-const MOTE_DRIFT_SPEED: float = 34.0
-## How fast a pulled mote travels.
-const MOTE_HOME_SPEED: float = 320.0
-## A mote that is never collected disappears after this long.
-const MOTE_LIFE_SECONDS: float = 8.0
-## Distance at which a homing mote counts as collected.
-const MOTE_PICKUP_DISTANCE: float = 18.0
-
-# --- Campaign ---------------------------------------------------------------
-## The sector graph for campaign mode. Each entry is a planet drawn on the
-## vertical 400x600 map: `tier` picks a row of CAMPAIGN_TIER_DIFFICULTY,
-## `waves` is 1-3 battles of `mix`, `boss` adds a boss to the last wave, `pos`
-## is the node centre on the map, and `links` are the sectors this one unlocks
-## when conquered. Sectors with no links are the final one.
-const CAMPAIGN_SECTORS: Dictionary = {
-	&"drift": {
-		"name": "DRIFT BELT", "tier": 1, "waves": 1, "boss": false,
-		"mix": {"straight": 4}, "pos": Vector2(200, 528),
-		"links": [&"cinder", &"vesper"],
+# --- Battle presets ---------------------------------------------------------
+## A Battle resource is built from one of these rows (see battle.gd). `mix` is
+## { fighter kind: how many of the wave's enemies are that kind } and
+## `asteroid_density` scales the drift-in rate (0 turns rocks off).
+const BATTLES: Dictionary = {
+	&"debug": {
+		"title": "DEBUG 1 WAVE",
+		"waves": 1,
+		"enemies_per_wave": 10,
+		"mix": {&"scout": 6, &"gunner": 3, &"heavy": 1},
+		"asteroid_density": 0.6,
+		"background": preload("res://assests/background-black.png"),
 	},
-	&"cinder": {
-		"name": "CINDER RUN", "tier": 1, "waves": 2, "boss": false,
-		"mix": {"straight": 4, "zigzag": 2}, "pos": Vector2(110, 452),
-		"links": [&"hollow", &"ember"],
+	&"tier1": {
+		"title": "DRIFT BELT",
+		"waves": 2,
+		"enemies_per_wave": 8,
+		"mix": {&"scout": 5, &"gunner": 3},
+		"asteroid_density": 0.7,
+		"background": preload("res://assests/background-black.png"),
 	},
-	&"vesper": {
-		"name": "VESPER FIELD", "tier": 1, "waves": 2, "boss": false,
-		"mix": {"zigzag": 4, "tank": 1}, "pos": Vector2(290, 452),
-		"links": [&"ember", &"quill"],
+	&"tier2": {
+		"title": "CINDER RUN",
+		"waves": 3,
+		"enemies_per_wave": 10,
+		"mix": {&"scout": 4, &"gunner": 4, &"heavy": 2},
+		"asteroid_density": 1.0,
+		"background": preload("res://assests/background-black.png"),
 	},
-	&"hollow": {
-		"name": "HOLLOW MOON", "tier": 2, "waves": 2, "boss": false,
-		"mix": {"straight": 5, "tank": 2}, "pos": Vector2(88, 368),
-		"links": [&"warden"],
-	},
-	&"ember": {
-		"name": "EMBER GATE", "tier": 2, "waves": 2, "boss": false,
-		"mix": {"zigzag": 6, "tank": 2}, "pos": Vector2(200, 368),
-		"links": [&"warden", &"sable"],
-	},
-	&"quill": {
-		"name": "QUILL NEBULA", "tier": 2, "waves": 3, "boss": false,
-		"mix": {"straight": 5, "zigzag": 4, "tank": 2}, "pos": Vector2(312, 368),
-		"links": [&"sable"],
-	},
-	&"warden": {
-		"name": "WARDEN REEF", "tier": 3, "waves": 3, "boss": true,
-		"mix": {"zigzag": 5, "tank": 3}, "pos": Vector2(140, 286),
-		"links": [&"nexus"],
-	},
-	&"sable": {
-		"name": "SABLE EXPANSE", "tier": 3, "waves": 3, "boss": false,
-		"mix": {"straight": 6, "zigzag": 5, "tank": 2}, "pos": Vector2(262, 286),
-		"links": [&"nexus"],
-	},
-	&"nexus": {
-		"name": "THE NEXUS", "tier": 3, "waves": 3, "boss": true,
-		"mix": {"tank": 4, "zigzag": 6}, "pos": Vector2(200, 204),
-		"links": [],
+	&"tier3": {
+		"title": "THE NEXUS",
+		"waves": 3,
+		"enemies_per_wave": 12,
+		"mix": {&"scout": 4, &"gunner": 5, &"heavy": 3},
+		"asteroid_density": 1.4,
+		"background": preload("res://assests/background-black.png"),
 	},
 }
-## Display order (and the order the map uses for keyboard cycling).
-const CAMPAIGN_ORDER: Array[StringName] = [
-	&"drift", &"cinder", &"vesper", &"hollow", &"ember", &"quill", &"warden", &"sable", &"nexus",
-]
-## Sectors the player may attack before conquering anything.
-const CAMPAIGN_START: Array[StringName] = [&"drift"]
-
-## Per-tier difficulty. `hp_scale` multiplies enemy health, `interval_scale`
-## multiplies the seconds between spawns (below 1 = faster), and `bullet_scale`
-## multiplies the boss spread interval (below 1 = more frequent).
-const CAMPAIGN_TIER_DIFFICULTY: Dictionary = {
-	1: {"hp_scale": 1.0, "interval_scale": 1.0, "bullet_scale": 1.0},
-	2: {"hp_scale": 1.3, "interval_scale": 0.9, "bullet_scale": 0.85},
-	3: {"hp_scale": 1.6, "interval_scale": 0.8, "bullet_scale": 0.7},
-}
-## Cleared without losing a life.
-const CAMPAIGN_PERFECT_SCORE_BONUS: int = 250
-const CAMPAIGN_PERFECT_ENERGY_BONUS: int = 10
-## Clearing a sector that ends with a boss grants one extra life.
-const CAMPAIGN_BOSS_LIFE_BONUS: int = 1
+## The battle the main scene starts (campaign selection arrives with the map).
+const DEFAULT_BATTLE: StringName = &"tier1"
+## Debug harness: a single wave of ten enemies.
+const DEBUG_BATTLE: StringName = &"debug"
 
 # --- Combo ------------------------------------------------------------------
 ## Seconds a kill keeps the chain alive; every kill resets the clock.
-const COMBO_WINDOW: float = 2.5
-## Kills needed for one step of the multiplier: x2 at 4 kills, x3 at 8, ...
-const COMBO_KILLS_PER_STEP: int = 4
-const COMBO_MAX_MULTIPLIER: int = 5
+const COMBO_WINDOW: float = 3.0
+## Score multiplier is 1 + chain / COMBO_SCORE_STEP, with no cap.
+const COMBO_SCORE_STEP: int = 8
+## Floating "+150 COMBO!" text: how long it lives and how far it rises.
+const COMBO_FLOAT_LIFE: float = 0.9
+const COMBO_FLOAT_RISE: float = 34.0
+const COMBO_FLOAT_COLOR: Color = Color(1.0, 0.32, 0.28)
+const COMBO_LABEL_COLOR: Color = Color(1.0, 0.85, 0.2)
+
+# --- Energy -----------------------------------------------------------------
+## Energy per kill = score points / this, floored at the minimum: a 20 point
+## scout gives 2, an 80 point heavy gives 8.
+const SCORE_POINTS_PER_ENERGY: int = 10
+const MIN_ENERGY_PER_KILL: int = 1
+## Kills split their energy between at most this many orbs.
+const MAX_ORBS_PER_KILL: int = 3
+const ORB_MAGNET_RADIUS: float = 150.0
+const ORB_DRIFT_SPEED: float = 48.0
+const ORB_HOME_SPEED: float = 540.0
+const ORB_LIFE_SECONDS: float = 9.0
+const ORB_PICKUP_RADIUS: float = 22.0
+## Speed of the soft glow pulse on an orb, in radians per second.
+const ORB_PULSE_SPEED: float = 7.0
+
+# --- Effects ----------------------------------------------------------------
+## Hard cap on particle emitters so a chain of kills cannot flood a phone.
+const MAX_LIVE_EXPLOSIONS: int = 16
+const MAX_LIVE_FLOAT_TEXTS: int = 12
+const EXPLOSION_PARTICLES: int = 18
+const EXPLOSION_LIFE: float = 0.45
+const SHOCKWAVE_LIFE: float = 0.35
+const SHOCKWAVE_RADIUS: float = 46.0
+const STARFIELD_SPEEDS: Array[float] = [14.0, 38.0, 72.0]
+const STARFIELD_COUNTS: Array[int] = [46, 30, 18]
+const STARFIELD_SIZES: Array[float] = [1.0, 2.0, 3.0]
+const STARFIELD_COLORS: Array[Color] = [
+	Color(0.55, 0.6, 0.9, 0.55),
+	Color(0.8, 0.85, 1.0, 0.8),
+	Color(1.0, 1.0, 1.0, 0.95),
+]
 
 # --- Upgrades ---------------------------------------------------------------
 const UPGRADE_MAX_LEVEL: int = 10
-## Ship stats before any upgrade level.
-const BASE_MOVE_SPEED: float = 300.0
-const BASE_FIRE_INTERVAL: float = 0.5
-const BASE_RAPID_INTERVAL: float = 0.16
-const BASE_BULLET_DAMAGE: int = 1
-const MAX_SHIELD_CHARGES: int = 3
-## Hull: +1 life every N levels, so levels 3 / 6 / 9 give 4 / 5 / 6 lives.
-const HULL_LEVELS_PER_LIFE: int = 3
-## Shields: one starting charge every N levels, capped at MAX_SHIELD_CHARGES.
+## Ship hull before any upgrade level.
+const BASE_MAX_HP: int = SHIP_MAX_HP
+const BASE_MOVE_SPEED: float = SHIP_MAX_SPEED
+const BASE_FIRE_INTERVAL: float = SHIP_FIRE_INTERVAL
+const BASE_BULLET_DAMAGE: int = SHIP_BULLET_DAMAGE
+## Hull: +HP_PER_HULL_STEP max HP every HULL_LEVELS_PER_STEP levels.
+const HULL_LEVELS_PER_STEP: int = 3
+const HP_PER_HULL_STEP: int = 20
+const SPEED_PER_LEVEL: float = 12.0
+## Shields: one starting charge every N levels, capped at the maximum.
 const SHIELD_LEVELS_PER_CHARGE: int = 3
 ## Fire power: +1 bullet damage every N levels.
 const FIRE_LEVELS_PER_DAMAGE: int = 3
-const SPEED_PER_LEVEL: float = 15.0
-## Fire intervals shrink per level, down to their floors.
-const FIRE_INTERVAL_PER_LEVEL: float = 0.02
-const RAPID_INTERVAL_PER_LEVEL: float = 0.008
-const MIN_FIRE_INTERVAL: float = 0.12
-const MIN_RAPID_INTERVAL: float = 0.05
+const FIRE_INTERVAL_PER_LEVEL: float = 0.008
+const MIN_FIRE_INTERVAL: float = 0.06
 
 ## Shop rows in display order. Price of a level is
 ## base_cost + cost_step * current_level, so the first point is the cheapest.
@@ -160,3 +223,65 @@ const UPGRADES: Dictionary = {
 	&"fire": {"title": "FIRE POWER", "base_cost": 25, "cost_step": 18},
 }
 const UPGRADE_ORDER: Array[StringName] = [&"hull", &"speed", &"shield", &"fire"]
+
+# --- Campaign ---------------------------------------------------------------
+## The sector graph is kept from the portrait build and is ported onto the
+## landscape map in the next stage. `pos` are portrait map coordinates and are
+## not read by the battle.
+const CAMPAIGN_SECTORS: Dictionary = {
+	&"drift": {
+		"name": "DRIFT BELT", "tier": 1, "waves": 1, "boss": false,
+		"mix": {"scout": 4}, "pos": Vector2(200, 528),
+		"links": [&"cinder", &"vesper"],
+	},
+	&"cinder": {
+		"name": "CINDER RUN", "tier": 1, "waves": 2, "boss": false,
+		"mix": {"scout": 4, "gunner": 2}, "pos": Vector2(110, 452),
+		"links": [&"hollow", &"ember"],
+	},
+	&"vesper": {
+		"name": "VESPER FIELD", "tier": 1, "waves": 2, "boss": false,
+		"mix": {"gunner": 4, "heavy": 1}, "pos": Vector2(290, 452),
+		"links": [&"ember", &"quill"],
+	},
+	&"hollow": {
+		"name": "HOLLOW MOON", "tier": 2, "waves": 2, "boss": false,
+		"mix": {"scout": 5, "heavy": 2}, "pos": Vector2(88, 368),
+		"links": [&"warden"],
+	},
+	&"ember": {
+		"name": "EMBER GATE", "tier": 2, "waves": 2, "boss": false,
+		"mix": {"gunner": 6, "heavy": 2}, "pos": Vector2(200, 368),
+		"links": [&"warden", &"sable"],
+	},
+	&"quill": {
+		"name": "QUILL NEBULA", "tier": 2, "waves": 3, "boss": false,
+		"mix": {"scout": 5, "gunner": 4, "heavy": 2}, "pos": Vector2(312, 368),
+		"links": [&"sable"],
+	},
+	&"warden": {
+		"name": "WARDEN REEF", "tier": 3, "waves": 3, "boss": true,
+		"mix": {"gunner": 5, "heavy": 3}, "pos": Vector2(140, 286),
+		"links": [&"nexus"],
+	},
+	&"sable": {
+		"name": "SABLE EXPANSE", "tier": 3, "waves": 3, "boss": false,
+		"mix": {"scout": 6, "gunner": 5, "heavy": 2}, "pos": Vector2(262, 286),
+		"links": [&"nexus"],
+	},
+	&"nexus": {
+		"name": "THE NEXUS", "tier": 3, "waves": 3, "boss": true,
+		"mix": {"heavy": 4, "gunner": 6}, "pos": Vector2(200, 204),
+		"links": [],
+	},
+}
+const CAMPAIGN_ORDER: Array[StringName] = [
+	&"drift", &"cinder", &"vesper", &"hollow", &"ember", &"quill", &"warden", &"sable", &"nexus",
+]
+## Sectors the player may attack before conquering anything.
+const CAMPAIGN_START: Array[StringName] = [&"drift"]
+const CAMPAIGN_TIER_DIFFICULTY: Dictionary = {
+	1: {"hp_scale": 1.0, "interval_scale": 1.0, "bullet_scale": 1.0},
+	2: {"hp_scale": 1.3, "interval_scale": 0.9, "bullet_scale": 0.85},
+	3: {"hp_scale": 1.6, "interval_scale": 0.8, "bullet_scale": 0.7},
+}
