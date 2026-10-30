@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://battle_game.gd" id="1_game"]
+[ext_resource type="Texture2D" path="res://assests/background-black.png" id="2_bg"]
+[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="3_stars"]
+[ext_resource type="PackedScene" path="res://entities/player/ship.tscn" id="4_ship"]
+[ext_resource type="Script" path="res://entities/effects/shake_camera.gd" id="5_camera"]
+[ext_resource type="Script" path="res://entities/spawner/wave_director.gd" id="6_director"]
+[ext_resource type="Script" path="res://entities/hazards/hazard_field.gd" id="7_hazards"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="8_hud"]
+
+[node name="BattleGame" type="Node2D"]
+script = ExtResource("1_game")
+
+[node name="World" type="Node2D" parent="."]
+process_mode = 1
+
+[node name="Backdrop" type="TextureRect" parent="World"]
+offset_right = 960.0
+offset_bottom = 600.0
+mouse_filter = 2
+texture_repeat = 2
+texture = ExtResource("2_bg")
+stretch_mode = 1
+
+[node name="Starfield" type="Node2D" parent="World"]
+script = ExtResource("3_stars")
+
+[node name="ShakeCamera" type="Camera2D" parent="World"]
+position = Vector2(480, 300)
+script = ExtResource("5_camera")
+
+[node name="Ship" parent="World" instance=ExtResource("4_ship")]
+position = Vector2(480, 480)
+
+[node name="Bullets" type="Node2D" parent="World"]
+
+[node name="Enemies" type="Node2D" parent="World"]
+
+[node name="EnemyBullets" type="Node2D" parent="World"]
+
+[node name="Asteroids" type="Node2D" parent="World"]
+
+[node name="Orbs" type="Node2D" parent="World"]
+
+[node name="Effects" type="Node2D" parent="World"]
+
+[node name="WaveDirector" type="Node" parent="World"]
+script = ExtResource("6_director")
+
+[node name="HazardField" type="Node" parent="World"]
+script = ExtResource("7_hazards")
+
+[node name="HUD" parent="." instance=ExtResource("8_hud")]
