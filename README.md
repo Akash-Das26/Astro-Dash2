@@ -65,9 +65,16 @@ galaxy from 7B; the arena is still the 7A battle.
   running, HEALTH and SHIELDS show the carried hull instead of a fresh one.
 - **Energy** in red at the top; **X** closes (48px). Arrow keys / d-pad move
   between cards, `Enter` / `A` buys, `Esc` / `B` / Android Back closes.
-- **Fire power changes the laser**, so progress is visible in the arena: blue at
-  level 0, green from level 3, yellow from level 6 (the same tiers as
-  `bullet_damage`).
+- **Fire power is now shared by both hardpoints**: every level adds +12% damage
+  and -3% cooldown (cooldown floors at -45%) to whatever is equipped. Only the
+  PULSE LASER still changes its art with the track — blue at level 0, green from
+  level 3, yellow from level 6 — because its art is the laser itself.
+- **A WEAPONS tab** beside HULL & SHIP: one card per weapon showing DAMAGE,
+  RATE, projectile SPEED and DPS, plus its state (OWNED, PRIMARY, SECONDARY,
+  COST n ENERGY, UNLOCKS AT n PLANETS). Selecting a card previews its projectile
+  large and in its own colour on the left; **BUY** spends energy, **EQUIP
+  PRIMARY** / **EQUIP SECONDARY** fill the two hardpoints. A weapon may only sit
+  in one slot, and the secondary starts empty.
 - **Ten hull skins** in the picker: `pixel_ship_red/blue/yellow` plus the green
   interceptor, then the six stroked hulls. They unlock at 0, 5, 10, 15, 20, 25,
   30, 35, 40 and 45 planets conquered (best run counts, so a skin can unlock
@@ -91,6 +98,21 @@ galaxy from 7B; the arena is still the 7A battle.
   score, high score, planets conquered and the deepest band reached. **TRY
   AGAIN** starts a fresh campaign (energy and upgrades kept), **QUIT** returns to
   the menu.
+- **Readable enemy fire.** Enemy shots are drawn hot diamonds with a white
+  core, a pulsing halo and a short fading trail — never a reused player colour.
+  The hitbox is deliberately smaller than the art. **HIGH-CONTRAST BULLETS**
+  (Settings, on by default) thickens the outline and brightens the halo; on the
+  red band the outline switches to yellow-white.
+- **Shield drops.** About 8% of kills and always a citadel drop a blue bubble
+  pickup worth one charge, up to 3. The ship wears a bubble with one pip per
+  charge that flashes when a charge is spent, and the HUD reads `SHIELD x N`
+  next to the HP bar. The SHIELDS track also adds starting charges every three
+  levels and recharges one charge after a quiet stretch (25 s at level 1 down to
+  8 s at max, reset by any hit). At level 0 the drop still works, so a shield is
+  always reachable.
+- **Two hardpoints.** The primary fires on `shoot`, the secondary on `shoot_alt`
+  (right mouse / `Shift` / left shoulder or trigger / a second touch button),
+  with independent cooldowns and left/right muzzle positions.
 - **Everything from 7A stays:** free-flight ship with thruster, HP and shields,
   three fighter types, splitting asteroids, waves, combo, energy orbs, particles,
   shockwaves, camera shake, parallax starfield, touch stick and aim zone.
@@ -105,13 +127,14 @@ to the menu.
 
 ### Settings
 
-Music and SFX sliders, mute, reduce motion and touch auto-fire, plus a control
-scheme note. Audio files are still postponed: `AudioManager` warns once per
-missing file and the game runs silently.
+Music and SFX sliders, mute, reduce motion, touch auto-fire and
+**HIGH-CONTRAST BULLETS** (thicker outline, brighter halo; saved in
+`user://save.cfg`), plus a control scheme note. Audio files are still postponed:
+`AudioManager` warns once per missing file and the game runs silently.
 
 ## What is not in this build yet
 
-Power-up pickups, a how-to-play card, songs and sound effects, and real
+A how-to-play card, more weapon types, songs and sound effects, and real
 screenshots. The audio files are the only missing content: dropping them into
 `assests/audio/` with the names in `autoload/audio_manager.gd` turns sound on
 without a code change.
@@ -147,21 +170,24 @@ without a code change.
 | --- | --- |
 | Move | `W` `A` `S` `D` or the arrow keys |
 | Aim | Mouse (the nose follows the pointer once it moves) |
-| Fire | `Space` or hold left click |
+| Fire primary | `Space` or hold left click |
+| Fire secondary | `Shift`, hold right click, or the touch **FIRE II** button |
 | Pause | `P` or `Esc` |
 | End card | `Enter` continues / retries, `Esc` / `B` Back |
 | Debug (debug builds) | `R` restarts the harness, `F9` starts it |
 
 **Gamepad** (twin-stick): left stick moves, right stick aims, right trigger or
-`A` / Cross fires, `Start` pauses, d-pad and `A` navigate cards.
+`A` / Cross fires the primary, left shoulder or left trigger fires the
+secondary, `Start` pauses, d-pad and `A` navigate cards.
 
-**Touch:** virtual stick on the left half, aim-and-fire on the right half, 48px
-pause button. On the map, drag pans and a tap selects.
+**Touch:** virtual stick on the left half, aim-and-fire on the right half, a
+second 48px+ **FIRE II** button for the secondary, 48px pause button. On the map,
+drag pans and a tap selects.
 
 Everything reaches the game through InputMap actions (`move_up`, `move_down`,
-`move_left`, `move_right`, `aim`, `aim_left/right/up/down`, `shoot`, `pause`, plus
-Godot's built-in `ui_*` actions for every screen), so no screen asks where an
-input came from.
+`move_left`, `move_right`, `aim`, `aim_left/right/up/down`, `shoot`, `shoot_alt`,
+`pause`, plus Godot's built-in `ui_*` actions for every screen), so no screen
+asks where an input came from.
 
 ## How a campaign runs
 
@@ -191,6 +217,7 @@ galaxy.gd                seeded layout, graph, types, traits, names, battle_for(
 campaign.gd              run state: galaxy cache, pending body, victories/defeats
 battle_game.gd/.tscn     arena root: score, combo, energy, waves, boss, end cards
 battle.gd                Battle resource (waves, mix, density, difficulty, boss)
+weapons.gd               the weapon table readers and formatting helpers
 tuning.gd                every balance number, in one file (see Balancing)
 upgrades.gd              upgrade table -> prices, ship stats, card labels
 
@@ -254,7 +281,9 @@ depends on the exact values.
 | --- | --- |
 | Canvas and arena | `VIEW_SIZE` (960x600), `HUD_BAR_HEIGHT` (24), `ARENA_TOP/BOTTOM/LEFT/RIGHT`, `ARENA_MARGIN` |
 | Ship flight | `SHIP_MAX_HP`, `SHIP_ACCELERATION`, `SHIP_MAX_SPEED`, `SHIP_DRAG` (inertia), `SHIP_TURN_LERP` |
-| Ship weapons | `SHIP_FIRE_INTERVAL`, `SHIP_BULLET_SPEED`, `SHIP_BULLET_DAMAGE`, `SHIP_BULLET_LIFE`, `SHIP_MUZZLE_OFFSET` |
+| Weapons | `WEAPONS` (one row per weapon: `damage`, `interval`, `speed`, `count`, `spread`, `pierce`, `life`, `scale`, `homing`, `area`, `knockback`, `cost`, `unlock`), `WEAPON_ORDER`, `WEAPON_MUZZLE_SIDE`, `FIRE_DAMAGE_PER_LEVEL`, `FIRE_COOLDOWN_PER_LEVEL`, `MIN_FIRE_COOLDOWN_MULT`, `WEAPON_BURST_COLOR`, `WEAPON_BURST_PARTICLES` |
+| Shield drops and recharge | `SHIELD_DROP_CHANCE`, `SHIELD_DROP_FALL_SPEED`, `SHIELD_DROP_DRIFT`, `SHIELD_DROP_LIFE`, `SHIELD_DROP_RADIUS`, `SHIELD_DROP_VISUAL_RADIUS`, `SHIELD_RECHARGE_BASE`, `SHIELD_RECHARGE_STEP`, `SHIELD_RECHARGE_MIN`, `SHIELD_RECHARGE_DAMAGE_DELAY`, `SHIELD_BUBBLE_RADIUS` |
+| Enemy bullet art | `ENEMY_BULLET_VISUAL_RADIUS`, `ENEMY_BULLET_CORE_RADIUS`, `ENEMY_BULLET_HITBOX_RADIUS`, `ENEMY_BULLET_TRAIL_SEGMENTS`, `ENEMY_BULLET_TRAIL_SPACING`, `ENEMY_BULLET_GLOW_PULSE`, `ENEMY_BULLET_BODY`, `ENEMY_BULLET_CORE`, `ENEMY_BULLET_OUTLINE*`, `ENEMY_BULLET_OUTLINE_WIDTH*` |
 | Ship damage | `SHIP_INVULNERABILITY`, `SHIP_SHIELD_GRACE`, `MAX_SHIELD_CHARGES`, `SHIP_BLINK_*` |
 | Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE` |
 | Fighters | `ENEMY_TYPES`: per kind `hp`, `speed`, `points`, `radius`, `orbit_radius` (0 = dive), `fire_interval`, `bullet_speed`, `aim_error`, `effect_color` |
@@ -268,6 +297,7 @@ depends on the exact values.
 | Upgrades | `UPGRADES` (price is `base_cost + cost_step * level`), `UPGRADE_MAX_LEVEL`, `HULL_LEVELS_PER_STEP` + `HP_PER_HULL_STEP`, `SPEED_PER_LEVEL`, `SHIELD_LEVELS_PER_CHARGE`, `FIRE_LEVELS_PER_DAMAGE`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` |
 | Perfect victory | `PERFECT_BONUS_SCORE` (500), `PERFECT_BONUS_ENERGY` (25) |
 | Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `skins.gd` |
+| Legacy single-laser values | `SHIP_FIRE_INTERVAL`, `SHIP_BULLET_*`, `SHIP_MUZZLE_OFFSET`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` (kept for the fallback bullet, superseded by `WEAPONS`) |
 | UI scale | `UITheme.SIZE_*`, `UITheme.COLOR_*` and the button/card styleboxes |
 | Galaxy layout | `GALAXY_MAP_SIZE`, `GALAXY_BODY_COUNT_MIN/MAX`, `GALAXY_MIN_SPACING`, `GALAXY_EDGE_MARGIN`, `GALAXY_LINKS_PER_BODY`, `GALAXY_MAX_LINK_LENGTH`, `GALAXY_HOME_ANCHOR`, `GALAXY_TAP_RADIUS`, `GALAXY_PAN_SPEED` |
 | Body art and tint | `GALAXY_BODY_ART`, `GALAXY_STATION_COLORS`, `GALAXY_TINTS`, `GALAXY_MARKER_TINTS`, `MAP_*` |
@@ -276,6 +306,30 @@ depends on the exact values.
 | Body traits | `GALAXY_TRAITS`: per trait `title`, `energy_scale`, `density_scale`, `enemies_delta`, `hp_scale`, `mix_bonus` |
 | Conquest payouts | `GALAXY_CONQUEST_ENERGY`, `GALAXY_CITADEL_ENERGY`, `GALAXY_GATE_ENERGY` |
 | Citadel boss | `BOSS_HP`, `BOSS_HP_PER_DISTANCE`, `BOSS_POINTS`, `BOSS_RADIUS`, `BOSS_SCALE`, `BOSS_FIRE_INTERVAL`, `BOSS_BULLETS_PER_VOLLEY`, `BOSS_SPREAD`, `BOSS_BULLET_DAMAGE`, `BOSS_CONTACT_DAMAGE`, `BOSS_HOVER_*` |
+
+### Weapons
+
+Every row lives in `Tuning.WEAPONS`; `weapons.gd` only reads and formats them.
+FIRE POWER multiplies damage by `1 + 0.12 * level` and cooldowns by
+`1 - 0.03 * level`, floored at 0.55, for **both** equipped slots.
+
+| Weapon | Unlock | Cost | Projectile | Damage | Interval | Speed | Pattern | Extra |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PULSE LASER | start | — | `pixel_laser_blue` (tier-tinted) | 3 | 0.14 s | 780 | 1 bolt | default, unlimited |
+| HEAVY CANNON | 3 planets | 45 | `pixel_laser_small_blue` | 9 | 0.8 s | 620 | 1 slug | 240 knockback |
+| SCATTER SHOT | 6 planets | 80 | `pixel_laser_green` | 2 | 0.6 s | 640 | 4 pellets, 0.2 rad fan | short range (0.5 s life) |
+| RAIL LASER | 12 planets | 130 | `pixel_laser_yellow` | 12 | 1.4 s | 1500 | 1 lance | pierces 4 |
+| HOMING MISSILE | 18 planets | 200 | `pixel_laser_red` tinted orange | 7 | 1.1 s | 320 | 1, steers | 74 px burst, splash half damage |
+
+### Shields and enemy fire
+
+| What | Value |
+| --- | --- |
+| Shield drop chance | 8% per kill; a citadel boss always drops one |
+| Shield drop | one charge, max 3, drifts down for 12 s |
+| Shield recharge | 25 s at level 1, -1.8 s per level, floor 8 s; 3 s of no damage required; level 0 = no recharge |
+| Shield upgrade | 15 energy + 8 per level; +1 starting charge every 3 levels |
+| Enemy bullet | 10 px visual radius, 3.4 px core, 4 trail puffs, 8 px hitbox, 2 px outline (3.5 px high contrast) |
 
 ### Difficulty bands
 
@@ -303,6 +357,8 @@ gate 250.
 | --- | --- |
 | `progress` | `high_score`, `energy`, `skin` |
 | `upgrades` | `<kind>_level` for hull, speed, shield, fire |
+| `gameplay` | `reduce_motion`, `auto_fire`, `high_contrast_bullets` |
+| `weapons` | `owned` (list), `primary`, `secondary` — missing keys fall back to the pulse laser and an empty second slot, so older saves load |
 | `audio` | `music_volume`, `sfx_volume`, `muted` |
 | `gameplay` | `reduce_motion`, `auto_fire` |
 | `campaign` | `active`, `seed`, `score`, `hp`, `shields`, `conquered`, `best_score`, `best_planets` |
