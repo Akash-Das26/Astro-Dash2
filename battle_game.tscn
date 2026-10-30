@@ -41,6 +41,8 @@ position = Vector2(480, 480)
 
 [node name="Asteroids" type="Node2D" parent="World"]
 
+[node name="Pickups" type="Node2D" parent="World"]
+
 [node name="Orbs" type="Node2D" parent="World"]
 
 [node name="Effects" type="Node2D" parent="World"]

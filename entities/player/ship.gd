@@ -30,6 +30,8 @@ signal died
 
 var hp: int = Tuning.SHIP_MAX_HP
 var shields: int = 0
+## Seconds for the SHIELDS track to recharge one charge; 0 disables it.
+var shield_recharge_time: float = 0.0
 var alive: bool = true
 ## Unit vector the nose is following.
 var aim: Vector2 = Vector2.UP
@@ -38,6 +40,10 @@ var _velocity: Vector2 = Vector2.ZERO
 var _thrust: float = 0.0
 var _shoot_cooldown: float = 0.0
 var _invulnerable_left: float = 0.0
+## 0..1 bubble flash after a charge is spent or picked up.
+var _shield_flash: float = 0.0
+var _recharge_left: float = 0.0
+var _since_damage: float = 0.0
 var _blink_timer: float = 0.0
 var _base_scale: Vector2 = Vector2.ONE
 ## Touch sets this while a finger holds the right zone; zero means "no override".
@@ -62,6 +68,7 @@ func _process(delta: float) -> void:
 	_update_aim(delta)
 	_update_shooting(delta)
 	_update_invulnerability(delta)
+	_update_shields(delta)
 
 
 # --- Run setup --------------------------------------------------------------
@@ -85,6 +92,7 @@ func apply_run_stats(stats: Dictionary) -> void:
 	bullet_damage = int(stats["bullet_damage"])
 	bullet_tier = int(stats.get("bullet_tier", 0))
 	fire_interval = float(stats["fire_interval"])
+	shield_recharge_time = float(stats.get("shield_recharge", 0.0))
 	revive()
 	set_shields(int(stats["shield_charges"]))
 
@@ -108,6 +116,9 @@ func revive() -> void:
 	_shoot_cooldown = 0.0
 	_invulnerable_left = 0.0
 	_blink_timer = 0.0
+	_shield_flash = 0.0
+	_recharge_left = shield_recharge_time
+	_since_damage = 0.0
 	_sprite.modulate.a = 1.0
 	_flash.modulate.a = 0.0
 	hp_changed.emit(hp, max_hp)
@@ -116,6 +127,15 @@ func revive() -> void:
 func set_shields(charges: int) -> void:
 	shields = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
 	shields_changed.emit(shields)
+	queue_redraw()
+
+
+## A shield drop: one charge, never above the cap. Works at SHIELDS level 0.
+func add_shield(amount: int = 1) -> void:
+	if not alive or shields >= Tuning.MAX_SHIELD_CHARGES:
+		return
+	set_shields(shields + amount)
+	_shield_flash = 0.7
 	queue_redraw()
 
 
@@ -137,9 +157,13 @@ func take_damage(amount: int) -> void:
 		return
 	if shields > 0:
 		set_shields(shields - 1)
+		_shield_flash = 1.0
+		_recharge_left = shield_recharge_time
+		_since_damage = 0.0
 		_start_invulnerability(Tuning.SHIP_SHIELD_GRACE)
 		_play_hit_feedback(Color(0.5, 0.95, 1.0))
 		return
+	_since_damage = 0.0
 	hp = maxi(hp - amount, 0)
 	hp_changed.emit(hp, max_hp)
 	hurt.emit(amount)
@@ -236,15 +260,42 @@ func _update_invulnerability(delta: float) -> void:
 		_sprite.modulate.a = 1.0
 
 
-## Shield bubble with one pip per charge, drawn behind the hull.
+## Shield bubble with one pip per charge, drawn behind the hull. The bubble
+## flashes when a charge is spent or picked up, and the recharge lights the
+## ring a little brighter while a new charge is building.
 func _draw() -> void:
 	if shields <= 0:
 		return
-	draw_circle(Vector2.ZERO, 24.0, Color(0.4, 0.9, 1.0, 0.12))
-	draw_arc(Vector2.ZERO, 24.0, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), 2.0, true)
+	var radius: float = Tuning.SHIELD_BUBBLE_RADIUS
+	var charging: bool = shield_recharge_time > 0.0 and shields < Tuning.MAX_SHIELD_CHARGES
+	var glow: float = 0.10 + 0.24 * _shield_flash + (0.04 if charging else 0.0)
+	var width: float = 2.0 + 1.5 * _shield_flash
+	draw_circle(Vector2.ZERO, radius, Color(0.4, 0.9, 1.0, glow))
+	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), width, true)
 	for index: int in shields:
 		var angle: float = -PI * 0.5 + float(index) * (TAU / float(Tuning.MAX_SHIELD_CHARGES))
-		draw_circle(Vector2(cos(angle), sin(angle)) * 24.0, 2.5, Color(0.75, 1.0, 1.0, 0.9))
+		draw_circle(Vector2(cos(angle), sin(angle)) * radius, 2.5, Color(0.75, 1.0, 1.0, 0.9))
+
+
+## Shield charges: the SHIELDS track recharges one charge after a quiet
+## stretch, and any damage restarts the wait. Drop pickups bypass this.
+func _update_shields(delta: float) -> void:
+	if _shield_flash > 0.0:
+		_shield_flash = maxf(_shield_flash - delta * 2.5, 0.0)
+		queue_redraw()
+	if shield_recharge_time <= 0.0:
+		return
+	_since_damage += delta
+	if shields >= Tuning.MAX_SHIELD_CHARGES \
+			or _since_damage < Tuning.SHIELD_RECHARGE_DAMAGE_DELAY:
+		_recharge_left = shield_recharge_time
+		return
+	_recharge_left -= delta
+	if _recharge_left > 0.0:
+		return
+	_recharge_left = shield_recharge_time
+	set_shields(shields + 1)
+	_shield_flash = 0.5
 
 
 # --- Collisions -------------------------------------------------------------

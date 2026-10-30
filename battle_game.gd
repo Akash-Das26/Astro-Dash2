@@ -22,6 +22,7 @@ const BULLET_SCENE: PackedScene = preload("res://entities/bullet/bullet.tscn")
 const ENEMY_BULLET_SCENE: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
 const EXPLOSION_SCENE: PackedScene = preload("res://entities/effects/explosion.tscn")
 const ORB_SCENE: PackedScene = preload("res://entities/effects/energy_mote.tscn")
+const SHIELD_PICKUP_SCENE: PackedScene = preload("res://entities/pickups/shield_pickup.tscn")
 const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/effects/shockwave.gd")
 const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/effects/float_text.gd")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
@@ -38,6 +39,7 @@ const VICTORY_SHAKE: float = 0.3
 @onready var enemies: Node2D = $World/Enemies
 @onready var enemy_bullets: Node2D = $World/EnemyBullets
 @onready var asteroids: Node2D = $World/Asteroids
+@onready var pickups: Node2D = $World/Pickups
 @onready var orbs: Node2D = $World/Orbs
 @onready var effects: Node2D = $World/Effects
 @onready var director: WaveDirector = $World/WaveDirector
@@ -339,6 +341,8 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	hud.set_score(score)
 	hud.set_enemies(kills, battle.enemy_total())
 	_drop_energy(enemy.global_position, points)
+	if randf() < Tuning.SHIELD_DROP_CHANCE:
+		_drop_shield(enemy.global_position)
 	_spawn_explosion(enemy.global_position, enemy.effect_color, Tuning.EXPLOSION_PARTICLES, 1.0, Tuning.EXPLOSION_LIFE)
 	_spawn_shockwave(enemy.global_position, enemy.effect_color)
 	_spawn_float_text(enemy.global_position, "+%d COMBO!" % gained, Tuning.COMBO_FLOAT_COLOR)
@@ -410,6 +414,8 @@ func _on_boss_died(points: int) -> void:
 	hud.set_score(score)
 	hud.set_enemies(kills, battle.enemy_total() + 1)
 	hud.hide_boss()
+	# A citadel always leaves a shield charge behind.
+	_drop_shield(at)
 	_spawn_explosion(
 		at, Color(1.0, 0.6, 0.4), Tuning.EXPLOSION_PARTICLES, 1.8, Tuning.EXPLOSION_LIFE
 	)
@@ -484,6 +490,25 @@ func _drop_energy(at: Vector2, points: int) -> void:
 		orbs.add_child(orb)
 
 
+## Shield drops follow the same deferred rule as debris: a fall may come out of
+## a damage callback, so the Area2D enters the tree after the physics step.
+func _drop_shield(at: Vector2) -> void:
+	if not _running:
+		return
+	var pickup := SHIELD_PICKUP_SCENE.instantiate() as ShieldPickup
+	pickup.position = at
+	pickup.collected.connect(_on_shield_collected)
+	pickups.call_deferred("add_child", pickup)
+
+
+func _on_shield_collected() -> void:
+	if not _running:
+		return
+	ship.add_shield(1)
+	AudioManager.play_sfx("pickup")
+	_spawn_float_text(ship.global_position, "+1 SHIELD", Color(0.55, 0.95, 1.0))
+
+
 func _on_energy_collected(value: int) -> void:
 	energy += value
 	SaveData.add_energy(value)
@@ -542,7 +567,7 @@ func _on_float_text_exited() -> void:
 # --- Housekeeping -----------------------------------------------------------
 
 func _clear_playfield() -> void:
-	for container: Node in [bullets, enemies, enemy_bullets, asteroids, orbs, effects]:
+	for container: Node in [bullets, enemies, enemy_bullets, asteroids, pickups, orbs, effects]:
 		for child: Node in container.get_children():
 			# Disable first, so a queued-for-deletion node cannot fire its
 			# signals into the new battle during the frame it is removed.

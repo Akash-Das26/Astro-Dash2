@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://entities/pickups/shield_pickup.gd" id="1_pickup"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_shield_drop"]
+radius = 20.0
+
+[node name="ShieldPickup" type="Area2D"]
+collision_layer = 32
+collision_mask = 1
+script = ExtResource("1_pickup")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_shield_drop")

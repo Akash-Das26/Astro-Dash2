@@ -41,11 +41,23 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 		"shield_charges": mini(shield_steps, Tuning.MAX_SHIELD_CHARGES),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + damage_steps,
 		"bullet_tier": mini(damage_steps, 2),
+		"shield_recharge": shield_recharge(shield),
 		"fire_interval": maxf(
 			Tuning.MIN_FIRE_INTERVAL,
 			Tuning.BASE_FIRE_INTERVAL - float(fire) * Tuning.FIRE_INTERVAL_PER_LEVEL
 		),
 	}
+
+
+## Seconds per recharged shield charge for a SHIELDS level. Level 0 means no
+## recharge at all; drops still work, so a shield is always reachable.
+static func shield_recharge(level: int) -> float:
+	if level <= 0:
+		return 0.0
+	return maxf(
+		Tuning.SHIELD_RECHARGE_MIN,
+		Tuning.SHIELD_RECHARGE_BASE - float(level - 1) * Tuning.SHIELD_RECHARGE_STEP
+	)
 
 
 ## The label on an upgrade card, naming the direction of the track.
@@ -71,8 +83,11 @@ static func tooltip(kind: StringName) -> String:
 		&"speed":
 			return "+%d px/s flight speed per level." % roundi(Tuning.SPEED_PER_LEVEL)
 		&"shield":
-			return "+1 shield charge every %d levels, up to %d." % [
+			return "+1 starting charge every %d levels, max %d. At level 1+ one charge recharges every %.0fs once you have not been hit for %.0fs, down to %.0fs at max. Drops always give +1." % [
 				Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES,
+				Tuning.SHIELD_RECHARGE_BASE,
+				Tuning.SHIELD_RECHARGE_DAMAGE_DELAY,
+				shield_recharge(MAX_LEVEL),
 			]
 		&"fire":
 			return "+1 bullet damage every %d levels; the laser turns green at level %d and yellow at level %d." % [

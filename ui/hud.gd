@@ -40,6 +40,7 @@ const COMBO_MIN_SHOWN: float = 1.25
 @onready var _enemies_label: Label = $Root/BottomBar/EnemiesLabel
 @onready var _hp_bar: TextureProgressBar = $Root/BottomBar/HpBar
 @onready var _shield_bar: TextureProgressBar = $Root/BottomBar/ShieldBar
+@onready var _shield_label: Label = $Root/BottomBar/ShieldLabel
 @onready var _banner_label: Label = $Root/BannerLabel
 @onready var _end_card: Control = $Root/EndCard
 @onready var _end_title: Label = $Root/EndCard/Panel/Margin/Box/Title
@@ -145,10 +146,19 @@ func set_hp(hp: int, max_hp: int) -> void:
 		_hp_bar.texture_progress = BAR_RED
 
 
+## The bar is the visual, the label is the exact count, and both stay readable
+## at zero so the player knows a drop is worth grabbing.
 func set_shields(charges: int) -> void:
+	var capped: int = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
 	_shield_bar.max_value = Tuning.MAX_SHIELD_CHARGES
-	_shield_bar.value = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
-	_shield_bar.visible = charges > 0
+	_shield_bar.value = capped
+	_shield_bar.visible = capped > 0
+	if capped > 0:
+		_shield_label.text = "SHIELD x%d" % capped
+		_shield_label.add_theme_color_override("font_color", Color(0.55, 0.95, 1.0))
+	else:
+		_shield_label.text = "NO SHIELD"
+		_shield_label.add_theme_color_override("font_color", UITheme.COLOR_MUTED)
 
 
 ## Citadel bar: the station name and the red HP bar under the top readout.

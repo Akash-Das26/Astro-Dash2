@@ -248,6 +248,23 @@ value = 0.0
 texture_under = ExtResource("3_grey")
 texture_progress = ExtResource("5_blue")
 
+[node name="ShieldLabel" type="Label" parent="Root/BottomBar"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 178.0
+offset_top = -19.0
+offset_right = 330.0
+offset_bottom = -5.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 11
+text = "NO SHIELD"
+
 [node name="BannerLabel" type="Label" parent="Root"]
 visible = false
 layout_mode = 1

@@ -39,6 +39,21 @@ const SHIP_SHIELD_GRACE: float = 0.4
 const SHIP_BLINK_INTERVAL: float = 0.08
 const SHIP_BLINK_ALPHA: float = 0.3
 const MAX_SHIELD_CHARGES: int = 3
+## Shield drops: a blue bubble that drifts down, always worth one charge.
+const SHIELD_DROP_CHANCE: float = 0.08
+const SHIELD_DROP_FALL_SPEED: float = 46.0
+const SHIELD_DROP_DRIFT: float = 22.0
+const SHIELD_DROP_LIFE: float = 12.0
+const SHIELD_DROP_RADIUS: float = 20.0
+const SHIELD_DROP_VISUAL_RADIUS: float = 11.0
+## The SHIELDS track also recharges one charge after a quiet stretch: this is
+## the wait at level 1, it shortens per level down to the floor, and any damage
+## restarts the quiet timer. Level 0 means no recharge, but drops still work.
+const SHIELD_RECHARGE_BASE: float = 25.0
+const SHIELD_RECHARGE_STEP: float = 1.8
+const SHIELD_RECHARGE_MIN: float = 8.0
+const SHIELD_RECHARGE_DAMAGE_DELAY: float = 3.0
+const SHIELD_BUBBLE_RADIUS: float = 24.0
 
 # --- Thrusters --------------------------------------------------------------
 const THRUSTER_FRAME_FPS: float = 18.0
@@ -237,7 +252,7 @@ const MIN_FIRE_INTERVAL: float = 0.06
 const UPGRADES: Dictionary = {
 	&"hull": {"title": "HEALTH", "base_cost": 20, "cost_step": 15},
 	&"speed": {"title": "SPEED", "base_cost": 15, "cost_step": 12},
-	&"shield": {"title": "SHIELDS", "base_cost": 30, "cost_step": 20},
+	&"shield": {"title": "SHIELDS", "base_cost": 15, "cost_step": 8},
 	&"fire": {"title": "FIRE POWER", "base_cost": 25, "cost_step": 18},
 }
 const UPGRADE_ORDER: Array[StringName] = [&"hull", &"speed", &"shield", &"fire"]
