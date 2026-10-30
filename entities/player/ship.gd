@@ -18,6 +18,8 @@ signal died
 @export var move_speed: float = Tuning.SHIP_MAX_SPEED
 @export var fire_interval: float = Tuning.SHIP_FIRE_INTERVAL
 @export var bullet_damage: int = Tuning.SHIP_BULLET_DAMAGE
+## 0 blue, 1 green, 2 yellow laser; follows the fire-power level.
+@export var bullet_tier: int = 0
 @export var acceleration: float = Tuning.SHIP_ACCELERATION
 @export var drag: float = Tuning.SHIP_DRAG
 
@@ -44,6 +46,7 @@ var _mouse_active: bool = false
 
 
 func _ready() -> void:
+	_apply_skin()
 	_base_scale = _sprite.scale
 	_flash.scale = _base_scale
 	_hurtbox.area_entered.connect(_on_hurtbox_area_entered)
@@ -63,11 +66,24 @@ func _process(delta: float) -> void:
 
 # --- Run setup --------------------------------------------------------------
 
+## The hull chosen in the upgrade screen. The flash sprite mirrors it, so a hit
+## flashes the silhouette the player is actually flying.
+func _apply_skin() -> void:
+	var id: StringName = Skins.selected()
+	var texture: Texture2D = Skins.texture(id)
+	var art_scale: float = Skins.scale_of(id)
+	if texture != null:
+		_sprite.texture = texture
+		_flash.texture = texture
+	_sprite.scale = Vector2.ONE * art_scale
+	_flash.scale = Vector2.ONE * art_scale
+
 ## Totals from the upgrade shop, applied at the start of a battle.
 func apply_run_stats(stats: Dictionary) -> void:
 	max_hp = int(stats["max_hp"])
 	move_speed = float(stats["move_speed"])
 	bullet_damage = int(stats["bullet_damage"])
+	bullet_tier = int(stats.get("bullet_tier", 0))
 	fire_interval = float(stats["fire_interval"])
 	revive()
 	set_shields(int(stats["shield_charges"]))

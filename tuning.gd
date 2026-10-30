@@ -219,7 +219,7 @@ const MIN_FIRE_INTERVAL: float = 0.06
 ## Shop rows in display order. Price of a level is
 ## base_cost + cost_step * current level, so the first point is the cheapest.
 const UPGRADES: Dictionary = {
-	&"hull": {"title": "HULL", "base_cost": 20, "cost_step": 15},
+	&"hull": {"title": "HEALTH", "base_cost": 20, "cost_step": 15},
 	&"speed": {"title": "SPEED", "base_cost": 15, "cost_step": 12},
 	&"shield": {"title": "SHIELDS", "base_cost": 30, "cost_step": 20},
 	&"fire": {"title": "FIRE POWER", "base_cost": 25, "cost_step": 18},
@@ -416,6 +416,9 @@ const GALAXY_TRAITS: Dictionary = {
 const GALAXY_CONQUEST_ENERGY: int = 20
 const GALAXY_CITADEL_ENERGY: int = 120
 const GALAXY_GATE_ENERGY: int = 250
+## Perfect Victory: a battle won without losing a single hull point.
+const PERFECT_BONUS_SCORE: int = 500
+const PERFECT_BONUS_ENERGY: int = 25
 
 # --- Citadel boss -----------------------------------------------------------
 const BOSS_HP: int = 140

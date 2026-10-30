@@ -35,6 +35,8 @@ const TAP_SLOP: float = 8.0
 @onready var _result_title: Label = $ResultCard/Panel/Margin/Box/Title
 @onready var _result_detail: Label = $ResultCard/Panel/Margin/Box/Detail
 @onready var _result_button: Button = $ResultCard/Panel/Margin/Box/ActionButton
+@onready var _upgrade_button: Button = $UpgradeButton
+@onready var _upgrade_panel: UpgradePanel = $UpgradePanel
 
 var _galaxy: Galaxy
 var _markers: Dictionary = {}
@@ -58,6 +60,9 @@ func _ready() -> void:
 	_battle_button.pressed.connect(_on_battle_pressed)
 	_cancel_button.pressed.connect(_close_card)
 	_result_button.pressed.connect(_on_result_pressed)
+	_upgrade_button.pressed.connect(_open_upgrades)
+	_upgrade_panel.closed.connect(_on_upgrades_closed)
+	_upgrade_panel.changed.connect(_on_upgrades_changed)
 	# A finished battle leaves its summary behind for this screen to show.
 	var result: Dictionary = Campaign.take_result()
 	if result.is_empty() and not SaveData.campaign_active:
@@ -78,7 +83,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _confirm_card.visible or _result_card.visible:
+	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
 		return
 	_pan_with_stick(delta)
 	_update_hover()
@@ -172,7 +177,7 @@ func _body_at(world_point: Vector2) -> StringName:
 ## the engine's emulated mouse events, so a finger and a mouse share this path
 ## (project setting `emulate_mouse_from_touch` stays at its default).
 func _gui_input(event: InputEvent) -> void:
-	if _confirm_card.visible or _result_card.visible:
+	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
 		return
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
@@ -292,6 +297,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	if _result_card.visible:
 		return
+	if _upgrade_panel.visible:
+		if event.is_action_pressed("ui_cancel"):
+			_upgrade_panel.close()
+			get_viewport().set_input_as_handled()
+		return
 	if _confirm_card.visible:
 		if event.is_action_pressed("ui_cancel"):
 			_close_card()
@@ -406,6 +416,25 @@ func _on_battle_pressed() -> void:
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 
+# --- Upgrades ---------------------------------------------------------------
+
+func _open_upgrades() -> void:
+	_hide_tooltip()
+	_upgrade_panel.open()
+
+
+func _on_upgrades_closed() -> void:
+	# Back to the map: the pointer re-detects whatever it is over and the
+	# energy readout picks up anything that was just bought.
+	_upgrade_button.release_focus()
+	_hovered = &""
+	_refresh()
+
+
+func _on_upgrades_changed() -> void:
+	_refresh()
+
+
 # --- Summaries --------------------------------------------------------------
 
 func _show_result(result: Dictionary) -> void:
@@ -453,6 +482,9 @@ func _handle_back() -> void:
 	# Always re-arm: GameState consumes the handler on every request.
 	GameState.back_handler = _handle_back
 	if _result_card.visible:
+		return
+	if _upgrade_panel.visible:
+		_upgrade_panel.close()
 		return
 	if _confirm_card.visible:
 		_close_card()

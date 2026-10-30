@@ -1,0 +1,288 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/upgrade_panel.gd" id="1_panel"]
+
+[node name="UpgradePanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_panel")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.04, 0.76)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -430.0
+offset_top = -262.0
+offset_right = 430.0
+offset_bottom = 262.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 16
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Panel/Margin/Box/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 26
+text = "SHIP UPGRADES"
+vertical_alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="Panel/Margin/Box/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.32, 1)
+theme_override_font_sizes/font_size = 18
+text = "ENERGY 0"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/Box/Header"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "X"
+
+[node name="Body" type="HBoxContainer" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Stats" type="VBoxContainer" parent="Panel/Margin/Box/Body"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Margin/Box/Body/Stats"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.72, 0.9, 1)
+theme_override_font_sizes/font_size = 13
+text = "CURRENT STATS"
+
+[node name="Value" type="Label" parent="Panel/Margin/Box/Body/Stats"]
+layout_mode = 2
+theme_override_constants/line_spacing = 8
+theme_override_font_sizes/font_size = 15
+text = "HEALTH    100/100
+SPEED      400
+SHIELDS   0/3
+FIRE       1x"
+
+[node name="Grid" type="GridContainer" parent="Panel/Margin/Box/Body"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="HullCard" type="Button" parent="Panel/Margin/Box/Body/Grid"]
+custom_minimum_size = Vector2(280, 128)
+layout_mode = 2
+tooltip_text = "+20 MAX HP every 3 levels."
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin/Box/Body/Grid/HullCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Name" type="Label" parent="Panel/Margin/Box/Body/Grid/HullCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "HEALTH +20"
+horizontal_alignment = 1
+
+[node name="Level" type="Label" parent="Panel/Margin/Box/Body/Grid/HullCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 12
+text = "LEVEL 0/10"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="Panel/Margin/Box/Body/Grid/HullCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "COST 20"
+horizontal_alignment = 1
+
+[node name="SpeedCard" type="Button" parent="Panel/Margin/Box/Body/Grid"]
+custom_minimum_size = Vector2(280, 128)
+layout_mode = 2
+tooltip_text = "+12 px/s per level."
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin/Box/Body/Grid/SpeedCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Name" type="Label" parent="Panel/Margin/Box/Body/Grid/SpeedCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "SPEED +1"
+horizontal_alignment = 1
+
+[node name="Level" type="Label" parent="Panel/Margin/Box/Body/Grid/SpeedCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 12
+text = "LEVEL 0/10"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="Panel/Margin/Box/Body/Grid/SpeedCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "COST 15"
+horizontal_alignment = 1
+
+[node name="ShieldCard" type="Button" parent="Panel/Margin/Box/Body/Grid"]
+custom_minimum_size = Vector2(280, 128)
+layout_mode = 2
+tooltip_text = "+1 shield charge every 3 levels, up to 3."
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin/Box/Body/Grid/ShieldCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Name" type="Label" parent="Panel/Margin/Box/Body/Grid/ShieldCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "SHIELDS +1"
+horizontal_alignment = 1
+
+[node name="Level" type="Label" parent="Panel/Margin/Box/Body/Grid/ShieldCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 12
+text = "LEVEL 0/10"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="Panel/Margin/Box/Body/Grid/ShieldCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "COST 30"
+horizontal_alignment = 1
+
+[node name="FireCard" type="Button" parent="Panel/Margin/Box/Body/Grid"]
+custom_minimum_size = Vector2(280, 128)
+layout_mode = 2
+tooltip_text = "+1 bullet damage every 3 levels. The laser turns green at level 3 and yellow at level 6."
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin/Box/Body/Grid/FireCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Name" type="Label" parent="Panel/Margin/Box/Body/Grid/FireCard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "FIRE POWER +1"
+horizontal_alignment = 1
+
+[node name="Level" type="Label" parent="Panel/Margin/Box/Body/Grid/FireCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 12
+text = "LEVEL 0/10"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="Panel/Margin/Box/Body/Grid/FireCard/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "COST 25"
+horizontal_alignment = 1
+
+[node name="Skins" type="VBoxContainer" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Margin/Box/Skins"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.72, 0.9, 1)
+theme_override_font_sizes/font_size = 13
+text = "HULL SKINS"
+
+[node name="Row" type="HBoxContainer" parent="Panel/Margin/Box/Skins"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Hint" type="Label" parent="Panel/Margin/Box/Skins"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.76, 0.9, 1)
+theme_override_font_sizes/font_size = 12
+text = "WEARING CRIMSON   |   NEXT SKIN AT 5 PLANETS"
+
+[node name="Footer" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.63, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+text = "ENTER BUYS   |   ESC / B CLOSES"
+horizontal_alignment = 1

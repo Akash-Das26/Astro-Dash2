@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://ui/galaxy_map.gd" id="1_map"]
 [ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
 [ext_resource type="Script" path="res://entities/map/galaxy_links.gd" id="3_links"]
+[ext_resource type="PackedScene" path="res://ui/upgrade_panel.tscn" id="4_upgrades"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
 bg_color = Color(0.04, 0.06, 0.12, 0.95)
@@ -310,6 +311,19 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_cancel_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_cancel")
 theme_override_styles/focus = SubResource("StyleBoxFlat_cancel_hover")
 text = "CANCEL"
+
+[node name="UpgradeButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 34.0
+offset_right = 152.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 14
+text = "UPGRADE"
+
+[node name="UpgradePanel" parent="." instance=ExtResource("4_upgrades")]
+visible = false
+layout_mode = 1
 
 [node name="ResultCard" type="Control" parent="."]
 visible = false

@@ -11,6 +11,7 @@ const SECTION_UPGRADES: String = "upgrades"
 const SECTION_CAMPAIGN: String = "campaign"
 const KEY_HIGH_SCORE: String = "high_score"
 const KEY_ENERGY: String = "energy"
+const KEY_SKIN: String = "skin"
 const KEY_REDUCE_MOTION: String = "reduce_motion"
 const KEY_MUSIC_VOLUME: String = "music_volume"
 const KEY_SFX_VOLUME: String = "sfx_volume"
@@ -30,6 +31,9 @@ var high_score: int = 0
 var energy: int = 0
 ## Upgrade kind (StringName) -> level 0..Tuning.UPGRADE_MAX_LEVEL.
 var upgrade_levels: Dictionary = {}
+## Hull the ship wears. Skins.selected() checks the id against the unlocks, so
+## an unknown or locked id simply falls back to the first hull.
+var skin_id: StringName = &"red"
 ## Campaign run in progress: the map seed, the conquered body ids, the carried
 ## hull and shields, and the accumulated score. Energy and upgrades are
 ## meta-progression and live outside the run.
@@ -147,6 +151,7 @@ func load_data() -> void:
 		return
 	high_score = int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0))
 	energy = maxi(int(config.get_value(SECTION_PROGRESS, KEY_ENERGY, 0)), 0)
+	skin_id = StringName(String(config.get_value(SECTION_PROGRESS, KEY_SKIN, "red")))
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		upgrade_levels[kind] = clampi(
 			int(config.get_value(SECTION_UPGRADES, String(kind) + "_level", 0)),
@@ -183,6 +188,7 @@ func save_data() -> void:
 	var config := ConfigFile.new()
 	config.set_value(SECTION_PROGRESS, KEY_HIGH_SCORE, high_score)
 	config.set_value(SECTION_PROGRESS, KEY_ENERGY, energy)
+	config.set_value(SECTION_PROGRESS, KEY_SKIN, String(skin_id))
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		config.set_value(SECTION_UPGRADES, String(kind) + "_level", level_of(kind))
 	config.set_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, music_volume)

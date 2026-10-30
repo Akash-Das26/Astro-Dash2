@@ -7,7 +7,7 @@ extends Node2D
 
 const SHIP_TEXTURES: Array[Texture2D] = [
 	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green.png"),
+	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
 	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
 	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
 ]

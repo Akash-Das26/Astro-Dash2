@@ -271,6 +271,7 @@ func _on_ship_shot_fired(origin: Vector2, direction: Vector2) -> void:
 	bullet.position = origin
 	bullet.direction = direction
 	bullet.damage = ship.bullet_damage
+	bullet.tier = ship.bullet_tier
 	bullets.add_child(bullet)
 
 

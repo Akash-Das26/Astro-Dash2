@@ -32,11 +32,48 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 		"move_speed": Tuning.BASE_MOVE_SPEED + float(speed) * Tuning.SPEED_PER_LEVEL,
 		"shield_charges": mini(shield / Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + fire / Tuning.FIRE_LEVELS_PER_DAMAGE,
+		"bullet_tier": mini(fire / Tuning.FIRE_LEVELS_PER_DAMAGE, 2),
 		"fire_interval": maxf(
 			Tuning.MIN_FIRE_INTERVAL,
 			Tuning.BASE_FIRE_INTERVAL - float(fire) * Tuning.FIRE_INTERVAL_PER_LEVEL
 		),
 	}
+
+
+## The label on an upgrade card, naming the direction of the track.
+static func card_title(kind: StringName) -> String:
+	match kind:
+		&"hull":
+			return "HEALTH +20"
+		&"speed":
+			return "SPEED +1"
+		&"shield":
+			return "SHIELDS +1"
+		&"fire":
+			return "FIRE POWER +1"
+		_:
+			return title(kind)
+
+
+## Precise effect of one level, for the card tooltip.
+static func tooltip(kind: StringName) -> String:
+	match kind:
+		&"hull":
+			return "+20 MAX HP every %d levels." % Tuning.HULL_LEVELS_PER_STEP
+		&"speed":
+			return "+%d px/s flight speed per level." % roundi(Tuning.SPEED_PER_LEVEL)
+		&"shield":
+			return "+1 shield charge every %d levels, up to %d." % [
+				Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES,
+			]
+		&"fire":
+			return "+1 bullet damage every %d levels; the laser turns green at level %d and yellow at level %d." % [
+				Tuning.FIRE_LEVELS_PER_DAMAGE,
+				Tuning.FIRE_LEVELS_PER_DAMAGE,
+				Tuning.FIRE_LEVELS_PER_DAMAGE * 2,
+			]
+		_:
+			return ""
 
 
 ## What one track gives at this level, e.g. "HP 120" or "DMG 2  5.0/s".
