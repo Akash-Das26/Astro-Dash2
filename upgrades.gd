@@ -27,12 +27,20 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 	var speed: int = level_of(levels, &"speed")
 	var shield: int = level_of(levels, &"shield")
 	var fire: int = level_of(levels, &"fire")
+	# Step sizes are whole levels, so these divisions floor on purpose:
+	# 3 hull levels = +20 HP, 3 shield levels = +1 charge, 3 fire levels = +1 damage.
+	@warning_ignore("integer_division")
+	var hull_steps: int = hull / Tuning.HULL_LEVELS_PER_STEP
+	@warning_ignore("integer_division")
+	var shield_steps: int = shield / Tuning.SHIELD_LEVELS_PER_CHARGE
+	@warning_ignore("integer_division")
+	var damage_steps: int = fire / Tuning.FIRE_LEVELS_PER_DAMAGE
 	return {
-		"max_hp": Tuning.BASE_MAX_HP + (hull / Tuning.HULL_LEVELS_PER_STEP) * Tuning.HP_PER_HULL_STEP,
+		"max_hp": Tuning.BASE_MAX_HP + hull_steps * Tuning.HP_PER_HULL_STEP,
 		"move_speed": Tuning.BASE_MOVE_SPEED + float(speed) * Tuning.SPEED_PER_LEVEL,
-		"shield_charges": mini(shield / Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES),
-		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + fire / Tuning.FIRE_LEVELS_PER_DAMAGE,
-		"bullet_tier": mini(fire / Tuning.FIRE_LEVELS_PER_DAMAGE, 2),
+		"shield_charges": mini(shield_steps, Tuning.MAX_SHIELD_CHARGES),
+		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + damage_steps,
+		"bullet_tier": mini(damage_steps, 2),
 		"fire_interval": maxf(
 			Tuning.MIN_FIRE_INTERVAL,
 			Tuning.BASE_FIRE_INTERVAL - float(fire) * Tuning.FIRE_INTERVAL_PER_LEVEL

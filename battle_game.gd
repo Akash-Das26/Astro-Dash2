@@ -417,7 +417,13 @@ func _on_boss_died(points: int) -> void:
 
 func _add_rock(rock: Asteroid) -> void:
 	rock.shattered.connect(_on_rock_shattered)
-	asteroids.add_child(rock)
+	# Debris is built from a bullet's area_entered callback. Adding an Area2D
+	# while the physics server flushes queries is illegal, so the rock enters
+	# the tree after the physics step, when its _ready may build its collider.
+	if not _running:
+		rock.queue_free()
+		return
+	asteroids.call_deferred("add_child", rock)
 
 
 func _on_rock_shattered(at: Vector2, was_large: bool) -> void:
@@ -457,8 +463,11 @@ func _break_combo() -> void:
 
 ## Splits a kill's energy into a few orbs, so a heavy reads as a shower.
 func _drop_energy(at: Vector2, points: int) -> void:
+	# Orbs carry whole energy on purpose: a kill's energy floors to an integer.
+	@warning_ignore("integer_division")
 	var total: int = maxi(Tuning.MIN_ENERGY_PER_KILL, points / Tuning.SCORE_POINTS_PER_ENERGY)
 	var orb_count: int = mini(total, Tuning.MAX_ORBS_PER_KILL)
+	@warning_ignore("integer_division")
 	var each: int = total / orb_count
 	var remainder: int = total % orb_count
 	for index: int in orb_count:

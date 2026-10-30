@@ -272,13 +272,13 @@ func _tooltip_text(body_id: StringName) -> String:
 
 func _place_tooltip(body_id: StringName) -> void:
 	var screen: Vector2 = _world.position + _galaxy.position_of(body_id)
-	var size: Vector2 = _tooltip.size
+	var tooltip_size: Vector2 = _tooltip.size
 	var point: Vector2 = screen + Vector2(30.0, -20.0)
-	point.x = clampf(point.x, 8.0, Tuning.VIEW_SIZE.x - size.x - 8.0)
+	point.x = clampf(point.x, 8.0, Tuning.VIEW_SIZE.x - tooltip_size.x - 8.0)
 	point.y = clampf(
 		point.y,
 		Tuning.HUD_BAR_HEIGHT + 8.0,
-		Tuning.VIEW_SIZE.y - size.y - 34.0
+		Tuning.VIEW_SIZE.y - tooltip_size.y - 34.0
 	)
 	_tooltip.position = point
 

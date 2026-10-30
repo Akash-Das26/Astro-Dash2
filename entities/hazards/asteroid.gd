@@ -31,6 +31,9 @@ var _active: bool = true
 
 
 func _ready() -> void:
+	# The battle only ever adds a rock with call_deferred(), because debris is
+	# created from a bullet's area_entered callback. This _ready therefore runs
+	# outside the physics query flush and may build the collider directly.
 	_apply_size()
 	_spin = randf_range(Tuning.ASTEROID_SPIN_MIN, Tuning.ASTEROID_SPIN_MAX)
 	rotation = randf() * TAU
