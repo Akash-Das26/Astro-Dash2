@@ -39,6 +39,8 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 		return
 	if area is EnemyBase:
 		(area as EnemyBase).take_damage(damage)
+	elif area is BossStation:
+		(area as BossStation).take_damage(damage)
 	elif area is Asteroid:
 		(area as Asteroid).take_damage(damage)
 	else:

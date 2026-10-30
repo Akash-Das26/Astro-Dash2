@@ -44,6 +44,9 @@ const COMBO_MIN_SHOWN: float = 1.25
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _banner_timer: Timer = $BannerTimer
 @onready var _touch_controls: TouchControls = $Root/TouchControls
+@onready var _boss_panel: Control = $Root/BossPanel
+@onready var _boss_name: Label = $Root/BossPanel/Name
+@onready var _boss_bar: TextureProgressBar = $Root/BossPanel/Bar
 
 var _banner_tween: Tween
 
@@ -62,6 +65,7 @@ func _ready() -> void:
 	_end_card.visible = false
 	_combo_label.visible = false
 	_banner_label.visible = false
+	_boss_panel.visible = false
 
 
 ## The ship the touch zone aims from; the battle sets it once at boot.
@@ -76,6 +80,7 @@ func reset(battle: Battle) -> void:
 	set_combo(0, 1.0)
 	set_wave(1, battle.waves)
 	set_enemies(0, battle.enemy_total())
+	hide_boss()
 	hide_end()
 	show_playing()
 	_banner_label.visible = false
@@ -123,6 +128,23 @@ func set_shields(charges: int) -> void:
 	_shield_bar.max_value = Tuning.MAX_SHIELD_CHARGES
 	_shield_bar.value = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
 	_shield_bar.visible = charges > 0
+
+
+## Citadel bar: the station name and the red HP bar under the top readout.
+func show_boss(title: String, hp: int, max_hp: int) -> void:
+	_boss_name.text = title.to_upper()
+	_boss_panel.visible = true
+	set_boss_hp(hp, max_hp)
+
+
+func set_boss_hp(hp: int, max_hp: int) -> void:
+	var maximum: int = maxi(max_hp, 1)
+	_boss_bar.max_value = maximum
+	_boss_bar.value = clampi(hp, 0, maximum)
+
+
+func hide_boss() -> void:
+	_boss_panel.visible = false
 
 
 ## Short "WAVE 2/3" flash in the middle of the arena.

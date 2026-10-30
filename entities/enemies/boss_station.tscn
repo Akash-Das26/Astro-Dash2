@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://entities/enemies/boss_station.gd" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_red.png" id="2_station"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 54.0
+
+[node name="BossStation" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_boss")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.46, 0.46)
+texture = ExtResource("2_station")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_boss")

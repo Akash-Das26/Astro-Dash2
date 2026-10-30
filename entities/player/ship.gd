@@ -73,6 +73,15 @@ func apply_run_stats(stats: Dictionary) -> void:
 	set_shields(int(stats["shield_charges"]))
 
 
+## Hull and shield charges left over from the previous campaign battle. Applied
+## after apply_run_stats(), which heals to full and grants the shop shields.
+func carry_over(stored_hp: int, stored_shields: int) -> void:
+	if stored_hp > 0:
+		hp = clampi(stored_hp, 1, max_hp)
+		hp_changed.emit(hp, max_hp)
+	set_shields(stored_shields)
+
+
 ## Resets the hull for a new battle (or after a restart).
 func revive() -> void:
 	alive = true
@@ -239,5 +248,11 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		rock.bump()
 		take_damage(Tuning.ASTEROID_CONTACT_DAMAGE)
 	elif area.has_method("on_player_contact"):
+		# Fighters and stations report their own contact damage; anything else
+		# falls back to the fighter default.
+		var contact: int = Tuning.ENEMY_CONTACT_DAMAGE
+		var reported: Variant = area.get("contact_damage")
+		if reported is int:
+			contact = int(reported)
 		area.call("on_player_contact")
-		take_damage(Tuning.ENEMY_CONTACT_DAMAGE)
+		take_damage(contact)
