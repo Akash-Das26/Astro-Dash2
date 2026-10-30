@@ -17,8 +17,10 @@ const KEY_SFX_VOLUME: String = "sfx_volume"
 const KEY_MUTED: String = "muted"
 const KEY_AUTO_FIRE: String = "auto_fire"
 const KEY_CAMPAIGN_ACTIVE: String = "active"
-const KEY_CAMPAIGN_LIVES: String = "lives"
+const KEY_CAMPAIGN_SEED: String = "seed"
 const KEY_CAMPAIGN_SCORE: String = "score"
+const KEY_CAMPAIGN_HP: String = "hp"
+const KEY_CAMPAIGN_SHIELDS: String = "shields"
 const KEY_CAMPAIGN_CONQUERED: String = "conquered"
 const KEY_CAMPAIGN_BEST_SCORE: String = "best_score"
 const KEY_CAMPAIGN_BEST_PLANETS: String = "best_planets"
@@ -28,11 +30,15 @@ var high_score: int = 0
 var energy: int = 0
 ## Upgrade kind (StringName) -> level 0..Tuning.UPGRADE_MAX_LEVEL.
 var upgrade_levels: Dictionary = {}
-## Campaign run in progress: conquered sector ids, carried lives and total score.
+## Campaign run in progress: the map seed, the conquered body ids, the carried
+## hull and shields, and the accumulated score. Energy and upgrades are
+## meta-progression and live outside the run.
 var campaign_active: bool = false
+var campaign_seed: int = 0
 var campaign_conquered: Array[StringName] = []
-var campaign_lives: int = 0
 var campaign_score: int = 0
+var campaign_hp: int = 0
+var campaign_shields: int = 0
 ## Best campaign ever finished, for the summaries and the menu.
 var campaign_best_score: int = 0
 var campaign_best_planets: int = 0
@@ -85,27 +91,33 @@ func buy_upgrade(kind: StringName) -> bool:
 	return true
 
 
-## Starts (or restarts) a campaign. Sector progress and lives reset; energy and
-## upgrades are meta-progression and deliberately survive.
-func begin_campaign(start_lives: int) -> void:
+## Starts (or restarts) a campaign on a fresh galaxy. Conquests, hull and score
+## reset; energy and upgrades are meta-progression and deliberately survive.
+func begin_campaign(map_seed: int) -> void:
 	campaign_active = true
+	campaign_seed = map_seed
 	campaign_conquered.clear()
-	campaign_lives = maxi(start_lives, 1)
 	campaign_score = 0
+	campaign_hp = 0
+	campaign_shields = 0
 	save_data()
 
 
-## Saves the campaign after a sector is won, without ending it.
-func record_campaign_progress(sector_id: StringName, lives: int, score: int) -> void:
-	if not campaign_conquered.has(sector_id):
-		campaign_conquered.append(sector_id)
-	campaign_lives = maxi(lives, 1)
+## Saves the campaign after a body is conquered, without ending it. The hull and
+## shields are the ones the ship finished the battle with, so they carry into
+## the next battle (and survive a quit).
+func record_campaign_progress(body_id: StringName, score: int, hp: int, shields: int) -> void:
+	if not campaign_conquered.has(body_id):
+		campaign_conquered.append(body_id)
 	campaign_score = maxi(score, 0)
+	campaign_hp = maxi(hp, 0)
+	campaign_shields = clampi(shields, 0, Tuning.MAX_SHIELD_CHARGES)
 	save_data()
 
 
-## Ends the campaign (completion or defeat), records the best result and clears
-## the in-progress run. Returns true when this run beat the stored best.
+## Ends the campaign (completion or defeat) and records the best result. The
+## conquests and the seed stay in the file, so the summary can show the run that
+## just ended; the next begin_campaign() clears them.
 func finish_campaign() -> bool:
 	var planets: int = campaign_conquered.size()
 	var is_new_best: bool = campaign_score > campaign_best_score \
@@ -113,15 +125,14 @@ func finish_campaign() -> bool:
 	campaign_best_score = maxi(campaign_best_score, campaign_score)
 	campaign_best_planets = maxi(campaign_best_planets, planets)
 	campaign_active = false
-	campaign_conquered.clear()
-	campaign_lives = 0
-	campaign_score = 0
+	campaign_hp = 0
+	campaign_shields = 0
 	save_data()
 	return is_new_best
 
 
-func is_sector_conquered(sector_id: StringName) -> bool:
-	return campaign_conquered.has(sector_id)
+func is_body_conquered(body_id: StringName) -> bool:
+	return campaign_conquered.has(body_id)
 
 
 func _reset_upgrade_levels() -> void:
@@ -148,18 +159,24 @@ func load_data() -> void:
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
 	auto_fire = bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true))
 	campaign_active = bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false))
-	campaign_lives = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_LIVES, 0)), 0)
+	campaign_seed = int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, 0))
 	campaign_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0)), 0)
+	campaign_hp = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, 0)), 0)
+	campaign_shields = clampi(
+		int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, 0)),
+		0,
+		Tuning.MAX_SHIELD_CHARGES
+	)
 	campaign_best_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, 0)), 0)
 	campaign_best_planets = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, 0)), 0)
 	campaign_conquered.clear()
 	var conquered: PackedStringArray = config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, PackedStringArray())
 	for sector: String in conquered:
 		campaign_conquered.append(StringName(sector))
-	# A campaign always has at least one life; a file claiming otherwise (an
-	# interrupted write, a hand-edited save) would resume into an instant loss.
-	if campaign_active and campaign_lives < 1:
-		campaign_lives = 1
+	# A stored campaign without a seed cannot be rebuilt, so treat it as finished
+	# instead of showing a map that does not match the conquests.
+	if campaign_active and campaign_seed == 0:
+		campaign_active = false
 
 
 func save_data() -> void:
@@ -174,8 +191,10 @@ func save_data() -> void:
 	config.set_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, reduce_motion)
 	config.set_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, auto_fire)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, campaign_active)
-	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_LIVES, campaign_lives)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, campaign_seed)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, campaign_score)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, campaign_hp)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, campaign_shields)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, campaign_best_score)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, campaign_best_planets)
 	var conquered := PackedStringArray()

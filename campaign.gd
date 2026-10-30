@@ -1,100 +1,134 @@
 class_name Campaign
 extends RefCounted
-## Static helpers over the sector graph in Tuning.CAMPAIGN_SECTORS. No state
-## lives here: who has conquered what is SaveData's business, so this file can
-## answer "what is unlocked", "how hard is this sector" and "what waves does it
-## spawn" without touching the runtime.
+## The run the galaxy map and a battle share.
+##
+## The map itself is rebuilt from `SaveData.campaign_seed`, so quitting mid-run
+## (or mid-battle) and relaunching brings back the same worlds, the same
+## conquests and the same hull. Only the two transient fields below live for a
+## single session; a cold launch simply returns to the map.
 
-## Sectors the player may attack right now, in map order.
-static func available_ids(conquered: Array[StringName]) -> Array[StringName]:
-	var available: Array[StringName] = []
-	for sector_id: StringName in Tuning.CAMPAIGN_ORDER:
-		if conquered.has(sector_id):
-			continue
-		if _is_unlocked(sector_id, conquered):
-			available.append(sector_id)
-	return available
+## Body chosen on the map, read and cleared by the battle scene.
+static var pending_id: StringName = &""
+## Summary of the last finished battle, read once by the map.
+static var last_result: Dictionary = {}
 
-
-static func total_sectors() -> int:
-	return Tuning.CAMPAIGN_ORDER.size()
+static var _galaxy: Galaxy
+static var _galaxy_seed: int = -1
 
 
-static func exists(sector_id: StringName) -> bool:
-	return Tuning.CAMPAIGN_SECTORS.has(sector_id)
+## The map's galaxy, regenerated only when the stored seed changed.
+static func galaxy() -> Galaxy:
+	if _galaxy != null and _galaxy_seed == SaveData.campaign_seed:
+		return _galaxy
+	_galaxy_seed = SaveData.campaign_seed
+	_galaxy = Galaxy.generate(_galaxy_seed)
+	return _galaxy
 
 
-static func sector(sector_id: StringName) -> Dictionary:
-	return Tuning.CAMPAIGN_SECTORS.get(sector_id, {})
+## Called by the map on entry. The front end that offers NEW / CONTINUE arrives
+## with the next stage, so until then the map is always inside a live campaign.
+static func ensure_run() -> Galaxy:
+	if not SaveData.campaign_active:
+		begin_run()
+	return galaxy()
 
 
-static func title(sector_id: StringName) -> String:
-	return String(sector(sector_id).get("name", String(sector_id).to_upper()))
+## Fresh seed, fresh conquests; energy and upgrades are kept.
+static func begin_run() -> void:
+	var fresh_seed: int = int(Time.get_unix_time_from_system()) ^ randi()
+	SaveData.begin_campaign(fresh_seed)
+	_galaxy = null
+	_galaxy_seed = -1
+	last_result = {}
+	pending_id = &""
 
 
-static func tier_of(sector_id: StringName) -> int:
-	return maxi(int(sector(sector_id).get("tier", 1)), 1)
+static func start_battle(body_id: StringName) -> void:
+	pending_id = body_id
 
 
-static func wave_count(sector_id: StringName) -> int:
-	return maxi(int(sector(sector_id).get("waves", 1)), 1)
+static func take_pending_id() -> StringName:
+	var body_id: StringName = pending_id
+	pending_id = &""
+	return body_id
 
 
-static func has_boss(sector_id: StringName) -> bool:
-	return bool(sector(sector_id).get("boss", false))
+static func battle_for(body_id: StringName) -> Battle:
+	return galaxy().battle_for(body_id)
 
 
-static func position_of(sector_id: StringName) -> Vector2:
-	return sector(sector_id).get("pos", Vector2.ZERO)
+static func attackable() -> Array[StringName]:
+	return galaxy().attackable(SaveData.campaign_conquered)
 
 
-static func links_of(sector_id: StringName) -> Array:
-	return sector(sector_id).get("links", [])
+static func can_attack(body_id: StringName) -> bool:
+	return attackable().has(body_id)
 
 
-## The last sector has nowhere further to go.
-static func is_final(sector_id: StringName) -> bool:
-	return links_of(sector_id).is_empty()
+## Home is conquered from the start without being stored in the save.
+static func planets_conquered() -> int:
+	return mini(SaveData.campaign_conquered.size() + 1, galaxy().body_count())
 
 
-## One composition per wave. Every wave uses the sector mix; a boss sector adds
-## the boss to its last wave, so clearing the boss clears the sector.
-static func waves_for(sector_id: StringName) -> Array[Dictionary]:
-	var count: int = wave_count(sector_id)
-	var mix: Dictionary = sector(sector_id).get("mix", {})
-	var waves: Array[Dictionary] = []
-	for index: int in count:
-		var composition: Dictionary = mix.duplicate()
-		if has_boss(sector_id) and index == count - 1:
-			composition["boss"] = 1
-		waves.append(composition)
-	return waves
+static func citadels_conquered() -> int:
+	return galaxy().citadel_conquered(SaveData.campaign_conquered)
 
 
-static func difficulty_for(sector_id: StringName) -> Dictionary:
-	return difficulty_for_tier(tier_of(sector_id))
+## Banks a won battle: conquest, carried hull, score, flat energy and, for the
+## final gate, the end of the campaign. Returns the summary for the map.
+static func award_victory(
+	body_id: StringName,
+	score: int,
+	hp: int,
+	shields: int,
+	bonus_energy: int
+) -> Dictionary:
+	var map: Galaxy = galaxy()
+	var data: Dictionary = map.body(body_id)
+	SaveData.add_energy(maxi(bonus_energy, 0))
+	SaveData.record_campaign_progress(
+		body_id,
+		SaveData.campaign_score + maxi(score, 0),
+		hp,
+		shields
+	)
+	var completed: bool = body_id == map.gate_id
+	var result: Dictionary = {
+		"won": true,
+		"name": String(data.get("name", "")),
+		"score": maxi(score, 0),
+		"energy": maxi(bonus_energy, 0),
+		"planets": planets_conquered(),
+		"citadels": citadels_conquered(),
+		"completed": completed,
+	}
+	if completed:
+		SaveData.finish_campaign()
+	last_result = result
+	return result
 
 
-static func difficulty_for_tier(tier: int) -> Dictionary:
-	var row: Dictionary = Tuning.CAMPAIGN_TIER_DIFFICULTY.get(tier, {})
-	if row.is_empty():
-		row = Tuning.CAMPAIGN_TIER_DIFFICULTY[1]
-	return row
+## Ends the run on a lost battle. The conquests stay in the save so the map
+## behind the summary still shows what was taken.
+static func record_defeat(body_id: StringName, score: int) -> Dictionary:
+	var map: Galaxy = galaxy()
+	var data: Dictionary = map.body(body_id)
+	SaveData.campaign_score += maxi(score, 0)
+	var result: Dictionary = {
+		"won": false,
+		"name": String(data.get("name", "")),
+		"score": maxi(score, 0),
+		"planets": planets_conquered(),
+		"citadels": citadels_conquered(),
+		"best": maxi(SaveData.campaign_best_score, SaveData.campaign_score),
+	}
+	SaveData.finish_campaign()
+	last_result = result
+	return result
 
 
-static func highest_tier(conquered: Array[StringName]) -> int:
-	var best: int = 0
-	for sector_id: StringName in conquered:
-		best = maxi(best, tier_of(sector_id))
-	return best
-
-
-## A sector is tappable when it is not conquered and either it is a starting
-## sector (nothing conquered yet) or a conquered sector links to it.
-static func _is_unlocked(sector_id: StringName, conquered: Array[StringName]) -> bool:
-	if conquered.is_empty():
-		return Tuning.CAMPAIGN_START.has(sector_id)
-	for done: StringName in conquered:
-		if links_of(done).has(sector_id):
-			return true
-	return false
+## Reads the pending summary (empty when there is none).
+static func take_result() -> Dictionary:
+	var result: Dictionary = last_result.duplicate()
+	last_result = {}
+	return result
