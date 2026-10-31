@@ -54,9 +54,8 @@ static func apply_saved() -> void:
 ## binding of that kind, and to UNBOUND when the action has none.
 static func binding_text(action: StringName, gamepad: bool) -> String:
 	ensure_defaults()
-	var stored: String = String(
-		(SaveData.gamepad_bindings if gamepad else SaveData.keyboard_bindings).get(action, "")
-	)
+	var column: Dictionary = SaveData.gamepad_bindings if gamepad else SaveData.keyboard_bindings
+	var stored: String = String(column.get(action, ""))
 	if not stored.is_empty():
 		var event := str_to_var(stored) as InputEvent
 		if event != null:
