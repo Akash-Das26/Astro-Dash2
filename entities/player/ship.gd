@@ -435,6 +435,9 @@ func _update_invulnerability(delta: float) -> void:
 ## flashes when a charge is spent or picked up, and the recharge lights the
 ## ring a little brighter while a new charge is building.
 func _draw() -> void:
+	# The debug overlay must not depend on a shield being up.
+	if Tuning.thruster_debug:
+		_draw_thruster_debug()
 	var manual_active: bool = _shield_active_left > 0.0
 	if shields <= 0 and not manual_active:
 		return
@@ -454,8 +457,6 @@ func _draw() -> void:
 	for index: int in shields:
 		var angle: float = -PI * 0.5 + float(index) * (TAU / float(Tuning.MAX_SHIELD_CHARGES))
 		draw_circle(Vector2(cos(angle), sin(angle)) * radius, 2.5, Color(0.75, 1.0, 1.0, 0.9))
-	if Tuning.thruster_debug:
-		_draw_thruster_debug()
 
 
 ## F3 overlay: the hurtbox circle and where the exhaust is anchored. The anchor
