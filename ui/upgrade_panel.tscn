@@ -125,7 +125,7 @@ SHIELDS   0/3
 FIRE       1x"
 
 [node name="Preview" type="Control" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
-custom_minimum_size = Vector2(210, 118)
+custom_minimum_size = Vector2(210, 130)
 layout_mode = 2
 mouse_filter = 2
 

@@ -22,7 +22,16 @@ const SKIN_ICON_SIZE: Vector2 = Vector2(56.0, 40.0)
 ## against the base 0.4 keeps the small green interceptor equally big.
 const BASE_SKIN_SCALE: float = 0.4
 const PREVIEW_ZOOM: float = 1.4
-const PREVIEW_CENTER: Vector2 = Vector2(105.0, 62.0)
+## The preview box (must match the 210x130 control in the scene) and the point
+## the hull is drawn around. The hull sits high in the box so the flame has
+## room below it, clear of the skin name underneath.
+const PREVIEW_SIZE: Vector2 = Vector2(210.0, 130.0)
+const PREVIEW_CENTER: Vector2 = Vector2(105.0, 44.0)
+## The flame is scaled to whatever room is left under the tail, and hidden when
+## that is barely a spark, so it can never reach the name label.
+const PREVIEW_FLAME_SCALE: float = 0.9
+const PREVIEW_FLAME_MIN: float = 0.12
+const PREVIEW_FLAME_MARGIN: float = 4.0
 const LASER_NAMES: Array[String] = ["BLUE", "GREEN", "YELLOW"]
 const LASER_COLORS: Array[Color] = [
 	Color(0.55, 0.78, 1.0),
@@ -306,6 +315,26 @@ func _refresh_skins() -> void:
 	_skin_hint.text = "WEARING %s   |   %s" % [Skins.title(worn), next_text]
 
 
+## The flame hangs off the hull's tail exactly as it does in battle: the nose
+## points up, so the tail is half a hull below the centre and the flame burns
+## further down. The preview box is small, so the flame is shrunk to the room
+## left under the tail, and hidden outright if that room is too little.
+func _place_preview_thruster(zoom: float, hull_height: float, alpha: float) -> void:
+	var tail: float = PREVIEW_CENTER.y + hull_height * 0.5 + Tuning.THRUSTER_TAIL_GAP
+	_preview_thruster.position = Vector2(PREVIEW_CENTER.x, tail)
+	var room: float = PREVIEW_SIZE.y - PREVIEW_FLAME_MARGIN - tail
+	# The art is ART_SIZE long and the thrust stretch multiplies that again.
+	var longest: float = Tuning.THRUSTER_ART_SIZE * Tuning.THRUSTER_FULL_SCALE
+	var fit: float = room / longest if longest > 0.0 else 0.0
+	var flame: float = minf(zoom * PREVIEW_FLAME_SCALE, fit)
+	_preview_thruster.set_base_scale(Vector2.ONE * maxf(flame, 0.0))
+	_preview_thruster.set_thrust(0.9)
+	# `set_thrust` re-shows the flame whenever there is any thrust, so the
+	# fit check has to be the last word.
+	_preview_thruster.visible = flame >= PREVIEW_FLAME_MIN
+	_preview_thruster.modulate = Color(1.0, 1.0, 1.0, alpha)
+
+
 ## The preview under CURRENT STATS: hull large, thruster lit, and exactly what
 ## it takes to wear it. Locked hulls are dimmed rather than hidden.
 func _refresh_preview() -> void:
@@ -325,10 +354,7 @@ func _refresh_preview() -> void:
 	var height: float = 0.0
 	if texture != null:
 		height = float(texture.get_height()) * zoom
-	_preview_thruster.position = PREVIEW_CENTER + Vector2(0.0, height * 0.36)
-	_preview_thruster.set_base_scale(Vector2.ONE * (zoom * 0.9))
-	_preview_thruster.set_thrust(0.9)
-	_preview_thruster.modulate = Color(1.0, 1.0, 1.0, alpha)
+	_place_preview_thruster(zoom, height, alpha)
 	_preview_name.text = Skins.title(id)
 	_preview_name.add_theme_color_override(
 		"font_color", UITheme.COLOR_TEXT if unlocked else UITheme.COLOR_MUTED
