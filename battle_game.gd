@@ -168,7 +168,7 @@ func _start_fight(fight: Battle) -> void:
 	ship.apply_run_stats(Upgrades.stats_for(SaveData.upgrade_levels))
 	ship.damage_scale = Difficulty.enemy_damage_scale() if _campaign else 1.0
 	if _campaign:
-		# Hull and shield charges carry from the previous battle of the run.
+		# The hull carries between battles of the run; the shield refills.
 		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
 	ship.apply_loadout(SaveData.weapon_primary, SaveData.weapon_secondary)
 	_hp_at_start = ship.hp
@@ -176,7 +176,7 @@ func _start_fight(fight: Battle) -> void:
 	hud.set_energy(energy)
 	hud.set_score(score)
 	hud.set_hp(ship.hp, ship.max_hp)
-	hud.set_shields(ship.shields)
+	hud.set_shields(ship.shields, ship.shield_capacity)
 	hud.set_weapons(ship.weapon_id(0), ship.weapon_id(1))
 	hud.set_weapon_cooldowns(0.0, 0.0)
 	director.start(battle, ship)
@@ -706,9 +706,17 @@ func _drop_shield(at: Vector2) -> void:
 func _on_shield_collected() -> void:
 	if not _running:
 		return
-	ship.add_shield(1)
-	AudioManager.play_sfx("shield_pickup")
-	_spawn_float_text(ship.global_position, "+1 SHIELD", Color(0.55, 0.95, 1.0))
+	if ship.add_shield(1):
+		AudioManager.play_sfx("shield_pickup")
+		_spawn_float_text(ship.global_position, "+1 SHIELD", Color(0.55, 0.95, 1.0))
+		return
+	# A full shield never wastes the drop: it pays out as energy instead.
+	var bonus: int = Tuning.SHIELD_PICKUP_FULL_ENERGY
+	energy += bonus
+	SaveData.add_energy(bonus)
+	hud.set_energy(energy)
+	AudioManager.play_sfx("energy_pickup")
+	_spawn_float_text(ship.global_position, "+%d ENERGY" % bonus, Color(0.6, 1.0, 0.75))
 
 
 func _on_energy_collected(value: int) -> void:

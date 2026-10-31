@@ -199,6 +199,13 @@ const SHIELD_MODE_AUTO: StringName = &"auto"
 const SHIELD_MODE_MANUAL: StringName = &"manual"
 ## Default shield mode, used when there is no save yet.
 const SHIELD_MODE_DEFAULT: StringName = SHIELD_MODE_AUTO
+## Capacity at SHIELDS level 0. Every battle starts with the shield full, so a
+## fresh save already has one charge to spend (AUTO) or raise (MANUAL). The
+## upgrade adds one more per SHIELD_LEVELS_PER_CHARGE levels, up to the cap.
+const SHIELD_BASE_CAPACITY: int = 1
+## A drop taken while the shield is already full is not wasted: it pays out this
+## much energy instead, with a floating readout.
+const SHIELD_PICKUP_FULL_ENERGY: int = 5
 ## MANUAL: one charge raises the bubble for this long, with a short cooldown
 ## before another charge can be spent. It flashes during its last second.
 const SHIELD_ACTIVE_SECONDS: float = 4.0

@@ -172,7 +172,10 @@ static func help_text() -> String:
 		binding_text(&"pause", false),
 		binding_text(&"controls", false),
 	]
-	text += "\nDIFFICULTY IS CHOSEN ON NEW GAME; THE HULL HEALS BETWEEN PLANETS BY MODE"
+	text += "\nTHE HULL HEALS BETWEEN PLANETS BY DIFFICULTY; THE SHIELD STARTS FULL EVERY BATTLE"
+	text += "\nSHIELD %s   |   DROPS REFILL 1, OR PAY %d ENERGY WHEN FULL" % [
+		String(SaveData.shield_mode).to_upper(), Tuning.SHIELD_PICKUP_FULL_ENERGY,
+	]
 	return text
 
 

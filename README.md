@@ -63,8 +63,9 @@ The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
 - **A 2x2 grid of cards** — HEALTH +20, SPEED +1, SHIELDS +1, FIRE POWER +1 —
   each showing its level 0/10, its price and its precise effect on hover
   (`Upgrades.tooltip`). A card is disabled when it is unaffordable or maxed.
-- **Current stats** on the left: HEALTH, SPEED, SHIELDS, FIRE. When a campaign is
-  running, HEALTH and SHIELDS show the carried hull instead of a fresh one.
+- **Current stats** on the left: HEALTH, SPEED, SHIELDS (current/capacity), FIRE.
+  During a campaign HEALTH shows the carried hull; the shield always starts a
+  battle full, so it reads capacity/capacity.
 - **Energy** in red at the top; **X** closes (48px). Arrow keys / d-pad move
   between cards, `Enter` / `A` buys, `Esc` / `B` / Android Back closes.
 - **Fire power is now shared by both hardpoints**: every level adds +12% damage
@@ -87,8 +88,9 @@ The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
 - **Difficulty from distance.** Graph hops from home pick a band: 6 to 14 enemies
   per wave, 1 to 3 waves, a heavier mix, more rocks and a different backdrop
   (`background-black`, `-blue`, `-purple`, `-red`). The trait bends it again.
-- **Carried hull.** HP and shield charges carry from one campaign battle to the
-  next and are saved with every conquest. Upgrade levels apply on top.
+- **Carried hull.** HP carries from one campaign battle to the next and is saved
+  with every conquest; the shield refills to its full capacity at the start of
+  every battle. Upgrade levels apply on top.
 - **Citadel boss.** A citadel's last wave is followed by its station: 140 HP plus
   9 per hop, hovering and firing a fan of five red dots. Its name and a red
   health bar sit under the top readout. Beating it pays a large energy bonus.
@@ -105,13 +107,15 @@ The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
   The hitbox is deliberately smaller than the art. **HIGH-CONTRAST BULLETS**
   (Settings, on by default) thickens the outline and brightens the halo; on the
   red band the outline switches to yellow-white.
-- **Shield drops.** About 8% of kills and always a citadel drop a blue bubble
-  pickup worth one charge, up to 3. The ship wears a bubble with one pip per
-  charge that flashes when a charge is spent, and the HUD reads `SHIELD x N`
-  next to the HP bar. The SHIELDS track also adds starting charges every three
-  levels and recharges one charge after a quiet stretch (25 s at level 1 down to
-  8 s at max, reset by any hit). At level 0 the drop still works, so a shield is
-  always reachable.
+- **Shields: capacity and charges.** The shield holds `capacity` charges and
+  **every battle starts with it full** — 1 charge at SHIELDS level 0, +1 per
+  three levels up to 3. The ship wears a bubble with one pip per charge that
+  flashes when a charge is spent, and the HUD reads `SHIELD 2/3` next to the HP
+  bar (`NO SHIELD` at zero). About 8% of kills and always a citadel drop a blue
+  bubble pickup that refills one charge; a drop collected while the shield is
+  already full is never wasted — it pays 5 energy with a floating readout. The
+  SHIELDS track also recharges one charge after a quiet stretch (25 s at level 1
+  down to 8 s at max, reset by any hit).
 - **Two hardpoints.** The primary fires on `shoot`, the secondary on `shoot_alt`
   (right mouse / `Shift` / left shoulder or trigger / a second touch button),
   with independent cooldowns and left/right muzzle positions.
@@ -312,7 +316,7 @@ depends on the exact values.
 | Canvas and arena | `VIEW_SIZE` (960x600), `HUD_BAR_HEIGHT` (24), `ARENA_TOP/BOTTOM/LEFT/RIGHT`, `ARENA_MARGIN` |
 | Ship flight | `SHIP_MAX_HP`, `SHIP_ACCELERATION`, `SHIP_MAX_SPEED`, `SHIP_DRAG` (exponential inertia), `SHIP_TURN_RATE` (exponential turn), `SHIP_AIM_DEADZONE`, `SHIP_WRAP_MARGIN` |
 | Weapons | `WEAPONS` (one row per weapon: `damage`, `interval`, `speed`, `count`, `spread`, `pierce`, `life`, `scale`, `homing`, `area`, `knockback`, `cost`, `unlock`), `WEAPON_ORDER`, `WEAPON_MUZZLE_SIDE`, `FIRE_DAMAGE_PER_LEVEL`, `FIRE_COOLDOWN_PER_LEVEL`, `MIN_FIRE_COOLDOWN_MULT`, `WEAPON_BURST_COLOR`, `WEAPON_BURST_PARTICLES` |
-| Shield drops and recharge | `SHIELD_DROP_CHANCE`, `SHIELD_DROP_FALL_SPEED`, `SHIELD_DROP_DRIFT`, `SHIELD_DROP_LIFE`, `SHIELD_DROP_RADIUS`, `SHIELD_DROP_VISUAL_RADIUS`, `SHIELD_RECHARGE_BASE`, `SHIELD_RECHARGE_STEP`, `SHIELD_RECHARGE_MIN`, `SHIELD_RECHARGE_DAMAGE_DELAY`, `SHIELD_BUBBLE_RADIUS` |
+| Shield capacity, drops and recharge | `SHIELD_BASE_CAPACITY`, `SHIELD_PICKUP_FULL_ENERGY`, `SHIELD_DROP_CHANCE`, `SHIELD_DROP_FALL_SPEED`, `SHIELD_DROP_DRIFT`, `SHIELD_DROP_LIFE`, `SHIELD_DROP_RADIUS`, `SHIELD_DROP_VISUAL_RADIUS`, `SHIELD_RECHARGE_BASE`, `SHIELD_RECHARGE_STEP`, `SHIELD_RECHARGE_MIN`, `SHIELD_RECHARGE_DAMAGE_DELAY`, `SHIELD_BUBBLE_RADIUS` |
 | Enemy bullet art | `ENEMY_BULLET_VISUAL_RADIUS`, `ENEMY_BULLET_CORE_RADIUS`, `ENEMY_BULLET_HITBOX_RADIUS`, `ENEMY_BULLET_TRAIL_SEGMENTS`, `ENEMY_BULLET_TRAIL_SPACING`, `ENEMY_BULLET_GLOW_PULSE`, `ENEMY_BULLET_BODY`, `ENEMY_BULLET_CORE`, `ENEMY_BULLET_OUTLINE*`, `ENEMY_BULLET_OUTLINE_WIDTH*` |
 | Ship damage | `SHIP_INVULNERABILITY`, `SHIP_SHIELD_GRACE`, `MAX_SHIELD_CHARGES`, `SHIP_BLINK_*` |
 | Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE`, `THRUSTER_TAIL_GAP`, `THRUSTER_ART_SIZE`, `THRUSTER_BAR_ROWS` |
@@ -360,9 +364,10 @@ FIRE POWER multiplies damage by `1 + 0.12 * level` and cooldowns by
 | What | Value |
 | --- | --- |
 | Shield drop chance | 8% per kill; a citadel boss always drops one |
-| Shield drop | one charge, max 3, drifts down for 12 s |
+| Shield capacity | 1 at level 0, +1 per 3 levels, max 3; every battle starts full |
+| Shield drop | one charge, up to capacity, drifts down for 12 s; collected at full it pays 5 energy instead |
 | Shield recharge | 25 s at level 1, -1.8 s per level, floor 8 s; 3 s of no damage required; level 0 = no recharge |
-| Shield upgrade | 15 energy + 8 per level; +1 starting charge every 3 levels |
+| Shield upgrade | 15 energy + 8 per level; +1 capacity every 3 levels |
 | Enemy bullet | 10 px visual radius, 3.4 px core, 4 trail puffs, 8 px hitbox, 2 px outline (3.5 px high contrast) |
 
 ### Difficulty bands

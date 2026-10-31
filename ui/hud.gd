@@ -171,14 +171,18 @@ func set_hp(hp: int, max_hp: int) -> void:
 
 
 var _shield_charges: int = 0
+var _shield_capacity: int = Tuning.SHIELD_BASE_CAPACITY
 var _shield_seconds: float = 0.0
 
 
-## The bar is the visual, the label is the exact count, and both stay readable
-## at zero so the player knows a drop is worth grabbing.
-func set_shields(charges: int) -> void:
-	_shield_charges = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
-	_shield_bar.max_value = Tuning.MAX_SHIELD_CHARGES
+## The bar is the visual, the label reads `current/capacity`, and both stay
+## readable at zero so the player knows a drop is worth grabbing.
+func set_shields(charges: int, capacity: int = Tuning.SHIELD_BASE_CAPACITY) -> void:
+	_shield_capacity = clampi(
+		capacity, Tuning.SHIELD_BASE_CAPACITY, Tuning.MAX_SHIELD_CHARGES
+	)
+	_shield_charges = clampi(charges, 0, _shield_capacity)
+	_shield_bar.max_value = _shield_capacity
 	_shield_bar.value = _shield_charges
 	_shield_bar.visible = _shield_charges > 0
 	_render_shield_label()
@@ -192,10 +196,12 @@ func set_shield_active(seconds: float) -> void:
 
 func _render_shield_label() -> void:
 	if _shield_seconds > 0.05:
-		_shield_label.text = "SHIELD x%d   %.1fs" % [_shield_charges, _shield_seconds]
+		_shield_label.text = "SHIELD %d/%d   %.1fs" % [
+			_shield_charges, _shield_capacity, _shield_seconds,
+		]
 		_shield_label.add_theme_color_override("font_color", Color(0.75, 1.0, 1.0))
 	elif _shield_charges > 0:
-		_shield_label.text = "SHIELD x%d" % _shield_charges
+		_shield_label.text = "SHIELD %d/%d" % [_shield_charges, _shield_capacity]
 		_shield_label.add_theme_color_override("font_color", Color(0.55, 0.95, 1.0))
 	else:
 		_shield_label.text = "NO SHIELD"

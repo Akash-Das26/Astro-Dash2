@@ -20,7 +20,7 @@ signal shield_raised
 ## Seconds left on the manual bubble; 0 when it is down.
 signal shield_timer_changed(remaining: float)
 signal hp_changed(hp: int, max_hp: int)
-signal shields_changed(charges: int)
+signal shields_changed(charges: int, capacity: int)
 signal died
 
 const SHOOT_ACTIONS: Array[StringName] = [&"shoot", &"shoot_alt"]
@@ -41,6 +41,8 @@ const SHOOT_ACTIONS: Array[StringName] = [&"shoot", &"shoot_alt"]
 
 var hp: int = Tuning.SHIP_MAX_HP
 var shields: int = 0
+## How many charges the shield holds. The SHIELDS track raises it; a battle
+## always starts full, so this is also the count shown on the HUD.
 ## Seconds for the SHIELDS track to recharge one charge; 0 disables it.
 var shield_recharge_time: float = 0.0
 var alive: bool = true
@@ -84,7 +86,7 @@ func _ready() -> void:
 	_hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 	hp = max_hp
 	hp_changed.emit(hp, max_hp)
-	shields_changed.emit(shields)
+	shields_changed.emit(shields, shield_capacity)
 
 
 ## Movement, aim, fire and damage all tick in `_physics_process`: the hull flies
@@ -133,9 +135,14 @@ func apply_run_stats(stats: Dictionary) -> void:
 	bullet_tier = int(stats.get("bullet_tier", 0))
 	fire_interval = float(stats["fire_interval"])
 	shield_recharge_time = float(stats.get("shield_recharge", 0.0))
+	shield_capacity = clampi(
+		int(stats.get("shield_charges", Tuning.SHIELD_BASE_CAPACITY)),
+		Tuning.SHIELD_BASE_CAPACITY,
+		Tuning.MAX_SHIELD_CHARGES
+	)
 	apply_controls()
 	revive()
-	set_shields(int(stats["shield_charges"]))
+	set_shields(shield_capacity)
 
 
 ## Reads the schemes from the save. Called at the start of every battle, so a
@@ -173,13 +180,15 @@ func weapon_cooldown_ratio(slot: int) -> float:
 	return clampf(_weapon_cooldowns[slot] / total, 0.0, 1.0)
 
 
-## Hull and shield charges left over from the previous campaign battle. Applied
-## after apply_run_stats(), which heals to full and grants the shop shields.
-func carry_over(stored_hp: int, stored_shields: int) -> void:
+## Hull left over from the previous campaign battle. Applied after
+## apply_run_stats(), which already filled the shield: every battle starts with
+## the shield full, so the stored count is kept in the save but never starts the
+## next fight with spent charges.
+func carry_over(stored_hp: int, _stored_shields: int) -> void:
 	if stored_hp > 0:
 		hp = clampi(stored_hp, 1, max_hp)
 		hp_changed.emit(hp, max_hp)
-	set_shields(stored_shields)
+	set_shields(shield_capacity)
 
 
 ## Resets the hull for a new battle (or after a restart).
@@ -205,18 +214,21 @@ func revive() -> void:
 
 
 func set_shields(charges: int) -> void:
-	shields = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
-	shields_changed.emit(shields)
+	shields = clampi(charges, 0, shield_capacity)
+	shields_changed.emit(shields, shield_capacity)
 	queue_redraw()
 
 
-## A shield drop: one charge, never above the cap. Works at SHIELDS level 0.
-func add_shield(amount: int = 1) -> void:
-	if not alive or shields >= Tuning.MAX_SHIELD_CHARGES:
-		return
+## A shield drop: one charge, never above the capacity. Works at SHIELDS level
+## 0, where the capacity is one. Returns false when the shield is already full,
+## so the battle can pay the drop out as energy instead of losing it.
+func add_shield(amount: int = 1) -> bool:
+	if not alive or shields >= shield_capacity:
+		return false
 	set_shields(shields + amount)
 	_shield_flash = 0.7
 	queue_redraw()
+	return true
 
 
 ## On-screen aim for touch devices: a direction, or zero to give control back
@@ -443,7 +455,7 @@ func _draw() -> void:
 	if shields <= 0 and not manual_active:
 		return
 	var radius: float = Tuning.SHIELD_BUBBLE_RADIUS
-	var charging: bool = shield_recharge_time > 0.0 and shields < Tuning.MAX_SHIELD_CHARGES
+	var charging: bool = shield_recharge_time > 0.0 and shields < shield_capacity
 	var glow: float = 0.10 + 0.24 * _shield_flash + (0.04 if charging else 0.0)
 	var width: float = 2.0 + 1.5 * _shield_flash
 	if manual_active:
@@ -456,7 +468,7 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, Color(0.4, 0.9, 1.0, glow))
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), width, true)
 	for index: int in shields:
-		var angle: float = -PI * 0.5 + float(index) * (TAU / float(Tuning.MAX_SHIELD_CHARGES))
+		var angle: float = -PI * 0.5 + float(index) * (TAU / float(maxi(shield_capacity, 1)))
 		draw_circle(Vector2(cos(angle), sin(angle)) * radius, 2.5, Color(0.75, 1.0, 1.0, 0.9))
 
 
@@ -511,8 +523,7 @@ func _update_shields(delta: float) -> void:
 	if shield_recharge_time <= 0.0:
 		return
 	_since_damage += delta
-	if shields >= Tuning.MAX_SHIELD_CHARGES \
-			or _since_damage < Tuning.SHIELD_RECHARGE_DAMAGE_DELAY:
+	if shields >= shield_capacity or _since_damage < Tuning.SHIELD_RECHARGE_DAMAGE_DELAY:
 		_recharge_left = shield_recharge_time
 		return
 	_recharge_left -= delta

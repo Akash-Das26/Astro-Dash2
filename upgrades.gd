@@ -28,7 +28,7 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 	var shield: int = level_of(levels, &"shield")
 	var fire: int = level_of(levels, &"fire")
 	# Step sizes are whole levels, so these divisions floor on purpose:
-	# 3 hull levels = +20 HP, 3 shield levels = +1 charge, 3 fire levels = +1 damage.
+	# 3 hull levels = +20 HP, 3 shield levels = +1 capacity, 3 fire levels = +1 damage.
 	@warning_ignore("integer_division")
 	var hull_steps: int = hull / Tuning.HULL_LEVELS_PER_STEP
 	@warning_ignore("integer_division")
@@ -38,7 +38,10 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 	return {
 		"max_hp": Tuning.BASE_MAX_HP + hull_steps * Tuning.HP_PER_HULL_STEP,
 		"move_speed": Tuning.BASE_MOVE_SPEED + float(speed) * Tuning.SPEED_PER_LEVEL,
-		"shield_charges": mini(shield_steps, Tuning.MAX_SHIELD_CHARGES),
+		# Capacity, not a starting count: the ship fills it at the start of a battle.
+		"shield_charges": mini(
+			Tuning.SHIELD_BASE_CAPACITY + shield_steps, Tuning.MAX_SHIELD_CHARGES
+		),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + damage_steps,
 		"bullet_tier": mini(damage_steps, 2),
 		"fire_level": fire,
@@ -89,11 +92,13 @@ static func tooltip(kind: StringName) -> String:
 		&"speed":
 			return "+%d px/s flight speed per level." % roundi(Tuning.SPEED_PER_LEVEL)
 		&"shield":
-			return "+1 starting charge every %d levels, max %d. At level 1+ one charge recharges every %.0fs once you have not been hit for %.0fs, down to %.0fs at max. Drops always give +1." % [
-				Tuning.SHIELD_LEVELS_PER_CHARGE, Tuning.MAX_SHIELD_CHARGES,
+			return "Starts at %d charge and every battle begins with the shield FULL. +1 capacity every %d levels, up to %d. At level 1+ one charge recharges every %.0fs once you have not been hit for %.0fs, down to %.0fs at max. Drops refill one charge, or pay %d energy when the shield is already full." % [
+				Tuning.SHIELD_BASE_CAPACITY, Tuning.SHIELD_LEVELS_PER_CHARGE,
+				Tuning.MAX_SHIELD_CHARGES,
 				Tuning.SHIELD_RECHARGE_BASE,
 				Tuning.SHIELD_RECHARGE_DAMAGE_DELAY,
 				shield_recharge(MAX_LEVEL),
+				Tuning.SHIELD_PICKUP_FULL_ENERGY,
 			]
 		&"fire":
 			return "+%d%% damage and -%d%% cooldown per level for BOTH weapon slots (cooldown floors at -%d%%). The PULSE LASER turns green at level %d and yellow at level %d." % [
@@ -119,7 +124,7 @@ static func effect_text(kind: StringName, level: int) -> String:
 			var percent: int = roundi((float(stats["move_speed"]) / Tuning.BASE_MOVE_SPEED - 1.0) * 100.0)
 			return "SPEED +%d%%" % percent
 		&"shield":
-			return "SHIELDS %d" % int(stats["shield_charges"])
+			return "SHIELDS %d/%d" % [int(stats["shield_charges"]), int(stats["shield_charges"])]
 		&"fire":
 			return "DAMAGE %d%%" % roundi(float(stats["damage_mult"]) * 100.0)
 		_:

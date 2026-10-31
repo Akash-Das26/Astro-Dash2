@@ -145,17 +145,17 @@ func _render_stats() -> void:
 	var stats: Dictionary = Upgrades.stats_for(SaveData.upgrade_levels)
 	var max_hp: int = int(stats["max_hp"])
 	var hp: int = max_hp
-	var shields: int = int(stats["shield_charges"])
-	if SaveData.campaign_active:
-		if SaveData.campaign_hp > 0:
-			hp = clampi(SaveData.campaign_hp, 1, max_hp)
-		shields = SaveData.campaign_shields
+	# Every battle starts with the shield full, so this reads current/capacity
+	# with current already at capacity.
+	var capacity: int = int(stats["shield_charges"])
+	if SaveData.campaign_active and SaveData.campaign_hp > 0:
+		hp = clampi(SaveData.campaign_hp, 1, max_hp)
 	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %d/%d\nFIRE       %d%%" % [
 		hp,
 		max_hp,
 		roundi(float(stats["move_speed"])),
-		shields,
-		Tuning.MAX_SHIELD_CHARGES,
+		capacity,
+		capacity,
 		roundi(float(stats["damage_mult"]) * 100.0),
 	]
 
