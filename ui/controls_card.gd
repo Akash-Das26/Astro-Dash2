@@ -190,6 +190,11 @@ func _on_reset_all() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible or _capture_action == &"":
 		return
+	# One capture for the whole call: the card can be closed (and this node
+	# hidden) by the branch that ends the capture.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
 	var is_gamepad_event: bool = event is InputEventJoypadButton \
 		or event is InputEventJoypadMotion
 	if is_gamepad_event != _capture_gamepad:
@@ -200,7 +205,7 @@ func _input(event: InputEvent) -> void:
 			return
 		if key.physical_keycode == KEY_ESCAPE:
 			_cancel_capture()
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 			return
 	elif event is InputEventMouseButton:
 		if not (event as InputEventMouseButton).pressed:
@@ -225,7 +230,7 @@ func _input(event: InputEvent) -> void:
 	else:
 		_status.text = note
 	AudioManager.play_sfx("ui_click")
-	get_viewport().set_input_as_handled()
+	vp.set_input_as_handled()
 
 
 func _cancel_capture() -> void:
@@ -237,6 +242,11 @@ func _cancel_capture() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
-		close()
-		get_viewport().set_input_as_handled()
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	# Marked first: closing the card can hand control back to the screen below.
+	vp.set_input_as_handled()
+	close()

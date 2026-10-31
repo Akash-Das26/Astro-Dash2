@@ -71,10 +71,17 @@ func _handle_back_request() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("pause") or event.is_echo():
 		return
+	# Captured first: `change_state` emits, and a listener may rebuild the tree.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	# Only the two live states consume the key; in MENU, MAP and the summary
+	# cards the screen below still gets to use pause as Back.
 	if state == State.PLAYING:
+		vp.set_input_as_handled()
 		change_state(State.PAUSED)
 	elif state == State.PAUSED:
+		vp.set_input_as_handled()
 		change_state(State.PLAYING)
 	else:
 		return
-	get_viewport().set_input_as_handled()

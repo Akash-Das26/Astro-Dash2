@@ -138,6 +138,11 @@ func _handle_back() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		_handle_back()
-		get_viewport().set_input_as_handled()
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	# Marked first: a NEW GAME confirmation can hand over to another scene.
+	vp.set_input_as_handled()
+	_handle_back()

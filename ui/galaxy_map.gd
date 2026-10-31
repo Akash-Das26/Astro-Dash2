@@ -466,14 +466,19 @@ func _place_tooltip(body_id: StringName) -> void:
 # --- Keyboard and gamepad ---------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Captured once, as a local: the Esc branch below leaves for the menu, which
+	# frees this whole scene, so get_viewport() is null by the time that branch
+	# would otherwise finish.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and key.physical_keycode == KEY_F9 \
 			and OS.is_debug_build():
 			# Debug harness: boot straight into the one-wave battle. Mark the
-			# input handled *before* the scene change: the map leaves the tree
-			# during the change, and get_viewport() is null right after it.
-			get_viewport().set_input_as_handled()
+			# input handled *before* the scene change.
+			vp.set_input_as_handled()
 			Campaign.pending_id = &""
 			get_tree().change_scene_to_file(BATTLE_SCENE)
 			return
@@ -485,41 +490,43 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _upgrade_panel.visible:
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			_upgrade_panel.close()
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 		return
 	if _confirm_card.visible:
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			_close_card()
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 		return
 	if event is InputEventKey:
 		var zoom_key := event as InputEventKey
 		if zoom_key.pressed and not zoom_key.echo:
 			if zoom_key.physical_keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]:
 				_zoom_to(_zoom_target + Tuning.GALAXY_ZOOM_STEP, Tuning.VIEW_SIZE * 0.5)
-				get_viewport().set_input_as_handled()
+				vp.set_input_as_handled()
 				return
 			if zoom_key.physical_keycode in [KEY_MINUS, KEY_KP_SUBTRACT]:
 				_zoom_to(_zoom_target - Tuning.GALAXY_ZOOM_STEP, Tuning.VIEW_SIZE * 0.5)
-				get_viewport().set_input_as_handled()
+				vp.set_input_as_handled()
 				return
 	if event.is_action_pressed("ui_right") or event.is_action_pressed("ui_down"):
 		_cycle(1)
-		get_viewport().set_input_as_handled()
+		vp.set_input_as_handled()
 	elif event.is_action_pressed("ui_left") or event.is_action_pressed("ui_up"):
 		_cycle(-1)
-		get_viewport().set_input_as_handled()
+		vp.set_input_as_handled()
 	elif event.is_action_pressed("ui_accept"):
 		if _focused != &"" and _galaxy.attackable(SaveData.campaign_conquered).has(_focused):
 			_open_card(_focused)
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		# Back out one layer at a time: first the tooltip, then the front end.
+		# Marked before _open_menu(): that changes the scene and frees this node
+		# with it, so the call has to happen while the viewport is still ours.
+		vp.set_input_as_handled()
 		if _tooltip.visible:
 			_hide_tooltip(true)
 		else:
 			_open_menu()
-		get_viewport().set_input_as_handled()
 
 
 func _cycle(step: int) -> void:

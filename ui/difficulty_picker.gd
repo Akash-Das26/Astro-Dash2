@@ -112,8 +112,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause")):
 		return
+	# Captured first: `close()` hands control back to whatever opened us, which
+	# may be a screen that leaves the tree.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	vp.set_input_as_handled()
 	if _confirm_card.visible:
 		_on_cancel_confirm()
 	else:
 		close()
-	get_viewport().set_input_as_handled()

@@ -30,11 +30,16 @@ func _input(event: InputEvent) -> void:
 	# While the card is capturing a key, C is a binding, not a close request.
 	if _card.is_capturing():
 		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	# Marked before either call: both can change the game state, and a state
+	# change is what the screens underneath react to.
+	vp.set_input_as_handled()
 	if _card.visible:
 		_card.close()
 	else:
 		open_card()
-	get_viewport().set_input_as_handled()
 
 
 func open_card() -> void:

@@ -231,26 +231,31 @@ func _on_skin_pressed(id: StringName) -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	var focused: Control = get_viewport().gui_get_focus_owner()
+	# One viewport for the whole call: EQUIP and a purchase can both change
+	# what is focusable while this handler is still running.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	var focused: Control = vp.gui_get_focus_owner()
 	if focused == null:
 		return
 	# Up/down walks the weapon rack, left/right walks the hull row.
 	if _tab == Tab.WEAPONS and _weapon_buttons.values().has(focused):
 		if event.is_action_pressed("ui_up"):
 			_step_weapon(-1)
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 		elif event.is_action_pressed("ui_down"):
 			_step_weapon(1)
-			get_viewport().set_input_as_handled()
+			vp.set_input_as_handled()
 		return
 	if not _skin_buttons.values().has(focused):
 		return
 	if event.is_action_pressed("ui_left"):
 		_step_skin(-1)
-		get_viewport().set_input_as_handled()
+		vp.set_input_as_handled()
 	elif event.is_action_pressed("ui_right"):
 		_step_skin(1)
-		get_viewport().set_input_as_handled()
+		vp.set_input_as_handled()
 
 
 func _step_skin(step: int) -> void:

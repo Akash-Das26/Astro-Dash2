@@ -377,14 +377,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event := event as InputEventKey
 	if not key_event.pressed or key_event.echo:
 		return
+	# Captured before the branch: KEY_R and KEY_F9 both tear down the live fight
+	# and build a new one, so nothing may be touched once a branch has run.
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
 	match key_event.physical_keycode:
 		KEY_R:
 			if _campaign or GameState.state != GameState.State.GAME_OVER:
 				return
+			vp.set_input_as_handled()
 			_restart()
 		KEY_F9:
 			if not OS.is_debug_build() or _campaign:
 				return
+			vp.set_input_as_handled()
 			_start_battle(Tuning.DEBUG_BATTLE)
 		KEY_F3:
 			if not OS.is_debug_build():
@@ -394,9 +401,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			ship.queue_redraw()
 			for child: Node in enemies.get_children():
 				(child as CanvasItem).queue_redraw()
+			vp.set_input_as_handled()
 		_:
 			return
-	get_viewport().set_input_as_handled()
 
 
 # --- Ship signals -----------------------------------------------------------

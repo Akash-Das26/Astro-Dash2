@@ -414,13 +414,16 @@ func _hide_menu_confirm() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
 		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
 	if _controls_card.visible:
+		vp.set_input_as_handled()
 		_controls_card.close()
-		get_viewport().set_input_as_handled()
 		return
 	if _pause_panel.visible:
+		vp.set_input_as_handled()
 		resume_requested.emit()
-		get_viewport().set_input_as_handled()
 
 
 func _on_controls_closed() -> void:
