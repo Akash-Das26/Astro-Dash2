@@ -108,14 +108,17 @@ The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
   (Settings, on by default) thickens the outline and brightens the halo; on the
   red band the outline switches to yellow-white.
 - **Shields: capacity and charges.** The shield holds `capacity` charges and
-  **every battle starts with it full** — 1 charge at SHIELDS level 0, +1 per
-  three levels up to 3. The ship wears a bubble with one pip per charge that
+  **every battle starts with it full**. The base depends on the mode: 1 charge
+  at SHIELDS level 0 on CADET and VECTOR, 0 from SUPERNOVA up, where the first
+  shield has to come from a drop (or from three SHIELDS levels). +1 capacity per
+  three levels, up to 3. The ship wears a bubble with one pip per charge that
   flashes when a charge is spent, and the HUD reads `SHIELD 2/3` next to the HP
-  bar (`NO SHIELD` at zero). About 8% of kills and always a citadel drop a blue
-  bubble pickup that refills one charge; a drop collected while the shield is
-  already full is never wasted — it pays 5 energy with a floating readout. The
-  SHIELDS track also recharges one charge after a quiet stretch (25 s at level 1
-  down to 8 s at max, reset by any hit).
+  bar (`NO SHIELD` at zero). About 5% of kills and always a citadel drop a blue
+  bubble pickup that refills one charge — even at capacity 0, where it grants a
+  real shield; a drop collected while the shield is already full is never wasted
+  — it pays 5 energy with a floating readout. The SHIELDS track also recharges
+  one charge after a quiet stretch (25 s at level 1 down to 8 s at max, reset by
+  any hit).
 - **Two hardpoints.** The primary fires on `shoot`, the secondary on `shoot_alt`
   (right mouse / `Shift` / left shoulder or trigger / a second touch button),
   with independent cooldowns and left/right muzzle positions.
@@ -363,8 +366,8 @@ FIRE POWER multiplies damage by `1 + 0.12 * level` and cooldowns by
 
 | What | Value |
 | --- | --- |
-| Shield drop chance | 8% per kill; a citadel boss always drops one |
-| Shield capacity | 1 at level 0, +1 per 3 levels, max 3; every battle starts full |
+| Shield drop chance | 5% per kill; a citadel boss always drops one |
+| Shield capacity | difficulty base (1 on CADET/VECTOR, 0 on SUPERNOVA and above) plus 1 per 3 SHIELDS levels, max 3; every battle starts full |
 | Shield drop | one charge, up to capacity, drifts down for 12 s; collected at full it pays 5 energy instead |
 | Shield recharge | 25 s at level 1, -1.8 s per level, floor 8 s; 3 s of no damage required; level 0 = no recharge |
 | Shield upgrade | 15 energy + 8 per level; +1 capacity every 3 levels |
@@ -397,13 +400,13 @@ and clamped; the largest reached milestone **replaces** the per-planet heal.
 is also the number used by the milestones. Every mode stacks its battle
 multipliers on top of the distance band and the body trait.
 
-| Mode | Heal per planet | Milestones | Defeat rule | Enemy HP | Enemy damage | Enemies/wave | Energy | Score | Shield drops |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| CADET | 100% | — | keep planets, hull 100% | x0.8 | x0.8 | x0.9 | x1.0 | x1.0 | x1.5 |
-| VECTOR | 25% | 50% at 5, 100% at 10 | keep planets, hull 50% | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 |
-| SUPERNOVA | 10% | 25% at 5, 50% at 10 | new galaxy, meta kept | x1.25 | x1.2 | x1.1 | x1.1 | x1.25 | x0.8 |
-| EVENT HORIZON | 0% | 10% at 5, 25% at 10 | new galaxy, meta kept | x1.5 | x1.4 | x1.25 | x1.25 | x1.5 | x0.6 |
-| SINGULARITY | 0% | 5% at 10 | wipes campaign, energy, upgrades and weapons | x1.8 | x1.7 | x1.4 | x1.5 | x2.0 | x0.5 |
+| Mode | Heal per planet | Milestones | Defeat rule | Enemy HP | Enemy damage | Enemies/wave | Energy | Score | Shield drops | Start shield |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CADET | 100% | — | keep planets, hull 100% | x0.8 | x0.8 | x0.9 | x1.0 | x1.0 | x1.4 | 1 (full) |
+| VECTOR | 25% | 50% at 5, 100% at 10 | keep planets, hull 50% | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 | 1 (full) |
+| SUPERNOVA | 10% | 25% at 5, 50% at 10 | new galaxy, meta kept | x1.25 | x1.2 | x1.1 | x1.1 | x1.25 | x0.7 | none (drops only) |
+| EVENT HORIZON | 0% | 10% at 5, 25% at 10 | new galaxy, meta kept | x1.5 | x1.4 | x1.25 | x1.25 | x1.5 | x0.5 | none (drops only) |
+| SINGULARITY | 0% | 5% at 10 | wipes campaign, energy, upgrades and weapons | x1.8 | x1.7 | x1.4 | x1.5 | x2.0 | x0.4 | none (drops only) |
 
 High scores are stored per mode under `[high_scores]`; the game-over card and the
 menu footer show the record for the mode being played. A save from before this

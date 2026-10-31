@@ -79,6 +79,13 @@ static func shield_drop_scale(id: StringName = &"") -> float:
 	return float(row(mode)["shield_drop"])
 
 
+## Charges a battle starts with before the SHIELDS upgrade counts: 1 on CADET
+## and VECTOR, 0 from SUPERNOVA up.
+static func shield_base_capacity(id: StringName = &"") -> int:
+	var mode: StringName = active() if id == &"" else normalise(id)
+	return maxi(int(row(mode).get("shield_base_capacity", Tuning.SHIELD_BASE_CAPACITY)), 0)
+
+
 ## Fraction of MAX HP healed by conquering the planet that brought the count to
 ## `planets`. The largest reached milestone replaces the per-planet heal.
 static func heal_fraction(planets: int, id: StringName = &"") -> float:

@@ -173,8 +173,12 @@ static func help_text() -> String:
 		binding_text(&"controls", false),
 	]
 	text += "\nTHE HULL HEALS BETWEEN PLANETS BY DIFFICULTY; THE SHIELD STARTS FULL EVERY BATTLE"
-	text += "\nSHIELD %s   |   DROPS REFILL 1, OR PAY %d ENERGY WHEN FULL" % [
-		String(SaveData.shield_mode).to_upper(), Tuning.SHIELD_PICKUP_FULL_ENERGY,
+	text += "\nSHIELD %s   |   FIRST CHARGE: %d ON CADET / VECTOR, 0 ON SUPERNOVA AND ABOVE" % [
+		String(SaveData.shield_mode).to_upper(),
+		Difficulty.shield_base_capacity(Tuning.DIFFICULTY_CADET),
+	]
+	text += "\nDROPS REFILL 1 (EVEN AT CAPACITY 0), OR PAY %d ENERGY WHEN ALREADY FULL" % [
+		Tuning.SHIELD_PICKUP_FULL_ENERGY,
 	]
 	return text
 

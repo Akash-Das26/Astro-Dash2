@@ -29,6 +29,9 @@ const ARENA_MARGIN: float = 36.0
 ## milestone REPLACES the per-planet heal (an empty table means none).
 ## `on_defeat` is "keep" (progress stays), "reset" (new galaxy, meta kept) or
 ## "wipe" (new galaxy and every meta progression reset).
+## `shield_base_capacity` is how many charges a battle starts with before the
+## SHIELDS upgrade: 1 on the two easier modes, 0 from SUPERNOVA up, where drops
+## are the only way to get a shield until the track reaches level 3.
 const DIFFICULTY_CADET: StringName = &"cadet"
 const DIFFICULTY_VECTOR: StringName = &"vector"
 const DIFFICULTY_SUPERNOVA: StringName = &"supernova"
@@ -46,7 +49,8 @@ const DIFFICULTIES: Dictionary = {
 		"heal_per_planet": 1.0, "milestones": {}, "on_defeat": "keep",
 		"defeat_hp": 1.0,
 		"enemy_hp": 0.8, "enemy_damage": 0.8, "enemies": 0.9,
-		"energy": 1.0, "score": 1.0, "shield_drop": 1.5,
+		"energy": 1.0, "score": 1.0, "shield_drop": 1.4,
+		"shield_base_capacity": 1,
 	},
 	DIFFICULTY_VECTOR: {
 		"title": "VECTOR", "level": 2, "color": Color(0.6, 0.85, 1.0),
@@ -55,6 +59,7 @@ const DIFFICULTIES: Dictionary = {
 		"on_defeat": "keep", "defeat_hp": 0.5,
 		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemies": 1.0,
 		"energy": 1.0, "score": 1.0, "shield_drop": 1.0,
+		"shield_base_capacity": 1,
 	},
 	DIFFICULTY_SUPERNOVA: {
 		"title": "SUPERNOVA", "level": 3, "color": Color(1.0, 0.8, 0.4),
@@ -62,7 +67,8 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {5: 0.25, 10: 0.5},
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.25, "enemy_damage": 1.2, "enemies": 1.1,
-		"energy": 1.1, "score": 1.25, "shield_drop": 0.8,
+		"energy": 1.1, "score": 1.25, "shield_drop": 0.7,
+		"shield_base_capacity": 0,
 	},
 	DIFFICULTY_EVENT_HORIZON: {
 		"title": "EVENT HORIZON", "level": 4, "color": Color(1.0, 0.55, 0.35),
@@ -70,7 +76,8 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {5: 0.1, 10: 0.25},
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemies": 1.25,
-		"energy": 1.25, "score": 1.5, "shield_drop": 0.6,
+		"energy": 1.25, "score": 1.5, "shield_drop": 0.5,
+		"shield_base_capacity": 0,
 	},
 	DIFFICULTY_SINGULARITY: {
 		"title": "SINGULARITY", "level": 5, "color": Color(1.0, 0.35, 0.45),
@@ -78,7 +85,8 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {10: 0.05},
 		"on_defeat": "wipe", "defeat_hp": 0.0,
 		"enemy_hp": 1.8, "enemy_damage": 1.7, "enemies": 1.4,
-		"energy": 1.5, "score": 2.0, "shield_drop": 0.5,
+		"energy": 1.5, "score": 2.0, "shield_drop": 0.4,
+		"shield_base_capacity": 0,
 	},
 }
 ## What a SINGULARITY defeat resets, listed on its card.
@@ -117,7 +125,7 @@ const SHIP_BLINK_INTERVAL: float = 0.08
 const SHIP_BLINK_ALPHA: float = 0.3
 const MAX_SHIELD_CHARGES: int = 3
 ## Shield drops: a blue bubble that drifts down, always worth one charge.
-const SHIELD_DROP_CHANCE: float = 0.08
+const SHIELD_DROP_CHANCE: float = 0.05
 const SHIELD_DROP_FALL_SPEED: float = 46.0
 const SHIELD_DROP_DRIFT: float = 22.0
 const SHIELD_DROP_LIFE: float = 12.0
@@ -199,10 +207,15 @@ const SHIELD_MODE_AUTO: StringName = &"auto"
 const SHIELD_MODE_MANUAL: StringName = &"manual"
 ## Default shield mode, used when there is no save yet.
 const SHIELD_MODE_DEFAULT: StringName = SHIELD_MODE_AUTO
-## Capacity at SHIELDS level 0. Every battle starts with the shield full, so a
-## fresh save already has one charge to spend (AUTO) or raise (MANUAL). The
-## upgrade adds one more per SHIELD_LEVELS_PER_CHARGE levels, up to the cap.
+## Capacity when the mode's `shield_base_capacity` is missing (and the value the
+## HUD falls back to). Every battle starts with the shield full, so on the
+## easier modes a fresh save already has one charge to spend (AUTO) or raise
+## (MANUAL). The SHIELDS upgrade adds one more per SHIELD_LEVELS_PER_CHARGE
+## levels, up to the cap. On SUPERNOVA and above the mode's base is 0.
 const SHIELD_BASE_CAPACITY: int = 1
+## A drop must always be usable somewhere, even on a mode that starts at 0: the
+## shield can hold this many charges whatever the capacity says.
+const SHIELD_PICKUP_MIN_CAPACITY: int = 1
 ## A drop taken while the shield is already full is not wasted: it pays out this
 ## much energy instead, with a floating readout.
 const SHIELD_PICKUP_FULL_ENERGY: int = 5

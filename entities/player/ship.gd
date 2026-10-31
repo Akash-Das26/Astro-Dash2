@@ -87,7 +87,7 @@ func _ready() -> void:
 	_hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 	hp = max_hp
 	hp_changed.emit(hp, max_hp)
-	shields_changed.emit(shields, shield_capacity)
+	shields_changed.emit(shields, shield_limit())
 
 
 ## Movement, aim, fire and damage all tick in `_physics_process`: the hull flies
@@ -214,17 +214,24 @@ func revive() -> void:
 	hp_changed.emit(hp, max_hp)
 
 
+## How many charges the shield can hold right now. A mode may start a battle at
+## capacity 0, but a drop must still be usable there, so the reachable limit is
+## never below SHIELD_PICKUP_MIN_CAPACITY.
+func shield_limit() -> int:
+	return maxi(shield_capacity, Tuning.SHIELD_PICKUP_MIN_CAPACITY)
+
+
 func set_shields(charges: int) -> void:
-	shields = clampi(charges, 0, shield_capacity)
-	shields_changed.emit(shields, shield_capacity)
+	shields = clampi(charges, 0, shield_limit())
+	shields_changed.emit(shields, shield_limit())
 	queue_redraw()
 
 
-## A shield drop: one charge, never above the capacity. Works at SHIELDS level
-## 0, where the capacity is one. Returns false when the shield is already full,
-## so the battle can pay the drop out as energy instead of losing it.
+## A shield drop: one charge, never above the limit. Works at capacity 0, where
+## the first drop gives a real shield. Returns false when the shield is already
+## at the limit, so the battle can pay the drop out as energy instead.
 func add_shield(amount: int = 1) -> bool:
-	if not alive or shields >= shield_capacity:
+	if not alive or shields >= shield_limit():
 		return false
 	set_shields(shields + amount)
 	_shield_flash = 0.7
@@ -456,7 +463,7 @@ func _draw() -> void:
 	if shields <= 0 and not manual_active:
 		return
 	var radius: float = Tuning.SHIELD_BUBBLE_RADIUS
-	var charging: bool = shield_recharge_time > 0.0 and shields < shield_capacity
+	var charging: bool = shield_recharge_time > 0.0 and shields < shield_limit()
 	var glow: float = 0.10 + 0.24 * _shield_flash + (0.04 if charging else 0.0)
 	var width: float = 2.0 + 1.5 * _shield_flash
 	if manual_active:
@@ -469,7 +476,7 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, Color(0.4, 0.9, 1.0, glow))
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), width, true)
 	for index: int in shields:
-		var angle: float = -PI * 0.5 + float(index) * (TAU / float(maxi(shield_capacity, 1)))
+		var angle: float = -PI * 0.5 + float(index) * (TAU / float(shield_limit()))
 		draw_circle(Vector2(cos(angle), sin(angle)) * radius, 2.5, Color(0.75, 1.0, 1.0, 0.9))
 
 
@@ -524,7 +531,7 @@ func _update_shields(delta: float) -> void:
 	if shield_recharge_time <= 0.0:
 		return
 	_since_damage += delta
-	if shields >= shield_capacity or _since_damage < Tuning.SHIELD_RECHARGE_DAMAGE_DELAY:
+	if shields >= shield_limit() or _since_damage < Tuning.SHIELD_RECHARGE_DAMAGE_DELAY:
 		_recharge_left = shield_recharge_time
 		return
 	_recharge_left -= delta

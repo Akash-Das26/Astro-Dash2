@@ -176,7 +176,7 @@ func _start_fight(fight: Battle) -> void:
 	hud.set_energy(energy)
 	hud.set_score(score)
 	hud.set_hp(ship.hp, ship.max_hp)
-	hud.set_shields(ship.shields, ship.shield_capacity)
+	hud.set_shields(ship.shields, ship.shield_limit())
 	hud.set_weapons(ship.weapon_id(0), ship.weapon_id(1))
 	hud.set_weapon_cooldowns(0.0, 0.0)
 	director.start(battle, ship)

@@ -39,8 +39,10 @@ static func stats_for(levels: Dictionary) -> Dictionary:
 		"max_hp": Tuning.BASE_MAX_HP + hull_steps * Tuning.HP_PER_HULL_STEP,
 		"move_speed": Tuning.BASE_MOVE_SPEED + float(speed) * Tuning.SPEED_PER_LEVEL,
 		# Capacity, not a starting count: the ship fills it at the start of a battle.
+		# The base comes from the difficulty, so SUPERNOVA and above start at 0
+		# until three SHIELDS levels are bought.
 		"shield_charges": mini(
-			Tuning.SHIELD_BASE_CAPACITY + shield_steps, Tuning.MAX_SHIELD_CHARGES
+			Difficulty.shield_base_capacity() + shield_steps, Tuning.MAX_SHIELD_CHARGES
 		),
 		"bullet_damage": Tuning.BASE_BULLET_DAMAGE + damage_steps,
 		"bullet_tier": mini(damage_steps, 2),
@@ -92,8 +94,8 @@ static func tooltip(kind: StringName) -> String:
 		&"speed":
 			return "+%d px/s flight speed per level." % roundi(Tuning.SPEED_PER_LEVEL)
 		&"shield":
-			return "Starts at %d charge and every battle begins with the shield FULL. +1 capacity every %d levels, up to %d. At level 1+ one charge recharges every %.0fs once you have not been hit for %.0fs, down to %.0fs at max. Drops refill one charge, or pay %d energy when the shield is already full." % [
-				Tuning.SHIELD_BASE_CAPACITY, Tuning.SHIELD_LEVELS_PER_CHARGE,
+			return "Starts at %d charge on CADET and VECTOR, 0 on SUPERNOVA and above (drops supply the first shield there). Every battle begins with the shield FULL. +1 capacity every %d levels, up to %d. At level 1+ one charge recharges every %.0fs once you have not been hit for %.0fs, down to %.0fs at max. Drops refill one charge, or pay %d energy when the shield is already full." % [
+				Difficulty.shield_base_capacity(), Tuning.SHIELD_LEVELS_PER_CHARGE,
 				Tuning.MAX_SHIELD_CHARGES,
 				Tuning.SHIELD_RECHARGE_BASE,
 				Tuning.SHIELD_RECHARGE_DAMAGE_DELAY,

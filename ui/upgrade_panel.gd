@@ -150,12 +150,14 @@ func _render_stats() -> void:
 	var capacity: int = int(stats["shield_charges"])
 	if SaveData.campaign_active and SaveData.campaign_hp > 0:
 		hp = clampi(SaveData.campaign_hp, 1, max_hp)
-	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %d/%d\nFIRE       %d%%" % [
+	# A mode with a zero base starts every battle with no shield at all, which
+	# reads better as NONE than as 0/0.
+	var shields_text: String = "NONE" if capacity <= 0 else "%d/%d" % [capacity, capacity]
+	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %s\nFIRE       %d%%" % [
 		hp,
 		max_hp,
 		roundi(float(stats["move_speed"])),
-		capacity,
-		capacity,
+		shields_text,
 		roundi(float(stats["damage_mult"]) * 100.0),
 	]
 
