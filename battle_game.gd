@@ -309,6 +309,16 @@ func _on_new_difficulty(difficulty: StringName) -> void:
 	get_tree().change_scene_to_file(GALAXY_SCENE)
 
 
+## Android Back on the game-over card: the mode picker is the top layer, so it
+## closes first; otherwise Back leaves for the menu as before.
+func _handle_game_over_back() -> void:
+	GameState.back_handler = _handle_game_over_back
+	if difficulty_picker.picker_open():
+		difficulty_picker.close()
+		return
+	_go_to_menu()
+
+
 func _go_to_menu() -> void:
 	# Only this battle is abandoned: the campaign, the hull from the last victory
 	# and the energy already banked stay in the save, so CONTINUE is offered.
@@ -348,7 +358,7 @@ func _on_state_changed(new_state: int) -> void:
 			GameState.back_handler = hud.handle_pause_back
 			hud.show_paused()
 		GameState.State.GAME_OVER:
-			GameState.back_handler = _go_to_menu
+			GameState.back_handler = _handle_game_over_back
 		GameState.State.BATTLE_WON:
 			GameState.back_handler = _on_end_continue
 		GameState.State.MENU:
