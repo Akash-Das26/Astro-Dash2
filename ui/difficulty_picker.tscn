@@ -57,9 +57,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -410.0
-offset_top = -252.0
+offset_top = -244.0
 offset_right = 410.0
-offset_bottom = 252.0
+offset_bottom = 244.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -72,7 +72,7 @@ theme_override_constants/margin_bottom = 16
 
 [node name="Box" type="VBoxContainer" parent="Root/Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="Root/Panel/Margin/Box"]
 layout_mode = 2
@@ -92,50 +92,42 @@ horizontal_alignment = 1
 [node name="Options" type="VBoxContainer" parent="Root/Panel/Margin/Box"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="Cadet" type="Button" parent="Root/Panel/Margin/Box/Options"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "CADET"
-alignment = 0
+alignment = 1
 
 [node name="Vector" type="Button" parent="Root/Panel/Margin/Box/Options"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "VECTOR"
-alignment = 0
+alignment = 1
 
 [node name="Supernova" type="Button" parent="Root/Panel/Margin/Box/Options"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "SUPERNOVA"
-alignment = 0
+alignment = 1
 
 [node name="EventHorizon" type="Button" parent="Root/Panel/Margin/Box/Options"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "EVENT HORIZON"
-alignment = 0
+alignment = 1
 
 [node name="Singularity" type="Button" parent="Root/Panel/Margin/Box/Options"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "SINGULARITY"
-alignment = 0
-
-[node name="Hint" type="Label" parent="Root/Panel/Margin/Box"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.68, 0.85, 1)
-theme_override_font_sizes/font_size = 11
-text = "CHOOSE A MODE   |   ESC / B CLOSES"
-horizontal_alignment = 1
-autowrap_mode = 2
+alignment = 1
 
 [node name="ConfirmCard" type="Control" parent="Root"]
 visible = false

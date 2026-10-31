@@ -25,7 +25,6 @@ const OPTION_PATHS: Array[String] = [
 @onready var _confirm_detail: Label = $Root/ConfirmCard/Panel/Margin/Box/Detail
 @onready var _confirm_yes: Button = $Root/ConfirmCard/Panel/Margin/Box/Buttons/ConfirmButton
 @onready var _confirm_no: Button = $Root/ConfirmCard/Panel/Margin/Box/Buttons/CancelButton
-@onready var _hint: Label = $Root/Panel/Margin/Box/Hint
 
 var _buttons: Array[Button] = []
 var _pending: StringName = &""
@@ -40,24 +39,15 @@ func _ready() -> void:
 	for index: int in OPTION_PATHS.size():
 		var button := get_node(OPTION_PATHS[index]) as Button
 		var id: StringName = OPTION_IDS[index]
-		button.text = "%s   %s" % [Difficulty.title(id), Difficulty.summary(id)]
+		# Names only: the rules live in the README and the help card.
+		button.text = Difficulty.title(id)
 		button.add_theme_color_override("font_color", Difficulty.color(id))
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_color_override("font_focus_color", Color.WHITE)
 		button.pressed.connect(_on_option.bind(id))
-		button.focus_entered.connect(_on_option_focused.bind(button))
 		_buttons.append(button)
 	_confirm_yes.pressed.connect(_on_confirm)
 	_confirm_no.pressed.connect(_on_cancel_confirm)
-	_hint.text = "CHOOSE A MODE   |   ESC / B CLOSES"
-
-
-func _on_option_focused(button: Button) -> void:
-	# Keep the longest summary readable: the hint repeats the focused line.
-	var index: int = _buttons.find(button)
-	if index >= 0:
-		var id: StringName = OPTION_IDS[index]
-		_hint.text = "%s: %s" % [Difficulty.title(id), Difficulty.summary(id)]
 
 
 func picker_open() -> bool:
@@ -69,7 +59,6 @@ func open() -> void:
 	_pending = &""
 	_confirm_card.visible = false
 	_root.visible = true
-	_hint.text = "CHOOSE A MODE   |   ESC / B CLOSES"
 	_buttons[0].grab_focus()
 
 
