@@ -24,8 +24,12 @@ const SHIP_ACCELERATION: float = 1500.0
 const SHIP_MAX_SPEED: float = 400.0
 ## Higher coasts less: the ship keeps a little inertia but stops in ~0.4s.
 const SHIP_DRAG: float = 3.4
-## How fast the hull swings onto the aim direction (per second, 0..1 lerp).
-const SHIP_TURN_LERP: float = 12.0
+## How fast the hull swings onto the aim direction, as an exponential rate per
+## second (1 - exp(-rate * delta)), so the turn feels the same at any fps.
+const SHIP_TURN_RATE: float = 12.0
+## The nose ignores a mouse pointer this close to the hull, which stops the
+## aim from jittering while the mouse is at rest.
+const SHIP_AIM_DEADZONE: float = 18.0
 const SHIP_FIRE_INTERVAL: float = 0.14
 const SHIP_BULLET_SPEED: float = 720.0
 const SHIP_BULLET_DAMAGE: int = 1
@@ -57,6 +61,24 @@ const SHIELD_RECHARGE_STEP: float = 1.8
 const SHIELD_RECHARGE_MIN: float = 8.0
 const SHIELD_RECHARGE_DAMAGE_DELAY: float = 3.0
 const SHIELD_BUBBLE_RADIUS: float = 24.0
+
+# --- Controls ---------------------------------------------------------------
+## Rebindable actions, in the order the CONTROLS card lists them. `pause` is
+## listed but fixed: Esc is the menu key, so no remap may take it away.
+const CONTROL_ACTIONS: Array[StringName] = [
+	&"move_up", &"move_down", &"move_left", &"move_right",
+	&"shoot", &"shoot_alt", &"pause",
+]
+const CONTROL_FIXED: Array[StringName] = [&"pause"]
+const CONTROL_LABELS: Dictionary = {
+	&"move_up": "MOVE UP",
+	&"move_down": "MOVE DOWN",
+	&"move_left": "MOVE LEFT",
+	&"move_right": "MOVE RIGHT",
+	&"shoot": "PRIMARY FIRE",
+	&"shoot_alt": "SECONDARY FIRE",
+	&"pause": "PAUSE / MENU",
+}
 
 # --- Thrusters --------------------------------------------------------------
 const THRUSTER_FRAME_FPS: float = 18.0

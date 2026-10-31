@@ -71,7 +71,10 @@ func _ready() -> void:
 	shields_changed.emit(shields)
 
 
-func _process(delta: float) -> void:
+## Movement, aim, fire and damage all tick in `_physics_process`: the hull flies
+## on the same fixed step as the areas that can hit it, so a fast ship cannot
+## tunnel through a rock between two frames of a variable frame rate.
+func _physics_process(delta: float) -> void:
 	if not alive:
 		return
 	_update_movement(delta)
@@ -226,12 +229,15 @@ func heal(amount: int) -> void:
 # --- Movement and input -----------------------------------------------------
 
 func _update_movement(delta: float) -> void:
+	# get_vector normalises the result and applies the actions' own deadzones,
+	# so a diagonal is exactly as fast as a straight line and a resting stick
+	# reads as zero instead of drifting on noise.
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	# Light inertia: the ship keeps drifting for a moment after the key is let
-	# go, and the drag is what stops it, not a hard reset.
-	_velocity = _velocity.lerp(Vector2.ZERO, clampf(drag * delta, 0.0, 1.0))
-	if input.length() > 0.05:
-		_velocity += input * acceleration * delta
+	# Light inertia: thrust adds speed, exponential drag bleeds it off, and the
+	# result is clamped to the hull's top speed. exp(-drag * delta) is
+	# frame-rate independent, unlike a per-frame lerp weight.
+	_velocity += input * acceleration * delta
+	_velocity *= exp(-drag * delta)
 	_velocity = _velocity.limit_length(move_speed)
 	position += _velocity * delta
 	_wrap_position()
@@ -280,9 +286,15 @@ func _update_aim(delta: float) -> void:
 			aim = stick.normalized()
 	elif _mouse_active:
 		var to_mouse: Vector2 = get_global_mouse_position() - global_position
-		if to_mouse.length() > 8.0:
+		# The nose only re-aims once the pointer is a few pixels away from the
+		# hull, so a mouse sitting still does not jitter the ship.
+		if to_mouse.length() > Tuning.SHIP_AIM_DEADZONE:
 			aim = to_mouse.normalized()
-	rotation = lerp_angle(rotation, aim.angle() + PI * 0.5, clampf(Tuning.SHIP_TURN_LERP * delta, 0.0, 1.0))
+	# Framerate-independent smoothing: the hull closes the same fraction of the
+	# remaining angle per second at 30, 60 or 144 fps.
+	rotation = lerp_angle(
+		rotation, aim.angle() + PI * 0.5, 1.0 - exp(-Tuning.SHIP_TURN_RATE * delta)
+	)
 
 
 ## Both hardpoints fire along the same aim, each on its own cooldown. A slot
