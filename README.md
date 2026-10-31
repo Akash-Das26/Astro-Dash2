@@ -136,7 +136,8 @@ to the menu.
 
 ### Settings
 
-Music and SFX sliders, mute, reduce motion, touch auto-fire,
+**MASTER**, **MUSIC** and **SFX** sliders (each writing its own audio bus, all
+persisted), mute (a Master-bus mute), reduce motion, touch auto-fire,
 **HIGH-CONTRAST BULLETS** (thicker outline, brighter halo; saved in
 `user://save.cfg`) and **REMAP CONTROLS**, which opens the binding card. The note
 under the sliders always shows the keys that are bound right now.
@@ -145,8 +146,10 @@ Music is a playlist of every `.ogg` / `.mp3` / `.wav` in
 `assests/audio/music/`. Settings shows **NOW PLAYING**, **PREV**, **NEXT** and a
 **SHUFFLE / IN ORDER** toggle. Shuffle uses a bag, so a full pass plays every
 track once and the track that just ended never starts the next pass; tracks
-cross-fade over 1.5 s. Sound effects are still postponed: `AudioManager` warns
-once per missing file and those events stay silent.
+cross-fade over 1.5 s. Releasing the SFX slider plays a short sample at the new
+level, and the saved volumes are applied before the first sound. Sound effects
+come from the two packs in `assests/audio/` through `AudioManager.SOUND_MAP`;
+events with no file are reported in a single startup warning.
 
 ## What is not in this build yet
 
@@ -244,6 +247,7 @@ asks where an input came from.
 
 ```
 project.godot            960x600 canvas, landscape, nearest filtering, input actions
+default_bus_layout.tres  Master / Music / SFX buses (declared in project settings)
 ui/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
 ui/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
 ui/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries
@@ -280,8 +284,9 @@ ui/
   touch_controls.gd      virtual stick, aim zone, pause button
   settings_panel.gd/.tscn  sliders, mute, reduce motion, auto-fire, control notes
 
-assests/                 sprite packs, backgrounds and the (still empty) audio drop
-                         folder; the name is misspelled on purpose, paths depend on it
+tests/                   headless suite and battle bot (see Tests)
+assests/                 sprite packs, backgrounds, fonts and the audio packs; the
+                         name is misspelled on purpose, paths depend on it
 ```
 
 ## Collision layers
@@ -307,6 +312,29 @@ reference to the ship, and the ship never needs one to them.
    ```
 3. Export templates are only needed for exporting (*Editor > Manage Export
    Templates*).
+
+## Tests
+
+Two headless entry points, no editor needed:
+
+```bash
+# Logic suite: 123 checks over difficulty healing and defeat rules, shields,
+# upgrades, weapons, the galaxy, audio buses/playlist and key rebinding.
+# Prints PASS/FAIL per check and a SUMMARY line; exits 1 when anything failed.
+godot --headless --path . res://tests/run_tests.tscn
+
+# Battle bot: three 60 s campaign fights (CADET pulse+cannon, SUPERNOVA
+# missile+rail, SINGULARITY scatter+pulse) that fly, aim, fire both hardpoints,
+# wrap, open and close the pause card, then reach the victory and game-over
+# cards. It prints the live node count and frame rate every 10 s.
+godot --headless --path . res://tests/battle_bot.tscn
+```
+
+`tests/run_all.ps1` runs the suite through PowerShell and prints the PASS/FAIL
+count. The suite copies `user://save.cfg` aside before its first write and puts
+it back afterwards, so a real playthrough is not damaged. `tests/README.md`
+explains why the suite is a scene rather than a `--script`: `--script` mode has
+no autoload globals, so any script naming `SaveData` fails to compile there.
 
 ## Balancing
 
@@ -423,9 +451,9 @@ system loads as CADET, with its old `high_score` seeding CADET's record.
 | `upgrades` | `<kind>_level` for hull, speed, shield, fire |
 | `gameplay` | `reduce_motion`, `auto_fire`, `high_contrast_bullets` |
 | `weapons` | `owned` (list), `primary`, `secondary` — missing keys fall back to the pulse laser and an empty second slot, so older saves load |
-| `audio` | `music_volume`, `sfx_volume`, `muted` |
-| `gameplay` | `reduce_motion`, `auto_fire` |
+| `audio` | `master_volume`, `music_volume`, `sfx_volume`, `muted` |
 | `campaign` | `active`, `seed`, `difficulty`, `score`, `hp`, `shields`, `conquered`, `best_score`, `best_planets` |
+| `controls` | one serialized `InputEvent` per rebound action, split into `keyboard_*` and `gamepad_*`; a missing entry means the project default |
 
 The galaxy is rebuilt from `seed`; `conquered` stores the body ids that fell (home
 is implicit). `hp`/`shields` are written on every conquest, so a relaunch resumes
