@@ -14,7 +14,9 @@ extends RefCounted
 ## each scene, so the whole UI stays on one scale.
 
 const FONT_DIR: String = "res://assests/fonts"
-const FONT_EXTENSIONS: Array[String] = ["ttf", "otf", "woff", "woff2", "bdf"]
+## Only importable formats: a stray .bdf/.fnt without an import file would make
+## ResourceLoader log an error, so those are skipped silently instead.
+const FONT_EXTENSIONS: Array[String] = ["ttf", "otf", "woff", "woff2"]
 ## Case-insensitive filename hints. First match wins.
 const BODY_FONT_HINTS: Array[String] = ["pixelify"]
 const DISPLAY_FONT_HINTS: Array[String] = ["press"]

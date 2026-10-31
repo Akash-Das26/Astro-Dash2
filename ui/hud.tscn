@@ -497,9 +497,6 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_end_quit")
 theme_override_styles/focus = SubResource("StyleBoxFlat_end_quit_hover")
 text = "QUIT"
 
-[node name="ControlsCard" parent="Root" instance=ExtResource("7_controls")]
-layout_mode = 1
-
 [node name="TouchControls" type="Control" parent="Root"]
 layout_mode = 1
 anchors_preset = 15
@@ -636,3 +633,6 @@ text = "CANCEL"
 [node name="BannerTimer" type="Timer" parent="."]
 wait_time = 1.4
 one_shot = true
+
+[node name="ControlsCard" parent="Root" instance=ExtResource("7_controls")]
+layout_mode = 1
