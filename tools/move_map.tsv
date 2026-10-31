@@ -1,0 +1,14 @@
+tuning.gd	config/tuning.gd
+tuning.gd.uid	config/tuning.gd.uid
+difficulty.gd	config/difficulty.gd
+difficulty.gd.uid	config/difficulty.gd.uid
+upgrades.gd	config/upgrades.gd
+upgrades.gd.uid	config/upgrades.gd.uid
+weapons.gd	config/weapons.gd
+weapons.gd.uid	config/weapons.gd.uid
+skins.gd	config/skins.gd
+skins.gd.uid	config/skins.gd.uid
+controls.gd	config/controls.gd
+controls.gd.uid	config/controls.gd.uid
+ui/ui_theme.gd	config/ui_theme.gd
+ui/ui_theme.gd.uid	config/ui_theme.gd.uid

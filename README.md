@@ -252,15 +252,15 @@ ui/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
 ui/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
 ui/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries
 ui/upgrade_panel.gd/.tscn  upgrade cards, current stats, skin picker
-ui/ui_theme.gd           the one theme: pixel font (if present), sizes, colours
-skins.gd                 hull table, unlock thresholds, selected-skin validation
+config/ui_theme.gd           the one theme: pixel font (if present), sizes, colours
+config/skins.gd                 hull table, unlock thresholds, selected-skin validation
 galaxy.gd                seeded layout, graph, types, traits, names, battle_for()
 campaign.gd              run state: galaxy cache, pending body, victories/defeats
 battle_game.gd/.tscn     arena root: score, combo, energy, waves, boss, end cards
 battle.gd                Battle resource (waves, mix, density, difficulty, boss)
-weapons.gd               the weapon table readers and formatting helpers
-tuning.gd                every balance number, in one file (see Balancing)
-upgrades.gd              upgrade table -> prices, ship stats, card labels
+config/weapons.gd               the weapon table readers and formatting helpers
+config/tuning.gd                every balance number, in one file (see Balancing)
+config/upgrades.gd              upgrade table -> prices, ship stats, card labels
 
 autoload/
   game_state.gd          MENU / PLAYING / PAUSED / GAME_OVER / MAP / BATTLE_WON,
@@ -281,7 +281,7 @@ entities/
 
 ui/
   hud.gd/.tscn           landscape bars, boss bar, pause card, victory/game-over cards
-  touch_controls.gd      virtual stick, aim zone, pause button
+  touch_config/controls.gd      virtual stick, aim zone, pause button
   settings_panel.gd/.tscn  sliders, mute, reduce motion, auto-fire, control notes
 
 tests/                   headless suite and battle bot (see Tests)
@@ -338,8 +338,8 @@ no autoload globals, so any script naming `SaveData` fails to compile there.
 
 ## Balancing
 
-Every number worth tweaking lives in **`tuning.gd`**, plus UI sizes in
-`ui/ui_theme.gd` and skin unlock thresholds in `skins.gd`. Nothing in the logic
+Every number worth tweaking lives in **`config/tuning.gd`**, plus UI sizes in
+`config/ui_theme.gd` and skin unlock thresholds in `config/skins.gd`. Nothing in the logic
 depends on the exact values.
 
 | What | Constant(s) |
@@ -362,9 +362,9 @@ depends on the exact values.
 | Effects | `MAX_LIVE_EXPLOSIONS`, `MAX_LIVE_FLOAT_TEXTS`, `EXPLOSION_PARTICLES`, `EXPLOSION_LIFE`, `SHOCKWAVE_LIFE`, `SHOCKWAVE_RADIUS`, `STARFIELD_*` |
 | Upgrades | `UPGRADES` (price is `base_cost + cost_step * level`), `UPGRADE_MAX_LEVEL`, `HULL_LEVELS_PER_STEP` + `HP_PER_HULL_STEP`, `SPEED_PER_LEVEL`, `SHIELD_LEVELS_PER_CHARGE`, `FIRE_LEVELS_PER_DAMAGE`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` |
 | Perfect victory | `PERFECT_BONUS_SCORE` (500), `PERFECT_BONUS_ENERGY` (25) |
-| Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `skins.gd` |
+| Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `config/skins.gd` |
 | Legacy single-laser values | `SHIP_FIRE_INTERVAL`, `SHIP_BULLET_*`, `SHIP_MUZZLE_OFFSET`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` (kept for the fallback bullet, superseded by `WEAPONS`) |
-| UI scale and fonts | `UITheme.SIZE_*` (including `SIZE_DISPLAY`), `UITheme.COLOR_*`, the font-name hints in `ui/ui_theme.gd` and the button/card styleboxes |
+| UI scale and fonts | `UITheme.SIZE_*` (including `SIZE_DISPLAY`), `UITheme.COLOR_*`, the font-name hints in `config/ui_theme.gd` and the button/card styleboxes |
 | Galaxy layout | `GALAXY_MAP_SIZE`, `GALAXY_BODY_COUNT_MIN/MAX`, `GALAXY_MIN_SPACING`, `GALAXY_EDGE_MARGIN`, `GALAXY_LINKS_PER_BODY`, `GALAXY_MAX_LINK_LENGTH`, `GALAXY_HOME_ANCHOR`, `GALAXY_TAP_RADIUS`, `GALAXY_PAN_SPEED` |
 | Map zoom | `GALAXY_ZOOM_MIN` (0.55), `GALAXY_ZOOM_MAX` (1.7), `GALAXY_ZOOM_STEP`, `GALAXY_ZOOM_SMOOTH` |
 | Music playlist | `MUSIC_ORDER_SHUFFLE` / `MUSIC_ORDER_IN_ORDER`, `MUSIC_CROSSFADE` (1.5 s), `MUSIC_SILENT_DB` (-40), `MUSIC_PAUSE_GAIN` (0.45), `MUSIC_PAUSE_FADE`; the folder and formats in `autoload/audio_manager.gd` (`MUSIC_DIR`, `MUSIC_EXTENSIONS`, `MUSIC_FORMAT_PRIORITY`) |
@@ -378,7 +378,7 @@ depends on the exact values.
 
 ### Weapons
 
-Every row lives in `Tuning.WEAPONS`; `weapons.gd` only reads and formats them.
+Every row lives in `Tuning.WEAPONS`; `config/weapons.gd` only reads and formats them.
 FIRE POWER multiplies damage by `1 + 0.12 * level` and cooldowns by
 `1 - 0.03 * level`, floored at 0.55, for **both** equipped slots.
 
@@ -468,9 +468,9 @@ Paths are relative to `assests/`.
 | PNG | Used by |
 | --- | --- |
 | `background-black.png` | `battle_game.tscn` backdrop, near-space band |
-| `background-blue.png` | blue-veil band (`tuning.gd`) |
-| `background-purple.png` | purple-deep band (`tuning.gd`) |
-| `background-red.png` | red-expanse band (`tuning.gd`) |
+| `background-blue.png` | blue-veil band (`config/tuning.gd`) |
+| `background-purple.png` | purple-deep band (`config/tuning.gd`) |
+| `background-red.png` | red-expanse band (`config/tuning.gd`) |
 | `spacepixels-0.2.0/.../asteroid_grey.png` | map minor planets, large rocks, menu drift |
 | `spacepixels-0.2.0/.../asteroid_grey_tiny.png` | split debris, menu drift |
 | `spacepixels-0.2.0/.../asteroid_tiny.png` | map minor planets, small rocks, menu drift |
