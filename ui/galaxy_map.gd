@@ -666,13 +666,14 @@ func _show_result(result: Dictionary) -> void:
 
 
 ## Finishing the galaxy starts a fresh campaign, so the mode is chosen again.
+## The result card stays behind the picker: cancelling returns to it.
 func _on_result_pressed() -> void:
-	_result_card.visible = false
 	_result_button.release_focus()
 	_difficulty_picker.open()
 
 
 func _on_difficulty_chosen(difficulty: StringName) -> void:
+	_result_card.visible = false
 	Campaign.begin_run(difficulty)
 	_reload_map()
 	_show_banner("NEW %s CAMPAIGN" % Difficulty.title(difficulty))
