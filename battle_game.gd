@@ -558,9 +558,15 @@ func _spawn_boss() -> void:
 	if boss == null:
 		_end_battle(true)
 		return
+	# The mode's enemy HP multiplier applies to the station as well.
+	var boss_hp: int = battle.boss_hp
+	if _campaign:
+		boss_hp = maxi(
+			roundi(float(boss_hp) * Difficulty.enemy_hp_scale(SaveData.campaign_difficulty)), 1
+		)
 	boss.configure(
 		battle.boss_color,
-		battle.boss_hp,
+		boss_hp,
 		Vector2(Tuning.VIEW_SIZE.x * 0.5, Tuning.ARENA_TOP + 170.0),
 		ship
 	)
