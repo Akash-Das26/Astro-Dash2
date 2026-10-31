@@ -10,11 +10,12 @@ extends Control
 signal closed
 signal changed
 
+const PAGE: String = "Panel/Margin/Box/Scroll/Page"
 const CARD_ROOT: Dictionary = {
-	&"hull": "Panel/Margin/Box/Body/Grid/HullCard",
-	&"speed": "Panel/Margin/Box/Body/Grid/SpeedCard",
-	&"shield": "Panel/Margin/Box/Body/Grid/ShieldCard",
-	&"fire": "Panel/Margin/Box/Body/Grid/FireCard",
+	&"hull": PAGE + "/Body/Grid/HullCard",
+	&"speed": PAGE + "/Body/Grid/SpeedCard",
+	&"shield": PAGE + "/Body/Grid/ShieldCard",
+	&"fire": PAGE + "/Body/Grid/FireCard",
 }
 const SKIN_ICON_SIZE: Vector2 = Vector2(58.0, 48.0)
 ## The preview draws a hull at about four times its in-battle size. Normalising
@@ -28,7 +29,13 @@ const LASER_COLORS: Array[Color] = [
 	Color(0.6, 1.0, 0.7),
 	Color(1.0, 0.88, 0.35),
 ]
-const WEAPON_CARD_HEIGHT: float = 46.0
+## Each weapon row is a fixed height so its three text lines never overlap.
+const WEAPON_CARD_HEIGHT: float = 64.0
+## The preview column is narrower on the hull tab, where the 2x2 grid needs
+## the room, and wider on the weapon tab, which has no grid.
+const STATS_WIDTH_HULL: float = 210.0
+const STATS_WIDTH_WEAPONS: float = 300.0
+const FEEDBACK_SECONDS: float = 2.0
 
 ## The panel has two views: ship upgrades plus hull skins, or the weapon rack.
 ## Both share the left column preview.
@@ -36,26 +43,30 @@ enum Tab { HULL, WEAPONS }
 
 @onready var _energy_label: Label = $Panel/Margin/Box/Header/EnergyLabel
 @onready var _close_button: Button = $Panel/Margin/Box/Header/CloseButton
-@onready var _stats_label: Label = $Panel/Margin/Box/Body/Stats/Value
-@onready var _preview_ship: Sprite2D = $Panel/Margin/Box/Body/Stats/Preview/ShipSprite
-@onready var _preview_thruster: Thruster = $Panel/Margin/Box/Body/Stats/Preview/Thruster
-@onready var _preview_name: Label = $Panel/Margin/Box/Body/Stats/PreviewName
-@onready var _preview_status: Label = $Panel/Margin/Box/Body/Stats/PreviewStatus
-@onready var _laser_label: Label = $Panel/Margin/Box/Body/Stats/LaserLabel
-@onready var _equip_button: Button = $Panel/Margin/Box/Body/Stats/EquipButton
-@onready var _skin_row: HBoxContainer = $Panel/Margin/Box/Skins/Row
-@onready var _skin_hint: Label = $Panel/Margin/Box/Skins/Hint
+@onready var _scroll: ScrollContainer = $Panel/Margin/Box/Scroll
+@onready var _body: HBoxContainer = $Panel/Margin/Box/Scroll/Page/Body
+@onready var _stats_column: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Stats
+@onready var _stats_label: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/Value
+@onready var _preview_ship: Sprite2D = $Panel/Margin/Box/Scroll/Page/Body/Stats/Preview/ShipSprite
+@onready var _preview_thruster: Thruster = $Panel/Margin/Box/Scroll/Page/Body/Stats/Preview/Thruster
+@onready var _preview_name: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/PreviewName
+@onready var _preview_status: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/PreviewStatus
+@onready var _laser_label: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/LaserLabel
+@onready var _equip_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/EquipButton
+@onready var _skin_row: HBoxContainer = $Panel/Margin/Box/Scroll/Page/Skins/Row
+@onready var _skin_hint: Label = $Panel/Margin/Box/Scroll/Page/Skins/Hint
 @onready var _hull_tab: Button = $Panel/Margin/Box/Tabs/HullTab
 @onready var _weapon_tab: Button = $Panel/Margin/Box/Tabs/WeaponTab
-@onready var _grid: GridContainer = $Panel/Margin/Box/Body/Grid
-@onready var _skins: VBoxContainer = $Panel/Margin/Box/Skins
-@onready var _weapon_box: VBoxContainer = $Panel/Margin/Box/Body/Weapons
-@onready var _weapon_row: VBoxContainer = $Panel/Margin/Box/Body/Weapons/Row
-@onready var _weapon_hint: Label = $Panel/Margin/Box/Body/Weapons/Hint
-@onready var _weapon_icon: TextureRect = $Panel/Margin/Box/Body/Stats/WeaponIcon
-@onready var _buy_button: Button = $Panel/Margin/Box/Body/Stats/BuyButton
-@onready var _equip_primary_button: Button = $Panel/Margin/Box/Body/Stats/EquipPrimaryButton
-@onready var _equip_secondary_button: Button = $Panel/Margin/Box/Body/Stats/EquipSecondaryButton
+@onready var _grid: GridContainer = $Panel/Margin/Box/Scroll/Page/Body/Grid
+@onready var _skins: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Skins
+@onready var _weapon_box: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Weapons
+@onready var _weapon_row: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Weapons/Row
+@onready var _weapon_hint: Label = $Panel/Margin/Box/Scroll/Page/Body/Weapons/Hint
+@onready var _weapon_icon: TextureRect = $Panel/Margin/Box/Scroll/Page/Body/Stats/WeaponIcon
+@onready var _buy_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/BuyButton
+@onready var _equip_primary_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/EquipPrimaryButton
+@onready var _equip_secondary_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/EquipSecondaryButton
+@onready var _feedback: Label = $Panel/Margin/Box/Feedback
 
 ## Hull shown in the preview. Picking a skin only previews it; EQUIP commits.
 var _preview_id: StringName = Skins.DEFAULT_ID
@@ -68,6 +79,7 @@ var _weapon_buttons: Dictionary = {}
 var _style_normal: StyleBoxFlat
 var _style_preview: StyleBoxFlat
 var _style_equipped: StyleBoxFlat
+var _feedback_tween: Tween
 
 
 func _ready() -> void:
@@ -165,9 +177,17 @@ func _render_card(kind: StringName) -> void:
 
 func _on_card_pressed(kind: StringName) -> void:
 	if SaveData.buy_upgrade(kind):
-		AudioManager.play_sfx("ui_click")
+		AudioManager.play_sfx("upgrade_buy")
 		changed.emit()
 		refresh()
+		return
+	AudioManager.play_sfx("upgrade_denied")
+	if SaveData.level_of(kind) >= Upgrades.MAX_LEVEL:
+		_show_feedback("MAX LEVEL", UITheme.COLOR_MUTED)
+	else:
+		_show_feedback(
+			"NOT ENOUGH ENERGY: NEED %d" % SaveData.next_upgrade_cost(kind), UITheme.COLOR_WARN
+		)
 
 
 func _build_skins() -> void:
@@ -241,8 +261,14 @@ func _step_skin(step: int) -> void:
 ## Commits the previewed hull. Disabled for a locked hull or the worn one.
 func _on_equip_pressed() -> void:
 	if not Skins.select(_preview_id):
+		AudioManager.play_sfx("upgrade_denied")
+		if not Skins.is_unlocked(_preview_id):
+			_show_feedback(
+				"LOCKED: %d PLANETS" % int(Skins.entry(_preview_id).get("unlock", 0)),
+				UITheme.COLOR_WARN
+			)
 		return
-	AudioManager.play_sfx("ui_click")
+	AudioManager.play_sfx("upgrade_buy")
 	changed.emit()
 	refresh()
 
@@ -340,12 +366,16 @@ func _build_weapons() -> void:
 		box.offset_right = -10.0
 		box.offset_bottom = -3.0
 		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_theme_constant_override("separation", 0)
+		box.add_theme_constant_override("separation", 1)
+		# Name, numbers and status each get their own fixed row, so a long
+		# "UNLOCKS AT 12 PLANETS" never rides over the stats line above it.
 		for row_name: String in ["Name", "Stats", "Status"]:
 			var label := Label.new()
 			label.name = row_name
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			label.add_theme_font_size_override("font_size", 15 if row_name == "Name" else 10)
+			label.custom_minimum_size = Vector2(0.0, 17.0 if row_name == "Name" else 12.0)
+			label.clip_text = true
 			box.add_child(label)
 		card.add_child(box)
 		card.pressed.connect(_on_weapon_pressed.bind(id))
@@ -376,19 +406,49 @@ func _weapon_stats() -> Dictionary:
 
 
 func _on_buy_pressed() -> void:
-	if not SaveData.buy_weapon(_preview_weapon):
+	if SaveData.buy_weapon(_preview_weapon):
+		AudioManager.play_sfx("upgrade_buy")
+		changed.emit()
+		refresh()
 		return
-	AudioManager.play_sfx("ui_click")
-	changed.emit()
-	refresh()
+	AudioManager.play_sfx("upgrade_denied")
+	if not Weapons.is_unlocked(_preview_weapon):
+		_show_feedback(
+			"LOCKED: %d PLANETS" % Weapons.unlock_planets(_preview_weapon), UITheme.COLOR_WARN
+		)
+	elif Weapons.owned(_preview_weapon):
+		_show_feedback("ALREADY OWNED", UITheme.COLOR_MUTED)
+	else:
+		_show_feedback(
+			"NOT ENOUGH ENERGY: NEED %d" % Weapons.cost(_preview_weapon), UITheme.COLOR_WARN
+		)
 
 
 func _on_equip_weapon_pressed(slot: int) -> void:
-	if not SaveData.equip_weapon(_preview_weapon, slot):
+	if SaveData.equip_weapon(_preview_weapon, slot):
+		AudioManager.play_sfx("upgrade_buy")
+		changed.emit()
+		refresh()
 		return
-	AudioManager.play_sfx("ui_click")
-	changed.emit()
-	refresh()
+	AudioManager.play_sfx("upgrade_denied")
+	_show_feedback("CANNOT EQUIP THAT PAIR", UITheme.COLOR_WARN)
+
+
+## One short line under the panel, faded out after two seconds, so a refused
+## purchase says why instead of doing nothing.
+func _show_feedback(message: String, tint: Color) -> void:
+	if message.is_empty():
+		return
+	_feedback.text = message
+	_feedback.add_theme_color_override("font_color", tint)
+	_feedback.visible = true
+	_feedback.modulate.a = 1.0
+	if _feedback_tween != null and _feedback_tween.is_valid():
+		_feedback_tween.kill()
+	_feedback_tween = create_tween()
+	_feedback_tween.tween_interval(FEEDBACK_SECONDS)
+	_feedback_tween.tween_property(_feedback, "modulate:a", 0.0, 0.35)
+	_feedback_tween.tween_callback(_feedback.hide)
 
 
 ## HULL & SHIP swaps the 2x2 upgrade grid and the skin row for the weapon rack.
@@ -419,6 +479,17 @@ func _apply_tab_visibility() -> void:
 	_equip_secondary_button.visible = not hull
 	_hull_tab.modulate = Color.WHITE if hull else Color(0.65, 0.7, 0.85)
 	_weapon_tab.modulate = Color(0.65, 0.7, 0.85) if hull else Color.WHITE
+	# Hull tab: preview column, then the 2x2 grid. Weapons tab: the rack on the
+	# left, the preview column (projectile, stats, buttons) on the right.
+	if hull:
+		_body.move_child(_stats_column, 0)
+		_body.move_child(_grid, 1)
+		_stats_column.custom_minimum_size.x = STATS_WIDTH_HULL
+	else:
+		_body.move_child(_weapon_box, 0)
+		_body.move_child(_stats_column, 1)
+		_stats_column.custom_minimum_size.x = STATS_WIDTH_WEAPONS
+	_scroll.scroll_vertical = 0
 
 
 func _refresh_weapons() -> void:
