@@ -1,9 +1,23 @@
 extends Node
-## Global audio service. Streams are looked up by name in SOUND_FILES and
-## loaded from res://assests/audio/; anything missing only produces a warning
-## so a build without audio still runs normally.
+## Global audio service. SFX streams are looked up by name in SOUND_FILES and
+## loaded from res://assests/audio/; anything missing only produces a warning so
+## a build without audio still runs normally.
+##
+## Music is a playlist, not a single track: every .ogg, .mp3 and .wav in
+## res://assests/audio/music/ becomes a track, sorted by file name. The folder is
+## rescanned once at startup. A track that is exported in more than one format
+## is only played once (ogg beats mp3 beats wav). The old single
+## res://assests/audio/music.ogg still works as a one-track playlist.
 
 const AUDIO_DIR: String = "res://assests/audio/"
+const MUSIC_DIR: String = "res://assests/audio/music/"
+const LEGACY_MUSIC: String = "res://assests/audio/music.ogg"
+const MUSIC_EXTENSIONS: Array[String] = ["ogg", "mp3", "wav"]
+## When the same base name exists in several formats, the earlier one wins.
+const MUSIC_FORMAT_PRIORITY: Array[String] = ["ogg", "mp3", "wav"]
+## Suffixes an exported build leaves next to a packed file instead of the file.
+const IMPORT_SUFFIXES: Array[String] = [".import", ".remap"]
+
 const MASTER_BUS: String = "Master"
 const MUSIC_BUS: String = "Music"
 const SFX_BUS: String = "SFX"
@@ -47,7 +61,7 @@ const SOUND_FILES: Dictionary = {
 	"boss_spawn": "boss_spawn.ogg",
 	"wave": "wave.ogg",
 	"game_over": "game_over.ogg",
-	# Music loops
+	# Music loops (the playlist scans the folder; this is the legacy slot)
 	"music": "music.ogg",
 }
 ## Random pitch spread per sound, as a fraction of 1.0 (+/-5% = 0.05).
@@ -62,6 +76,8 @@ const PITCH_JITTER: Dictionary = {
 ## Emitted whenever a real volume or mute change happens, so every settings
 ## panel (menu and pause are separate instances) can stay in step.
 signal settings_changed
+## The track that just started, as a display name (file name without extension).
+signal track_changed(track: String)
 
 var _streams: Dictionary = {}
 var _last_played: Dictionary = {}
@@ -71,6 +87,10 @@ var _music_player: AudioStreamPlayer
 var _muted: bool = false
 var _music_volume: float = 0.8
 var _sfx_volume: float = 0.8
+## Playlist: res:// paths and display names, same order.
+var _tracks: Array[String] = []
+var _track_names: Array[String] = []
+var _current: int = -1
 
 
 func _ready() -> void:
@@ -78,8 +98,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_streams()
 	_build_players()
+	_build_playlist()
 	_apply_saved_settings()
+	start_music()
 
+
+# --- SFX --------------------------------------------------------------------
 
 func play_sfx(sound: String) -> void:
 	var stream := _streams.get(sound) as AudioStream
@@ -97,19 +121,171 @@ func play_sfx(sound: String) -> void:
 	player.play()
 
 
-func play_music(track: String) -> void:
-	var stream := _streams.get(track) as AudioStream
-	if stream == null:
+# --- Music playlist ---------------------------------------------------------
+
+## Every track found at startup, as display names, in playlist order.
+func music_tracks() -> Array[String]:
+	return _track_names.duplicate()
+
+
+func track_count() -> int:
+	return _tracks.size()
+
+
+func current_track_name() -> String:
+	if _current < 0 or _current >= _track_names.size():
+		return ""
+	return _track_names[_current]
+
+
+## Starts the playlist at the current (or first) track. Safe to call twice.
+func start_music() -> void:
+	if _music_player == null or _tracks.is_empty() or _music_player.playing:
 		return
-	if _music_player.stream == stream and _music_player.playing:
+	_play_index(0 if _current < 0 else _current)
+
+
+## Kept for callers from the single-track era. A known name or path plays that
+## track; anything else just resumes the playlist.
+func play_music(track: String = "") -> void:
+	var index: int = _index_of(track)
+	if index >= 0:
+		_play_index(index)
+	else:
+		start_music()
+
+
+func next_track() -> void:
+	if _tracks.is_empty():
 		return
-	_music_player.stream = stream
-	_music_player.play()
+	_play_index((_current + 1) % _tracks.size() if _current >= 0 else 0)
 
 
 func stop_music() -> void:
-	_music_player.stop()
+	if _music_player != null:
+		_music_player.stop()
 
+
+## Scans the music folder once and builds the playlist. Missing folder or no
+## playable file is not an error: music stays off with a single warning.
+func _build_playlist() -> void:
+	_tracks.clear()
+	_track_names.clear()
+	var candidates: Array[String] = []
+	for entry: String in _list_music_entries():
+		var file_name: String = _strip_import_suffix(entry)
+		if file_name.is_empty():
+			continue
+		if not MUSIC_EXTENSIONS.has(file_name.get_extension().to_lower()):
+			continue
+		var path: String = MUSIC_DIR + file_name
+		# A name listed from an export pack is only usable if the resource (or
+		# the source file) is actually there; skip anything ordinal-looking or
+		# half-remapped instead of failing later.
+		if not ResourceLoader.exists(path) and not FileAccess.file_exists(path):
+			continue
+		candidates.append(path)
+	candidates.sort()
+	# One entry per base name, in format-priority order.
+	var by_base: Dictionary = {}
+	for path: String in candidates:
+		var base_name: String = path.get_file().get_basename().to_lower()
+		if by_base.has(base_name):
+			var existing: String = String(by_base[base_name])
+			if _format_rank(path) < _format_rank(existing):
+				by_base[base_name] = path
+		else:
+			by_base[base_name] = path
+	for path: String in by_base.values():
+		_tracks.append(path)
+		_track_names.append(path.get_file().get_basename())
+	if _tracks.is_empty() and ResourceLoader.exists(LEGACY_MUSIC):
+		_tracks.append(LEGACY_MUSIC)
+		_track_names.append("music")
+	if _tracks.is_empty():
+		push_warning(
+			"AudioManager: no music found in %s and no %s; music is off."
+			% [MUSIC_DIR, LEGACY_MUSIC]
+		)
+
+
+## Raw directory entries in the music folder. Two sources on purpose:
+## - ResourceLoader.list_directory (Godot 4.5+) reads the resource pack, which
+##   is the only listing that works in a Web or Android export: the imported
+##   audio does not live next to the source path there.
+## - DirAccess lists the real folder, which covers the editor and any export
+##   whose preset includes the source files (see export_presets.cfg).
+## Exported names may carry ".import" / ".remap"; both are stripped later.
+func _list_music_entries() -> PackedStringArray:
+	var entries: PackedStringArray = PackedStringArray()
+	if ResourceLoader.has_method("list_directory"):
+		var listed: Variant = ResourceLoader.call("list_directory", MUSIC_DIR)
+		if listed is PackedStringArray:
+			entries.append_array(listed as PackedStringArray)
+		elif listed is Array:
+			for item: Variant in (listed as Array):
+				entries.append(String(item))
+	var dir := DirAccess.open(MUSIC_DIR)
+	if dir != null:
+		dir.list_dir_begin()
+		var entry: String = dir.get_next()
+		while entry != "":
+			if not dir.current_is_dir():
+				entries.append(entry)
+			entry = dir.get_next()
+		dir.list_dir_end()
+	return entries
+
+
+func _strip_import_suffix(entry: String) -> String:
+	var file_name: String = entry.get_file()
+	for suffix: String in IMPORT_SUFFIXES:
+		if file_name.ends_with(suffix):
+			return file_name.substr(0, file_name.length() - suffix.length())
+	return file_name
+
+
+func _format_rank(path: String) -> int:
+	var rank: int = MUSIC_FORMAT_PRIORITY.find(path.get_extension().to_lower())
+	return rank if rank >= 0 else MUSIC_FORMAT_PRIORITY.size()
+
+
+func _index_of(track: String) -> int:
+	if track.is_empty():
+		return -1
+	var index: int = _tracks.find(track)
+	if index >= 0:
+		return index
+	return _track_names.find(track)
+
+
+## Loads a track and skips past unreadable files, so one bad file cannot stop
+## the playlist. Returns false when nothing could be played at all.
+func _play_index(index: int) -> bool:
+	if _tracks.is_empty():
+		return false
+	index = clampi(index, 0, _tracks.size() - 1)
+	for _attempt: int in _tracks.size():
+		var stream: AudioStream = _load_track(_tracks[index])
+		if stream != null:
+			_current = index
+			_music_player.stream = stream
+			_music_player.play()
+			track_changed.emit(_track_names[index])
+			return true
+		push_warning("AudioManager: could not load %s; skipping it." % _tracks[index])
+		index = (index + 1) % _tracks.size()
+	push_warning("AudioManager: no music track could be loaded.")
+	return false
+
+
+func _load_track(path: String) -> AudioStream:
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	return load(path) as AudioStream
+
+
+# --- Volume and settings ----------------------------------------------------
 
 ## linear is 0.0 (silent) to 1.0 (full).
 func set_bus_volume(bus: String, linear: float) -> void:
@@ -206,6 +382,6 @@ func _resolve_bus(bus: String) -> String:
 
 
 func _on_music_finished() -> void:
-	# Only loops for streams that are not already flagged as looping.
-	if _music_player.stream != null:
-		_music_player.play()
+	if _tracks.size() <= 1:
+		return
+	next_track()
