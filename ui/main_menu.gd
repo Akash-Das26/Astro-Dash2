@@ -21,6 +21,7 @@ const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
 @onready var _confirm_card: Control = $ConfirmCard
 @onready var _confirm_start: Button = $ConfirmCard/Panel/Margin/Box/Buttons/StartButton
 @onready var _confirm_cancel: Button = $ConfirmCard/Panel/Margin/Box/Buttons/CancelButton
+@onready var _difficulty_picker: DifficultyPicker = $DifficultyPicker
 
 
 func _ready() -> void:
@@ -37,11 +38,16 @@ func _ready() -> void:
 	_settings_close.pressed.connect(_close_settings)
 	_confirm_start.pressed.connect(_on_confirm_new_run)
 	_confirm_cancel.pressed.connect(_close_confirm)
+	_difficulty_picker.chosen.connect(_on_difficulty_chosen)
+	_difficulty_picker.closed.connect(_on_difficulty_closed)
 	_settings_panel.controls_requested.connect(_open_controls)
 	_controls_card.closed.connect(_on_controls_closed)
 	_continue_button.disabled = not SaveData.campaign_active
-	_footer.text = "ENERGY %d      BEST %d PLANETS      HIGH SCORE %d" % [
-		SaveData.energy, SaveData.campaign_best_planets, SaveData.high_score,
+	# The footer follows the mode of the campaign just played (or the next one).
+	var mode: StringName = Difficulty.normalise(SaveData.campaign_difficulty)
+	_footer.text = "ENERGY %d      BEST %d PLANETS      %s HIGH %d" % [
+		SaveData.energy, SaveData.campaign_best_planets,
+		Difficulty.title(mode), SaveData.high_score_for(mode),
 	]
 	_new_game.grab_focus()
 
@@ -52,16 +58,29 @@ func _on_new_game() -> void:
 		_confirm_card.visible = true
 		_confirm_start.grab_focus()
 		return
-	_start_new_run()
+	_open_difficulty()
 
 
 func _on_confirm_new_run() -> void:
 	_confirm_card.visible = false
-	_start_new_run()
+	_open_difficulty()
 
 
-func _start_new_run() -> void:
-	Campaign.begin_run()
+func _open_difficulty() -> void:
+	_new_game.release_focus()
+	_difficulty_picker.open()
+
+
+func _on_difficulty_chosen(difficulty: StringName) -> void:
+	_start_new_run(difficulty)
+
+
+func _on_difficulty_closed() -> void:
+	_new_game.grab_focus()
+
+
+func _start_new_run(difficulty: StringName) -> void:
+	Campaign.begin_run(difficulty)
 	AudioManager.play_sfx("ui_click")
 	get_tree().change_scene_to_file(GALAXY_SCENE)
 
@@ -105,6 +124,9 @@ func _quit() -> void:
 ## out of the game.
 func _handle_back() -> void:
 	GameState.back_handler = _handle_back
+	if _difficulty_picker.picker_open():
+		_difficulty_picker.close()
+		return
 	if _controls_card.visible:
 		_controls_card.close()
 		return

@@ -18,6 +18,76 @@ const ARENA_BOTTOM: float = VIEW_SIZE.y - HUD_BAR_HEIGHT
 ## Keep-out band inside the arena, so nothing spawns half off screen.
 const ARENA_MARGIN: float = 36.0
 
+# --- Difficulty -------------------------------------------------------------
+## One row per mode. Everything the mode changes is here: the between-planet
+## heal, what a defeat does, and the battle multipliers. They stack with the
+## galaxy bands and the body traits, so a distant FORTRESS on SINGULARITY is
+## the hardest fight the tables can produce.
+##
+## `heal_per_planet` is a fraction of MAX HP added on every conquest.
+## `milestones` maps "planets conquered" -> fraction; the largest reached
+## milestone REPLACES the per-planet heal (an empty table means none).
+## `on_defeat` is "keep" (progress stays), "reset" (new galaxy, meta kept) or
+## "wipe" (new galaxy and every meta progression reset).
+const DIFFICULTY_CADET: StringName = &"cadet"
+const DIFFICULTY_VECTOR: StringName = &"vector"
+const DIFFICULTY_SUPERNOVA: StringName = &"supernova"
+const DIFFICULTY_EVENT_HORIZON: StringName = &"event_horizon"
+const DIFFICULTY_SINGULARITY: StringName = &"singularity"
+const DIFFICULTY_ORDER: Array[StringName] = [
+	DIFFICULTY_CADET, DIFFICULTY_VECTOR, DIFFICULTY_SUPERNOVA,
+	DIFFICULTY_EVENT_HORIZON, DIFFICULTY_SINGULARITY,
+]
+## Old saves without a stored mode load as CADET.
+const DIFFICULTY_DEFAULT: StringName = DIFFICULTY_CADET
+const DIFFICULTIES: Dictionary = {
+	DIFFICULTY_CADET: {
+		"title": "CADET", "level": 1, "color": Color(0.55, 1.0, 0.65),
+		"heal_per_planet": 1.0, "milestones": {}, "on_defeat": "keep",
+		"defeat_hp": 1.0,
+		"enemy_hp": 0.8, "enemy_damage": 0.8, "enemies": 0.9,
+		"energy": 1.0, "score": 1.0, "shield_drop": 1.5,
+	},
+	DIFFICULTY_VECTOR: {
+		"title": "VECTOR", "level": 2, "color": Color(0.6, 0.85, 1.0),
+		"heal_per_planet": 0.25,
+		"milestones": {5: 0.5, 10: 1.0},
+		"on_defeat": "keep", "defeat_hp": 0.5,
+		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemies": 1.0,
+		"energy": 1.0, "score": 1.0, "shield_drop": 1.0,
+	},
+	DIFFICULTY_SUPERNOVA: {
+		"title": "SUPERNOVA", "level": 3, "color": Color(1.0, 0.8, 0.4),
+		"heal_per_planet": 0.1,
+		"milestones": {5: 0.25, 10: 0.5},
+		"on_defeat": "reset", "defeat_hp": 0.0,
+		"enemy_hp": 1.25, "enemy_damage": 1.2, "enemies": 1.1,
+		"energy": 1.1, "score": 1.25, "shield_drop": 0.8,
+	},
+	DIFFICULTY_EVENT_HORIZON: {
+		"title": "EVENT HORIZON", "level": 4, "color": Color(1.0, 0.55, 0.35),
+		"heal_per_planet": 0.0,
+		"milestones": {5: 0.1, 10: 0.25},
+		"on_defeat": "reset", "defeat_hp": 0.0,
+		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemies": 1.25,
+		"energy": 1.25, "score": 1.5, "shield_drop": 0.6,
+	},
+	DIFFICULTY_SINGULARITY: {
+		"title": "SINGULARITY", "level": 5, "color": Color(1.0, 0.35, 0.45),
+		"heal_per_planet": 0.0,
+		"milestones": {10: 0.05},
+		"on_defeat": "wipe", "defeat_hp": 0.0,
+		"enemy_hp": 1.8, "enemy_damage": 1.7, "enemies": 1.4,
+		"energy": 1.5, "score": 2.0, "shield_drop": 0.5,
+	},
+}
+## What a SINGULARITY defeat resets, listed on its card.
+const DIFFICULTY_WIPE_LIST: Array[String] = [
+	"CAMPAIGN", "BANKED ENERGY", "UPGRADE LEVELS", "OWNED WEAPONS",
+]
+## Fixed while a campaign runs; the picker is the only way to change it.
+const DIFFICULTY_PICKER_BG: Color = Color(0.04, 0.06, 0.12, 0.97)
+
 # --- Ship -------------------------------------------------------------------
 const SHIP_MAX_HP: int = 100
 const SHIP_ACCELERATION: float = 1500.0

@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://ui/menu_backdrop.gd" id="3_backdrop"]
 [ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="4_settings"]
 [ext_resource type="PackedScene" path="res://ui/controls_card.tscn" id="5_controls"]
+[ext_resource type="PackedScene" path="res://ui/difficulty_picker.tscn" id="6_difficulty"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
 bg_color = Color(0.45, 0.12, 0.14, 1)
@@ -300,3 +301,5 @@ text = "CANCEL"
 
 [node name="ControlsCard" parent="." instance=ExtResource("5_controls")]
 layout_mode = 1
+
+[node name="DifficultyPicker" parent="." instance=ExtResource("6_difficulty")]

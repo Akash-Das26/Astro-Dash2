@@ -22,6 +22,8 @@ const TAP_SLOP: float = 8.0
 @onready var _bodies_root: Node2D = $View/World/Bodies
 @onready var _links: GalaxyLinks = $View/World/Links
 @onready var _planets_label: Label = $TopBar/PlanetsLabel
+@onready var _hull_label: Label = $TopBar/HullLabel
+@onready var _difficulty_label: Label = $TopBar/DifficultyLabel
 @onready var _score_label: Label = $TopBar/ScoreLabel
 @onready var _energy_label: Label = $TopBar/EnergyLabel
 @onready var _hint: Label = $Hint
@@ -39,6 +41,7 @@ const TAP_SLOP: float = 8.0
 @onready var _result_button: Button = $ResultCard/Panel/Margin/Box/ActionButton
 @onready var _upgrade_button: Button = $UpgradeButton
 @onready var _upgrade_panel: UpgradePanel = $UpgradePanel
+@onready var _difficulty_picker: DifficultyPicker = $DifficultyPicker
 
 var _galaxy: Galaxy
 var _markers: Dictionary = {}
@@ -77,6 +80,8 @@ func _ready() -> void:
 	_upgrade_button.pressed.connect(_open_upgrades)
 	_upgrade_panel.closed.connect(_on_upgrades_closed)
 	_upgrade_panel.changed.connect(_on_upgrades_changed)
+	_difficulty_picker.chosen.connect(_on_difficulty_chosen)
+	_difficulty_picker.closed.connect(_on_difficulty_closed)
 	# A finished battle leaves its summary behind for this screen to show.
 	var result: Dictionary = Campaign.take_result()
 	if result.is_empty() and not SaveData.campaign_active:
@@ -104,7 +109,8 @@ var _stick_cursor_cooldown: float = 0.0
 
 func _process(delta: float) -> void:
 	_update_zoom(delta)
-	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
+	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible \
+			or _difficulty_picker.picker_open():
 		return
 	_pan_with_stick(delta)
 	_stick_cursor(delta)
@@ -135,6 +141,12 @@ func _refresh() -> void:
 	_planets_label.text = "PLANETS %d/%d" % [
 		Campaign.planets_conquered(), _galaxy.body_count(),
 	]
+	# Low hull is visible before a planet is chosen: the carried value, or full
+	# hull when this is the first battle of the run (nothing stored yet).
+	var max_hp: int = int(Upgrades.stats_for(SaveData.upgrade_levels)["max_hp"])
+	var hull: int = SaveData.campaign_hp if SaveData.campaign_hp > 0 else max_hp
+	_hull_label.text = "HULL %d/%d" % [clampi(hull, 0, max_hp), max_hp]
+	_difficulty_label.text = Difficulty.title(SaveData.campaign_difficulty)
 	_score_label.text = "SCORE %d" % SaveData.campaign_score
 	_energy_label.text = "ENERGY %d" % SaveData.energy
 
@@ -465,6 +477,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			Campaign.pending_id = &""
 			get_tree().change_scene_to_file(BATTLE_SCENE)
 			return
+	if _difficulty_picker.picker_open():
+		# The picker owns Esc / Back while it is up.
+		return
 	if _result_card.visible:
 		return
 	if _upgrade_panel.visible:
@@ -631,37 +646,41 @@ func _show_result(result: Dictionary) -> void:
 			String(result.get("name", "SECTOR")), int(result.get("energy", 0)),
 		])
 		return
-	if completed:
-		_result_title.text = "GALAXY CONQUERED"
-		_result_detail.text = "ALL %d PLANETS   |   %d CITADELS\nSCORE %d   |   BEST %d" % [
-			Campaign.planets_conquered(),
-			Campaign.citadels_conquered(),
-			SaveData.campaign_score,
-			SaveData.campaign_best_score,
-		]
-		_result_button.text = "NEW CAMPAIGN"
-		_result_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7))
-	else:
-		_result_title.text = "CAMPAIGN OVER"
-		_result_detail.text = "PLANETS %d/%d   |   CITADELS %d/%d\nSCORE %d   |   BEST %d" % [
-			int(result.get("planets", 0)),
-			_galaxy.body_count(),
-			int(result.get("citadels", 0)),
-			_galaxy.citadel_total(),
-			int(result.get("score", 0)),
-			int(result.get("best", 0)),
-		]
-		_result_button.text = "RETRY"
-		_result_title.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
+	# A defeat was already summarised by the battle's game-over card, and the
+	# mode's rule has been applied; the map just shows the run's state.
+	if not completed:
+		return
+	_result_title.text = "GALAXY CONQUERED"
+	var mode: StringName = Difficulty.normalise(SaveData.campaign_difficulty)
+	_result_detail.text = "ALL %d PLANETS   |   %d CITADELS\nSCORE %d   |   %s HIGH %d" % [
+		Campaign.planets_conquered(),
+		Campaign.citadels_conquered(),
+		SaveData.campaign_score,
+		Difficulty.title(mode),
+		SaveData.high_score_for(mode),
+	]
+	_result_button.text = "NEW CAMPAIGN"
+	_result_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7))
 	_result_card.visible = true
 	_result_button.grab_focus()
 
 
+## Finishing the galaxy starts a fresh campaign, so the mode is chosen again.
 func _on_result_pressed() -> void:
 	_result_card.visible = false
 	_result_button.release_focus()
-	Campaign.begin_run()
+	_difficulty_picker.open()
+
+
+func _on_difficulty_chosen(difficulty: StringName) -> void:
+	Campaign.begin_run(difficulty)
 	_reload_map()
+	_show_banner("NEW %s CAMPAIGN" % Difficulty.title(difficulty))
+
+
+func _on_difficulty_closed() -> void:
+	if _result_card.visible:
+		_result_button.grab_focus()
 
 
 ## Leave for the front end. Every conquest and the carried hull are already in
@@ -675,6 +694,9 @@ func _open_menu() -> void:
 func _handle_back() -> void:
 	# Always re-arm: GameState consumes the handler on every request.
 	GameState.back_handler = _handle_back
+	if _difficulty_picker.picker_open():
+		_difficulty_picker.close()
+		return
 	if _result_card.visible:
 		return
 	if _upgrade_panel.visible:

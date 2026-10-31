@@ -25,10 +25,11 @@ static func galaxy() -> Galaxy:
 	return _galaxy
 
 
-## Fresh seed, fresh conquests; energy and upgrades are kept.
-static func begin_run() -> void:
+## Fresh seed, fresh conquests; energy and upgrades are kept. With no mode the
+## difficulty of the previous campaign is reused.
+static func begin_run(difficulty: StringName = &"") -> void:
 	var fresh_seed: int = int(Time.get_unix_time_from_system()) ^ randi()
-	SaveData.begin_campaign(fresh_seed)
+	SaveData.begin_campaign(fresh_seed, difficulty)
 	_galaxy = null
 	_galaxy_seed = -1
 	last_result = {}
@@ -72,16 +73,22 @@ static func award_victory(
 	body_id: StringName,
 	score: int,
 	hp: int,
+	max_hp: int,
 	shields: int,
 	bonus_energy: int
 ) -> Dictionary:
 	var map: Galaxy = galaxy()
 	var data: Dictionary = map.body(body_id)
 	SaveData.add_energy(maxi(bonus_energy, 0))
+	# Healing is computed from MAX HP and added to the carried hull, clamped.
+	var planets: int = planets_conquered() + (0 if SaveData.is_body_conquered(body_id) else 1)
+	var fraction: float = Difficulty.heal_fraction(planets)
+	var healed: int = clampi(roundi(float(max_hp) * fraction), 0, maxi(max_hp, 1))
+	var new_hp: int = clampi(hp + healed, 0, maxi(max_hp, 1))
 	SaveData.record_campaign_progress(
 		body_id,
 		SaveData.campaign_score + maxi(score, 0),
-		hp,
+		new_hp,
 		shields
 	)
 	var completed: bool = body_id == map.gate_id
@@ -93,6 +100,12 @@ static func award_victory(
 		"planets": planets_conquered(),
 		"citadels": citadels_conquered(),
 		"completed": completed,
+		"difficulty": Difficulty.title(),
+		"difficulty_id": SaveData.campaign_difficulty,
+		"heal": new_hp - hp,
+		"heal_fraction": fraction,
+		"hp": new_hp,
+		"max_hp": maxi(max_hp, 1),
 	}
 	if completed:
 		SaveData.submit_score(SaveData.campaign_score)
@@ -103,23 +116,55 @@ static func award_victory(
 
 ## Ends the run on a lost battle. The conquests stay in the save so the map
 ## behind the summary still shows what was taken.
-static func record_defeat(body_id: StringName, score: int) -> Dictionary:
+## Applies the mode's on_defeat rule right away, so quitting on the game-over
+## card cannot dodge it. The summary keeps the numbers of the run that ended.
+static func record_defeat(
+	body_id: StringName,
+	score: int,
+	max_hp: int = 0,
+	shields: int = 0
+) -> Dictionary:
 	var map: Galaxy = galaxy()
 	var data: Dictionary = map.body(body_id)
+	var mode: StringName = Difficulty.normalise(SaveData.campaign_difficulty)
+	var action: StringName = Difficulty.on_defeat(mode)
+	var planets_before: int = planets_conquered()
+	var citadels_before: int = citadels_conquered()
+	var band: String = deepest_band()
 	SaveData.campaign_score += maxi(score, 0)
 	var new_high: bool = SaveData.submit_score(SaveData.campaign_score)
 	var result: Dictionary = {
 		"won": false,
 		"name": String(data.get("name", "")),
 		"score": maxi(score, 0),
-		"planets": planets_conquered(),
-		"citadels": citadels_conquered(),
+		"planets": planets_before,
+		"citadels": citadels_before,
 		"best": maxi(SaveData.campaign_best_score, SaveData.campaign_score),
-		"high": SaveData.high_score,
+		"high": SaveData.high_score_for(mode),
 		"new_high": new_high,
-		"band": deepest_band(),
+		"band": band,
+		"difficulty": Difficulty.title(mode),
+		"difficulty_id": mode,
+		"action": action,
+		"wiped": Tuning.DIFFICULTY_WIPE_LIST if action == Difficulty.WIPE else [],
+		"hp": Difficulty.hp_after_defeat(max_hp, mode),
+		"max_hp": maxi(max_hp, 0),
 	}
 	SaveData.finish_campaign()
+	match action:
+		Difficulty.KEEP:
+			# The galaxy, its conquests and the score stay; only the hull is
+			# restored, so the run continues from the map.
+			SaveData.campaign_active = true
+			SaveData.campaign_hp = Difficulty.hp_after_defeat(max_hp, mode)
+			SaveData.campaign_shields = clampi(shields, 0, Tuning.MAX_SHIELD_CHARGES)
+			SaveData.save_data()
+		_:
+			# A fresh galaxy on the same mode. SINGULARITY also loses the meta
+			# progression, which is exactly what its picker warned about.
+			if action == Difficulty.WIPE:
+				SaveData.wipe_meta_progress()
+			begin_run(mode)
 	last_result = result
 	return result
 

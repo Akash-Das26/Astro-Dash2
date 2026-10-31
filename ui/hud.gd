@@ -53,6 +53,7 @@ var _weapon_cooldowns: Array[TextureProgressBar] = []
 @onready var _end_title: Label = $Root/EndCard/Panel/Margin/Box/Title
 @onready var _end_subtitle: Label = $Root/EndCard/Panel/Margin/Box/Subtitle
 @onready var _end_detail: Label = $Root/EndCard/Panel/Margin/Box/Detail
+@onready var _end_heal: Label = $Root/EndCard/Panel/Margin/Box/HealLabel
 @onready var _end_hint: Label = $Root/EndCard/Panel/Margin/Box/Hint
 @onready var _end_button: Button = $Root/EndCard/Panel/Margin/Box/Buttons/EndButton
 @onready var _quit_button: Button = $Root/EndCard/Panel/Margin/Box/Buttons/QuitButton
@@ -71,6 +72,7 @@ var _weapon_cooldowns: Array[TextureProgressBar] = []
 @onready var _boss_panel: Control = $Root/BossPanel
 @onready var _boss_name: Label = $Root/BossPanel/Name
 @onready var _boss_bar: TextureProgressBar = $Root/BossPanel/Bar
+@onready var _pause_difficulty: Label = $Root/PausePanel/Box/DifficultyLabel
 
 var _banner_tween: Tween
 ## The end card's primary button continues after a win and retries after a loss.
@@ -123,6 +125,11 @@ func reset(battle: Battle) -> void:
 	set_weapon_cooldowns(0.0, 0.0)
 	show_playing()
 	_banner_label.visible = false
+
+
+## Shown on the pause card, so the player never forgets which rules are live.
+func set_difficulty(title: String) -> void:
+	_pause_difficulty.text = "DIFFICULTY %s" % title.to_upper()
 
 
 func set_score(value: int) -> void:
@@ -288,7 +295,21 @@ func show_victory(data: Dictionary) -> void:
 		])
 	else:
 		lines.append("ENERGY +%d" % int(data.get("energy", 0)))
+	lines.append("DIFFICULTY %s" % String(data.get("difficulty", "")).to_upper())
 	_end_detail.text = "\n".join(lines)
+	# The between-planet heal gets its own green line; a 0% mode shows nothing.
+	var healed: int = int(data.get("heal", 0))
+	var max_hp: int = int(data.get("max_hp", 0))
+	var hp: int = int(data.get("hp", 0))
+	if max_hp > 0 and hp >= max_hp and float(data.get("heal_fraction", 0.0)) > 0.0:
+		_end_heal.text = "HULL REPAIRED TO FULL  (%d/%d)" % [hp, max_hp]
+		_end_heal.visible = true
+	elif healed > 0:
+		var percent: int = roundi(float(data.get("heal_fraction", 0.0)) * 100.0)
+		_end_heal.text = "HULL +%d%%  (%d/%d)" % [percent, hp, max_hp]
+		_end_heal.visible = true
+	else:
+		_end_heal.visible = false
 	_end_hint.text = "ENTER CONTINUES"
 	_end_button.text = "CONTINUE"
 	_quit_button.visible = false
@@ -306,9 +327,10 @@ func show_game_over(data: Dictionary) -> void:
 	_end_subtitle.add_theme_color_override(
 		"font_color", UITheme.COLOR_GOLD if new_high else UITheme.COLOR_WARN
 	)
+	var difficulty: String = String(data.get("difficulty", "")).to_upper()
 	var lines: PackedStringArray = []
 	lines.append("FINAL SCORE %d" % int(data.get("score", 0)))
-	lines.append("HIGH SCORE %d" % int(data.get("high", 0)))
+	lines.append("%s HIGH SCORE %d" % [difficulty, int(data.get("high", 0))])
 	var planets: int = int(data.get("planets", 0))
 	var bodies: int = int(data.get("bodies", 0))
 	if bodies > 0:
@@ -317,9 +339,23 @@ func show_game_over(data: Dictionary) -> void:
 		])
 	else:
 		lines.append("PLANETS %d   |   WAVE %d" % [planets, int(data.get("wave", 1))])
+	lines.append("DIFFICULTY %s" % difficulty)
+	var wiped: Array = data.get("wiped", [])
+	if not wiped.is_empty():
+		lines.append("WIPED: %s" % ", ".join(wiped))
 	_end_detail.text = "\n".join(lines)
-	_end_hint.text = "TRY AGAIN STARTS A FRESH CAMPAIGN"
-	_end_button.text = "TRY AGAIN"
+	_end_heal.visible = false
+	# The button and the hint follow the mode's on_defeat rule.
+	var action: String = String(data.get("action", String(Difficulty.KEEP)))
+	if action == String(Difficulty.KEEP):
+		_end_hint.text = "YOUR MAP AND PLANETS ARE KEPT   |   HULL RESTORED"
+		_end_button.text = "RETURN TO MAP"
+	elif action == String(Difficulty.RESET):
+		_end_hint.text = "A FRESH GALAXY   |   ENERGY AND UPGRADES KEPT"
+		_end_button.text = "NEW GALAXY"
+	else:
+		_end_hint.text = "EVERYTHING THE RUN EARNED IS GONE"
+		_end_button.text = "START OVER"
 	_quit_button.visible = true
 	_present_end()
 
@@ -340,6 +376,7 @@ func _on_end_button_pressed() -> void:
 
 func hide_end() -> void:
 	_end_card.visible = false
+	_end_heal.visible = false
 	_pause_button.visible = true
 
 

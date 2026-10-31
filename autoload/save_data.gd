@@ -11,7 +11,10 @@ const SECTION_UPGRADES: String = "upgrades"
 const SECTION_CAMPAIGN: String = "campaign"
 const SECTION_WEAPONS: String = "weapons"
 const SECTION_CONTROLS: String = "controls"
+const SECTION_SCORES: String = "high_scores"
+## Kept so a save from before per-difficulty scores still seeds CADET's record.
 const KEY_HIGH_SCORE: String = "high_score"
+const KEY_CAMPAIGN_DIFFICULTY: String = "difficulty"
 const KEY_ENERGY: String = "energy"
 const KEY_SKIN: String = "skin"
 const KEY_REDUCE_MOTION: String = "reduce_motion"
@@ -35,7 +38,11 @@ const KEY_WEAPONS_OWNED: String = "owned"
 const KEY_WEAPON_PRIMARY: String = "primary"
 const KEY_WEAPON_SECONDARY: String = "secondary"
 
-var high_score: int = 0
+## Best score per difficulty (mode -> score). A missing mode is zero.
+var high_scores: Dictionary = {}
+## Difficulty the running (or last) campaign was started on. Fixed for the
+## whole run; an old save without it is CADET.
+var campaign_difficulty: StringName = Tuning.DIFFICULTY_DEFAULT
 ## Spendable currency, earned by killing enemies and spent in the upgrade shop.
 var energy: int = 0
 ## Upgrade kind (StringName) -> level 0..Tuning.UPGRADE_MAX_LEVEL.
@@ -90,11 +97,21 @@ func _ready() -> void:
 	Controls.apply_saved()
 
 
-## Records a finished run. Returns true when it beat the stored record.
-func submit_score(score: int) -> bool:
-	if score <= high_score:
+## Best score on one difficulty. With no argument, the current campaign's.
+func high_score_for(difficulty: StringName = &"") -> int:
+	var mode: StringName = campaign_difficulty if difficulty == &"" else difficulty
+	return maxi(int(high_scores.get(mode, 0)), 0)
+
+
+## Records a finished run on one difficulty. Returns true when it beat that
+## mode's record; every mode keeps its own high score.
+func submit_score(score: int, difficulty: StringName = &"") -> bool:
+	var mode: StringName = Difficulty.normalise(
+		campaign_difficulty if difficulty == &"" else difficulty
+	)
+	if score <= high_score_for(mode):
 		return false
-	high_score = score
+	high_scores[mode] = score
 	save_data()
 	return true
 
@@ -165,13 +182,30 @@ func equip_weapon(id: StringName, slot: int) -> bool:
 
 ## Starts (or restarts) a campaign on a fresh galaxy. Conquests, hull and score
 ## reset; energy and upgrades are meta-progression and deliberately survive.
-func begin_campaign(map_seed: int) -> void:
+## The difficulty is fixed from here until the next campaign.
+func begin_campaign(map_seed: int, difficulty: StringName = &"") -> void:
 	campaign_active = true
 	campaign_seed = map_seed
+	campaign_difficulty = Difficulty.normalise(
+		difficulty if difficulty != &"" else campaign_difficulty
+	)
 	campaign_conquered.clear()
 	campaign_score = 0
 	campaign_hp = 0
 	campaign_shields = 0
+	save_data()
+
+
+## SINGULARITY's defeat: the campaign and every scrap of meta progression go.
+## Settings, key bindings, high scores and skin unlocks are not metaprogression
+## and deliberately survive.
+func wipe_meta_progress() -> void:
+	_reset_upgrade_levels()
+	energy = 0
+	weapons_owned.clear()
+	weapons_owned.append(Weapons.DEFAULT_ID)
+	weapon_primary = Weapons.DEFAULT_ID
+	weapon_secondary = &""
 	save_data()
 
 
@@ -217,7 +251,14 @@ func load_data() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return
-	high_score = int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0))
+	high_scores.clear()
+	var legacy_high: int = maxi(int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0)), 0)
+	if legacy_high > 0:
+		high_scores[Tuning.DIFFICULTY_CADET] = legacy_high
+	for mode: StringName in Tuning.DIFFICULTY_ORDER:
+		var stored: int = int(config.get_value(SECTION_SCORES, String(mode), 0))
+		if stored > 0 or high_scores.has(mode):
+			high_scores[mode] = maxi(stored, high_score_for(mode))
 	energy = maxi(int(config.get_value(SECTION_PROGRESS, KEY_ENERGY, 0)), 0)
 	skin_id = StringName(String(config.get_value(SECTION_PROGRESS, KEY_SKIN, "red")))
 	for kind: StringName in Tuning.UPGRADE_ORDER:
@@ -245,6 +286,9 @@ func load_data() -> void:
 	high_contrast_bullets = bool(config.get_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, true))
 	campaign_active = bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false))
 	campaign_seed = int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, 0))
+	campaign_difficulty = Difficulty.normalise(StringName(String(config.get_value(
+		SECTION_CAMPAIGN, KEY_CAMPAIGN_DIFFICULTY, String(Tuning.DIFFICULTY_DEFAULT)
+	))))
 	campaign_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0)), 0)
 	campaign_hp = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, 0)), 0)
 	campaign_shields = clampi(
@@ -300,7 +344,9 @@ func load_data() -> void:
 
 func save_data() -> void:
 	var config := ConfigFile.new()
-	config.set_value(SECTION_PROGRESS, KEY_HIGH_SCORE, high_score)
+	for mode: StringName in Tuning.DIFFICULTY_ORDER:
+		config.set_value(SECTION_SCORES, String(mode), high_score_for(mode))
+	config.set_value(SECTION_PROGRESS, KEY_HIGH_SCORE, high_score_for(Tuning.DIFFICULTY_CADET))
 	config.set_value(SECTION_PROGRESS, KEY_ENERGY, energy)
 	config.set_value(SECTION_PROGRESS, KEY_SKIN, String(skin_id))
 	for kind: StringName in Tuning.UPGRADE_ORDER:
@@ -316,6 +362,7 @@ func save_data() -> void:
 	config.set_value(SECTION_GAMEPLAY, KEY_SHIELD_MODE, String(shield_mode))
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, campaign_active)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, campaign_seed)
+	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_DIFFICULTY, String(campaign_difficulty))
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, campaign_score)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, campaign_hp)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, campaign_shields)

@@ -1,0 +1,220 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/difficulty_picker.gd" id="1_picker"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
+bg_color = Color(0.45, 0.12, 0.14, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.55, 0.5, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger_hover"]
+bg_color = Color(0.62, 0.18, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.7, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="DifficultyPicker" type="CanvasLayer"]
+process_mode = 3
+layer = 90
+script = ExtResource("1_picker")
+
+[node name="Root" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.01, 0.04, 0.82)
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -410.0
+offset_top = -252.0
+offset_right = 410.0
+offset_bottom = 252.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="Box" type="VBoxContainer" parent="Root/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Root/Panel/Margin/Box"]
+layout_mode = 2
+theme_type_variation = "DisplayLabel"
+theme_override_colors/font_color = Color(0.85, 1, 0.9, 1)
+theme_override_font_sizes/font_size = 20
+text = "CHOOSE DIFFICULTY"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Root/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.88, 1)
+theme_override_font_sizes/font_size = 11
+text = "FIXED FOR THE WHOLE CAMPAIGN"
+horizontal_alignment = 1
+
+[node name="Options" type="VBoxContainer" parent="Root/Panel/Margin/Box"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Cadet" type="Button" parent="Root/Panel/Margin/Box/Options"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "CADET"
+alignment = 0
+
+[node name="Vector" type="Button" parent="Root/Panel/Margin/Box/Options"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "VECTOR"
+alignment = 0
+
+[node name="Supernova" type="Button" parent="Root/Panel/Margin/Box/Options"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "SUPERNOVA"
+alignment = 0
+
+[node name="EventHorizon" type="Button" parent="Root/Panel/Margin/Box/Options"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "EVENT HORIZON"
+alignment = 0
+
+[node name="Singularity" type="Button" parent="Root/Panel/Margin/Box/Options"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "SINGULARITY"
+alignment = 0
+
+[node name="Hint" type="Label" parent="Root/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.68, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "CHOOSE A MODE   |   ESC / B CLOSES"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmCard" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/ConfirmCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.0, 0.01, 0.78)
+
+[node name="Panel" type="PanelContainer" parent="Root/ConfirmCard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -140.0
+offset_right = 300.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/ConfirmCard/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="Box" type="VBoxContainer" parent="Root/ConfirmCard/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Root/ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_type_variation = "DisplayLabel"
+theme_override_colors/font_color = Color(1, 0.4, 0.45, 1)
+theme_override_font_sizes/font_size = 18
+text = "DEATH WIPES EVERYTHING"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="Root/ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "A defeat resets the campaign, banked energy, upgrade levels and every owned weapon."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Root/ConfirmCard/Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ConfirmButton" type="Button" parent="Root/ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.88, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_danger")
+theme_override_styles/hover = SubResource("StyleBoxFlat_danger_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_danger")
+theme_override_styles/focus = SubResource("StyleBoxFlat_danger_hover")
+text = "YES, WIPE IT"
+
+[node name="CancelButton" type="Button" parent="Root/ConfirmCard/Panel/Margin/Box/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "CANCEL"

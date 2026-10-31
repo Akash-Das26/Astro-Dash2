@@ -50,6 +50,8 @@ var aim: Vector2 = Vector2.UP
 var control_scheme: StringName = Tuning.CONTROL_SCHEME_DEFAULT
 ## AUTO spends a charge per hit; MANUAL spends one on a timed bubble.
 var shield_mode: StringName = Tuning.SHIELD_MODE_DEFAULT
+## Difficulty's enemy-damage multiplier, applied to every hull hit.
+var damage_scale: float = 1.0
 
 ## The upgrade totals for this battle, so a weapon can read its multipliers.
 var run_stats: Dictionary = {}
@@ -243,9 +245,11 @@ func take_damage(amount: int) -> void:
 			shield_broken.emit()
 		return
 	_since_damage = 0.0
-	hp = maxi(hp - amount, 0)
+	# A hit always costs at least one point, whatever the mode's multiplier.
+	var dealt: int = maxi(roundi(float(amount) * maxf(damage_scale, 0.0)), 1)
+	hp = maxi(hp - dealt, 0)
 	hp_changed.emit(hp, max_hp)
-	hurt.emit(amount)
+	hurt.emit(dealt)
 	_start_invulnerability(Tuning.SHIP_INVULNERABILITY)
 	_play_hit_feedback(Color.WHITE)
 	if hp <= 0:

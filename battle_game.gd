@@ -56,6 +56,7 @@ const VICTORY_SHAKE: float = 0.3
 @onready var backdrop: TextureRect = $World/Backdrop
 @onready var shake_camera: ShakeCamera = $World/ShakeCamera
 @onready var hud: BattleHUD = $HUD
+@onready var difficulty_picker: DifficultyPicker = $DifficultyPicker
 
 var battle: Battle
 var score: int = 0
@@ -74,6 +75,14 @@ var _running: bool = false
 var _combo_chain: int = 0
 var _combo_time_left: float = 0.0
 var _float_texts: int = 0
+## Difficulty multipliers for this fight. The harness (no campaign) is left at
+## 1.0 so the debug battle stays predictable.
+var _score_scale: float = 1.0
+var _energy_scale: float = 1.0
+var _shield_drop_scale: float = 1.0
+var _difficulty_title: String = "ARCADE"
+## Set from the defeat result: "keep", "reset" or "wipe".
+var _defeat_action: StringName = Difficulty.KEEP
 
 
 func _ready() -> void:
@@ -103,6 +112,7 @@ func _ready() -> void:
 	hud.end_quit_requested.connect(_go_to_menu)
 	hud.menu_requested.connect(_go_to_menu)
 	hud.set_aim_origin(ship)
+	difficulty_picker.chosen.connect(_on_new_difficulty)
 	UITheme.apply(get_node("HUD/Root") as Control)
 	GameState.state_changed.connect(_on_state_changed)
 	# The map picks the body and hands it over; with nothing pending (the scene
@@ -149,11 +159,14 @@ func _start_fight(fight: Battle) -> void:
 	_float_texts = 0
 	victory = false
 	_running = true
+	_apply_difficulty()
 	if battle.background != null:
 		backdrop.texture = battle.background
 	hud.set_shield_active(0.0)
+	hud.set_difficulty(_difficulty_title)
 	ship.position = Tuning.SHIP_SPAWN_POSITION
 	ship.apply_run_stats(Upgrades.stats_for(SaveData.upgrade_levels))
+	ship.damage_scale = Difficulty.enemy_damage_scale() if _campaign else 1.0
 	if _campaign:
 		# Hull and shield charges carry from the previous battle of the run.
 		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
@@ -176,6 +189,26 @@ func _start_fight(fight: Battle) -> void:
 	GameState.change_state(GameState.State.PLAYING)
 
 
+## Stacks the mode's multipliers on top of the band and trait values already
+## baked into the Battle resource. Enemies per wave never drop below one.
+func _apply_difficulty() -> void:
+	_score_scale = 1.0
+	_energy_scale = 1.0
+	_shield_drop_scale = 1.0
+	_difficulty_title = "ARCADE"
+	if not _campaign:
+		return
+	var mode: StringName = Difficulty.normalise(SaveData.campaign_difficulty)
+	_difficulty_title = Difficulty.title(mode)
+	_score_scale = Difficulty.score_scale(mode)
+	_energy_scale = Difficulty.energy_scale(mode)
+	_shield_drop_scale = Difficulty.shield_drop_scale(mode)
+	battle.enemies_per_wave = maxi(
+		roundi(float(battle.enemies_per_wave) * Difficulty.enemies_scale(mode)), 1
+	)
+	battle.hp_scale *= Difficulty.enemy_hp_scale(mode)
+
+
 func _end_battle(won: bool) -> void:
 	if not _running:
 		return
@@ -195,17 +228,23 @@ func _end_battle(won: bool) -> void:
 		score += Tuning.PERFECT_BONUS_SCORE
 		bonus_energy = Tuning.PERFECT_BONUS_ENERGY
 		energy += bonus_energy
+	# The flat conquest reward also follows the mode's energy multiplier.
+	var flat_energy: int = 0
+	if _campaign:
+		flat_energy = roundi(float(battle.reward_energy) * _energy_scale)
 	var result: Dictionary = {}
 	if _campaign:
 		if won:
 			result = Campaign.award_victory(
-				planet_id, score, ship.hp, ship.shields, battle.reward_energy + bonus_energy
+				planet_id, score, ship.hp, ship.max_hp, ship.shields,
+				flat_energy + bonus_energy
 			)
 		else:
-			result = Campaign.record_defeat(planet_id, score)
+			result = Campaign.record_defeat(planet_id, score, ship.max_hp, ship.shields)
 	elif won and perfect:
 		# The harness has no campaign to bank the bonus, so bank it here.
 		SaveData.add_energy(bonus_energy)
+	_defeat_action = StringName(String(result.get("action", String(Difficulty.KEEP))))
 	hud.set_score(score)
 	hud.set_energy(energy)
 	if won:
@@ -218,21 +257,29 @@ func _end_battle(won: bool) -> void:
 			"kills": kills,
 			"total": battle.enemy_total(),
 			"score": score,
-			"energy": (battle.reward_energy if _campaign else 0) + bonus_energy,
+			"energy": flat_energy + bonus_energy,
 			"total_score": SaveData.campaign_score if _campaign else score,
 			"perfect": perfect,
+			"difficulty": _difficulty_title,
+			"heal": int(result.get("heal", 0)),
+			"heal_fraction": float(result.get("heal_fraction", 0.0)),
+			"hp": int(result.get("hp", ship.hp)),
+			"max_hp": int(result.get("max_hp", ship.max_hp)),
 		})
 	else:
 		AudioManager.play_sfx("defeat")
 		_shake(DEATH_SHAKE)
 		hud.show_game_over({
 			"score": SaveData.campaign_score if _campaign else score,
-			"high": SaveData.high_score,
+			"high": int(result.get("high", SaveData.high_score_for())),
 			"new_high": bool(result.get("new_high", false)),
 			"planets": int(result.get("planets", 1 if _campaign else 0)),
 			"bodies": Campaign.galaxy().body_count() if _campaign else 0,
 			"band": String(result.get("band", "")),
 			"wave": maxi(director.wave, 1),
+			"difficulty": String(result.get("difficulty", _difficulty_title)),
+			"action": String(result.get("action", String(Difficulty.KEEP))),
+			"wiped": result.get("wiped", []),
 		})
 	GameState.change_state(
 		GameState.State.BATTLE_WON if won else GameState.State.GAME_OVER
@@ -247,9 +294,18 @@ func _on_end_continue() -> void:
 	_restart()
 
 
-## A lost campaign starts over from a fresh galaxy; energy and upgrades stay.
+## The defeat rule already ran when the battle ended. KEEP goes straight back
+## to the same galaxy (hull restored). RESET and WIPE start a fresh campaign and
+## ask for a mode first, the same way NEW GAME does.
 func _on_retry_campaign() -> void:
-	Campaign.begin_run()
+	if _defeat_action == Difficulty.KEEP:
+		get_tree().change_scene_to_file(GALAXY_SCENE)
+		return
+	difficulty_picker.open()
+
+
+func _on_new_difficulty(difficulty: StringName) -> void:
+	Campaign.begin_run(difficulty)
 	get_tree().change_scene_to_file(GALAXY_SCENE)
 
 
@@ -436,12 +492,12 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("explosion_small")
 	kills += 1
 	_register_combo_kill()
-	var gained: int = int(round(float(points) * _combo_multiplier()))
+	var gained: int = roundi(float(points) * _combo_multiplier() * _score_scale)
 	score += gained
 	hud.set_score(score)
 	hud.set_enemies(kills, battle.enemy_total())
 	_drop_energy(enemy.global_position, points)
-	if randf() < Tuning.SHIELD_DROP_CHANCE:
+	if randf() < clampf(Tuning.SHIELD_DROP_CHANCE * _shield_drop_scale, 0.0, 1.0):
 		_drop_shield(enemy.global_position)
 	_spawn_explosion(enemy.global_position, enemy.effect_color, Tuning.EXPLOSION_PARTICLES, 1.0, Tuning.EXPLOSION_LIFE)
 	_spawn_shockwave(enemy.global_position, enemy.effect_color)
@@ -510,7 +566,7 @@ func _on_boss_died(points: int) -> void:
 	var at: Vector2 = _boss.global_position if _boss != null else Tuning.VIEW_SIZE * 0.5
 	AudioManager.play_sfx("explosion_large")
 	kills += 1
-	score += points
+	score += roundi(float(points) * _score_scale)
 	hud.set_score(score)
 	hud.set_enemies(kills, battle.enemy_total() + 1)
 	hud.hide_boss()
@@ -588,7 +644,11 @@ func _break_combo() -> void:
 func _drop_energy(at: Vector2, points: int) -> void:
 	# Orbs carry whole energy on purpose: a kill's energy floors to an integer.
 	@warning_ignore("integer_division")
-	var total: int = maxi(Tuning.MIN_ENERGY_PER_KILL, points / Tuning.SCORE_POINTS_PER_ENERGY)
+	# The mode's energy multiplier scales the drop, rounded to whole orbs.
+	var base_energy: int = maxi(
+		Tuning.MIN_ENERGY_PER_KILL, int(points / Tuning.SCORE_POINTS_PER_ENERGY)
+	)
+	var total: int = maxi(roundi(float(base_energy) * _energy_scale), 1)
 	var orb_count: int = mini(total, Tuning.MAX_ORBS_PER_KILL)
 	@warning_ignore("integer_division")
 	var each: int = total / orb_count

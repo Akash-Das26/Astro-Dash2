@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
 [ext_resource type="Script" path="res://entities/map/galaxy_links.gd" id="3_links"]
 [ext_resource type="PackedScene" path="res://ui/upgrade_panel.tscn" id="4_upgrades"]
+[ext_resource type="PackedScene" path="res://ui/difficulty_picker.tscn" id="5_difficulty"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
 content_margin_left = 10.0
@@ -134,26 +135,52 @@ color = Color(0, 0, 0, 0.55)
 layout_mode = 0
 offset_left = 12.0
 offset_top = 5.0
-offset_right = 280.0
+offset_right = 196.0
 offset_bottom = 24.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
 text = "PLANETS 1/56"
+
+[node name="HullLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 5.0
+offset_right = 340.0
+offset_bottom = 24.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "HULL 100/100"
 
 [node name="ScoreLabel" type="Label" parent="TopBar"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -140.0
+offset_left = -100.0
 offset_top = 5.0
-offset_right = 140.0
+offset_right = 100.0
 offset_bottom = 24.0
 grow_horizontal = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
 text = "SCORE 0"
 horizontal_alignment = 1
+
+[node name="DifficultyLabel" type="Label" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -370.0
+offset_top = 5.0
+offset_right = -262.0
+offset_bottom = 24.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "CADET"
+horizontal_alignment = 2
 
 [node name="EnergyLabel" type="Label" parent="TopBar"]
 layout_mode = 1
@@ -330,6 +357,8 @@ text = "UPGRADE"
 [node name="UpgradePanel" parent="." instance=ExtResource("4_upgrades")]
 visible = false
 layout_mode = 1
+
+[node name="DifficultyPicker" parent="." instance=ExtResource("5_difficulty")]
 
 [node name="ResultCard" type="Control" parent="."]
 visible = false
