@@ -18,13 +18,13 @@ extends Node2D
 ## restart from the end card; the World node is pausable and freezes with the
 ## tree, and the HUD is always-on so its buttons work.
 
-const BULLET_SCENE: PackedScene = preload("res://entities/bullet/bullet.tscn")
-const ENEMY_BULLET_SCENE: PackedScene = preload("res://entities/enemies/enemy_bullet.tscn")
-const EXPLOSION_SCENE: PackedScene = preload("res://entities/effects/explosion.tscn")
-const ORB_SCENE: PackedScene = preload("res://entities/effects/energy_mote.tscn")
+const BULLET_SCENE: PackedScene = preload("res://entities/projectiles/bullet.tscn")
+const ENEMY_BULLET_SCENE: PackedScene = preload("res://entities/projectiles/enemy_bullet.tscn")
+const EXPLOSION_SCENE: PackedScene = preload("res://entities/fx/explosion.tscn")
+const ORB_SCENE: PackedScene = preload("res://entities/pickups/energy_mote.tscn")
 const SHIELD_PICKUP_SCENE: PackedScene = preload("res://entities/pickups/shield_pickup.tscn")
-const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/effects/shockwave.gd")
-const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/effects/float_text.gd")
+const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/fx/shockwave.gd")
+const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/fx/float_text.gd")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
 const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
 const MENU_SCENE: String = "res://ui/main_menu.tscn"

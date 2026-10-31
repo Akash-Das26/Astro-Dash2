@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/galaxy_map.gd" id="1_map"]
-[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
+[ext_resource type="Script" path="res://entities/fx/starfield.gd" id="2_stars"]
 [ext_resource type="Script" path="res://entities/map/galaxy_links.gd" id="3_links"]
 [ext_resource type="PackedScene" path="res://ui/upgrade_panel.tscn" id="4_upgrades"]
 [ext_resource type="PackedScene" path="res://ui/difficulty_picker.tscn" id="5_difficulty"]

@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/main_menu.gd" id="1_menu"]
-[ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
+[ext_resource type="Script" path="res://entities/fx/starfield.gd" id="2_stars"]
 [ext_resource type="Script" path="res://ui/menu_backdrop.gd" id="3_backdrop"]
 [ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="4_settings"]
 [ext_resource type="PackedScene" path="res://ui/controls_card.tscn" id="5_controls"]
