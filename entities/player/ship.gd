@@ -109,7 +109,8 @@ func _physics_process(delta: float) -> void:
 func _apply_skin() -> void:
 	var id: StringName = Skins.selected()
 	var texture: Texture2D = Skins.texture(id)
-	var art_scale: float = Skins.scale_of(id)	if texture != null:
+	var art_scale: float = Skins.scale_of(id)
+	if texture != null:
 		_sprite.texture = texture
 		_flash.texture = texture
 		_sprite.scale = Vector2.ONE * art_scale
