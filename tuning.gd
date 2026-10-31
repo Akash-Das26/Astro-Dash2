@@ -62,6 +62,12 @@ const SHIELD_RECHARGE_MIN: float = 8.0
 const SHIELD_RECHARGE_DAMAGE_DELAY: float = 3.0
 const SHIELD_BUBBLE_RADIUS: float = 24.0
 
+# --- Music ------------------------------------------------------------------
+## Playlist rotation. SHUFFLE uses a bag: every track plays once per pass and
+## the track that just ended never starts the next pass.
+const MUSIC_ORDER_SHUFFLE: StringName = &"shuffle"
+const MUSIC_ORDER_IN_ORDER: StringName = &"in_order"
+
 # --- Controls ---------------------------------------------------------------
 ## Rebindable actions, in the order the CONTROLS card lists them. `pause` is
 ## listed but fixed: Esc is the menu key, so no remap may take it away.

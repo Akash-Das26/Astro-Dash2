@@ -20,6 +20,7 @@ const KEY_SFX_VOLUME: String = "sfx_volume"
 const KEY_MUTED: String = "muted"
 const KEY_AUTO_FIRE: String = "auto_fire"
 const KEY_HIGH_CONTRAST: String = "high_contrast_bullets"
+const KEY_MUSIC_ORDER: String = "music_order"
 const KEY_CAMPAIGN_ACTIVE: String = "active"
 const KEY_CAMPAIGN_SEED: String = "seed"
 const KEY_CAMPAIGN_SCORE: String = "score"
@@ -62,6 +63,8 @@ var weapon_secondary: StringName = &""
 ## "use the project's own binding", so old saves keep working unchanged.
 var keyboard_bindings: Dictionary = {}
 var gamepad_bindings: Dictionary = {}
+## Playlist rotation, `shuffle` or `in_order` (see Tuning.MUSIC_ORDER_*).
+var music_order: StringName = Tuning.MUSIC_ORDER_SHUFFLE
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -218,6 +221,7 @@ func load_data() -> void:
 			Tuning.UPGRADE_MAX_LEVEL
 		)
 	music_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, 0.8)), 0.0, 1.0)
+	music_order = StringName(String(config.get_value(SECTION_AUDIO, KEY_MUSIC_ORDER, "shuffle")))
 	sfx_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8)), 0.0, 1.0)
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
@@ -286,6 +290,7 @@ func save_data() -> void:
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		config.set_value(SECTION_UPGRADES, String(kind) + "_level", level_of(kind))
 	config.set_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, music_volume)
+	config.set_value(SECTION_AUDIO, KEY_MUSIC_ORDER, String(music_order))
 	config.set_value(SECTION_AUDIO, KEY_SFX_VOLUME, sfx_volume)
 	config.set_value(SECTION_AUDIO, KEY_MUTED, muted)
 	config.set_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, reduce_motion)

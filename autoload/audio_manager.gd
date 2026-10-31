@@ -78,6 +78,8 @@ const PITCH_JITTER: Dictionary = {
 signal settings_changed
 ## The track that just started, as a display name (file name without extension).
 signal track_changed(track: String)
+## Shuffle / in-order was changed (from the settings card or the API).
+signal music_order_changed(order: StringName)
 
 var _streams: Dictionary = {}
 var _last_played: Dictionary = {}
@@ -91,6 +93,13 @@ var _sfx_volume: float = 0.8
 var _tracks: Array[String] = []
 var _track_names: Array[String] = []
 var _current: int = -1
+## Shuffle bag: each track lands in it once per reshuffle, so a full pass plays
+## everything before anything repeats, and the bag never starts with the track
+## that just ended.
+var _order: StringName = Tuning.MUSIC_ORDER_SHUFFLE
+var _bag: Array[int] = []
+## Tracks played before the current one, newest last, for PREVIOUS.
+var _history: Array[int] = []
 
 
 func _ready() -> void:
@@ -99,6 +108,7 @@ func _ready() -> void:
 	_load_streams()
 	_build_players()
 	_build_playlist()
+	_order = _normalise_order(SaveData.music_order)
 	_apply_saved_settings()
 	start_music()
 
@@ -142,7 +152,7 @@ func current_track_name() -> String:
 func start_music() -> void:
 	if _music_player == null or _tracks.is_empty() or _music_player.playing:
 		return
-	_play_index(0 if _current < 0 else _current)
+	_play_index(_first_index())
 
 
 ## Kept for callers from the single-track era. A known name or path plays that
@@ -158,7 +168,80 @@ func play_music(track: String = "") -> void:
 func next_track() -> void:
 	if _tracks.is_empty():
 		return
-	_play_index((_current + 1) % _tracks.size() if _current >= 0 else 0)
+	var index: int = _pick_next_index()
+	if index < 0:
+		return
+	if _current >= 0:
+		_history.append(_current)
+	_play_index(index)
+
+
+func previous_track() -> void:
+	if _tracks.is_empty():
+		return
+	var index: int = -1
+	if not _history.is_empty():
+		index = _history.pop_back()
+	elif _current >= 0:
+		index = (_current - 1 + _tracks.size()) % _tracks.size()
+	if index >= 0:
+		_play_index(index)
+
+
+func music_order() -> StringName:
+	return _order
+
+
+## Shuffle (default) or in order. Survives relaunches through SaveData.
+func set_music_order(order: StringName) -> void:
+	var normalised: StringName = _normalise_order(order)
+	if normalised == _order:
+		return
+	_order = normalised
+	_bag.clear()
+	SaveData.music_order = _order
+	music_order_changed.emit(_order)
+
+
+func toggle_music_order() -> StringName:
+	set_music_order(
+		Tuning.MUSIC_ORDER_IN_ORDER if _order == Tuning.MUSIC_ORDER_SHUFFLE \
+			else Tuning.MUSIC_ORDER_SHUFFLE
+	)
+	return _order
+
+
+func _normalise_order(order: StringName) -> StringName:
+	return Tuning.MUSIC_ORDER_IN_ORDER if order == Tuning.MUSIC_ORDER_IN_ORDER \
+		else Tuning.MUSIC_ORDER_SHUFFLE
+
+
+func _first_index() -> int:
+	if _order == Tuning.MUSIC_ORDER_IN_ORDER or _tracks.size() <= 1:
+		return 0
+	return randi() % _tracks.size()
+
+
+## In order: the next slot. Shuffle: draw from the bag, reshuffling when it is
+## empty and never putting the current track first in a fresh bag.
+func _pick_next_index() -> int:
+	if _tracks.is_empty():
+		return -1
+	if _tracks.size() == 1:
+		return 0
+	if _order == Tuning.MUSIC_ORDER_IN_ORDER:
+		return (_current + 1) % _tracks.size() if _current >= 0 else 0
+	if _bag.is_empty():
+		_bag.clear()
+		for index: int in _tracks.size():
+			_bag.append(index)
+		_bag.shuffle()
+		if _bag.size() > 1 and _bag[0] == _current:
+			var last: int = _bag.size() - 1
+			var swapped: int = _bag[0]
+			_bag[0] = _bag[last]
+			_bag[last] = swapped
+	return _bag.pop_front()
 
 
 func stop_music() -> void:
@@ -282,7 +365,25 @@ func _play_index(index: int) -> bool:
 func _load_track(path: String) -> AudioStream:
 	if path.is_empty() or not ResourceLoader.exists(path):
 		return null
-	return load(path) as AudioStream
+	var stream := load(path) as AudioStream
+	if stream == null:
+		return null
+	_set_loop(stream, _tracks.size() <= 1)
+	return stream
+
+
+## Looping is a property of the stream, and an imported file may have it on.
+## A multi-track playlist must not loop one track or `finished` never fires; a
+## one-track playlist is the exception and loops that track.
+func _set_loop(stream: AudioStream, enabled: bool) -> void:
+	if stream is AudioStreamWAV:
+		(stream as AudioStreamWAV).loop_mode = (
+			AudioStreamWAV.LOOP_FORWARD if enabled else AudioStreamWAV.LOOP_DISABLED
+		)
+	elif stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = enabled
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = enabled
 
 
 # --- Volume and settings ----------------------------------------------------
