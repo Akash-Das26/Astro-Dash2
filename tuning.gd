@@ -67,6 +67,13 @@ const SHIELD_BUBBLE_RADIUS: float = 24.0
 ## the track that just ended never starts the next pass.
 const MUSIC_ORDER_SHUFFLE: StringName = &"shuffle"
 const MUSIC_ORDER_IN_ORDER: StringName = &"in_order"
+## Crossfade between tracks, in seconds, and how quiet a fading-out player
+## drops before it stops. The pause dip multiplies the Music bus (0.45 = about
+## -7 dB) and eases in at MUSIC_PAUSE_FADE per second.
+const MUSIC_CROSSFADE: float = 1.5
+const MUSIC_SILENT_DB: float = -40.0
+const MUSIC_PAUSE_GAIN: float = 0.45
+const MUSIC_PAUSE_FADE: float = 2.0
 
 # --- Controls ---------------------------------------------------------------
 ## Rebindable actions, in the order the CONTROLS card lists them. `pause` is

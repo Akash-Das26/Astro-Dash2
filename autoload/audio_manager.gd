@@ -85,7 +85,13 @@ var _streams: Dictionary = {}
 var _last_played: Dictionary = {}
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _next_sfx_player: int = 0
-var _music_player: AudioStreamPlayer
+## Two players on the Music bus, cross-faded when the track changes.
+var _music_players: Array[AudioStreamPlayer] = []
+var _active_player: int = 0
+var _fade_tween: Tween
+## Mild dip of the Music bus while the pause card is up.
+var _pause_gain: float = 1.0
+var _pause_target: float = 1.0
 var _muted: bool = false
 var _music_volume: float = 0.8
 var _sfx_volume: float = 0.8
@@ -110,7 +116,17 @@ func _ready() -> void:
 	_build_playlist()
 	_order = _normalise_order(SaveData.music_order)
 	_apply_saved_settings()
+	GameState.state_changed.connect(_on_game_state_changed)
+	_pause_target = Tuning.MUSIC_PAUSE_GAIN if GameState.state == GameState.State.PAUSED else 1.0
+	_pause_gain = _pause_target
 	start_music()
+
+
+func _process(delta: float) -> void:
+	if is_equal_approx(_pause_gain, _pause_target):
+		return
+	_pause_gain = move_toward(_pause_gain, _pause_target, delta * Tuning.MUSIC_PAUSE_FADE)
+	_apply_music_bus()
 
 
 # --- SFX --------------------------------------------------------------------
@@ -150,7 +166,9 @@ func current_track_name() -> String:
 
 ## Starts the playlist at the current (or first) track. Safe to call twice.
 func start_music() -> void:
-	if _music_player == null or _tracks.is_empty() or _music_player.playing:
+	if _music_players.is_empty() or _tracks.is_empty():
+		return
+	if _music_players[_active_player].playing:
 		return
 	_play_index(_first_index())
 
@@ -245,8 +263,10 @@ func _pick_next_index() -> int:
 
 
 func stop_music() -> void:
-	if _music_player != null:
-		_music_player.stop()
+	if _fade_tween != null and _fade_tween.is_valid():
+		_fade_tween.kill()
+	for player: AudioStreamPlayer in _music_players:
+		player.stop()
 
 
 ## Scans the music folder once and builds the playlist. Missing folder or no
@@ -345,21 +365,41 @@ func _index_of(track: String) -> int:
 ## Loads a track and skips past unreadable files, so one bad file cannot stop
 ## the playlist. Returns false when nothing could be played at all.
 func _play_index(index: int) -> bool:
-	if _tracks.is_empty():
+	if _tracks.is_empty() or _music_players.is_empty():
 		return false
 	index = clampi(index, 0, _tracks.size() - 1)
 	for _attempt: int in _tracks.size():
 		var stream: AudioStream = _load_track(_tracks[index])
 		if stream != null:
-			_current = index
-			_music_player.stream = stream
-			_music_player.play()
-			track_changed.emit(_track_names[index])
+			_start_stream(index, stream)
 			return true
 		push_warning("AudioManager: could not load %s; skipping it." % _tracks[index])
 		index = (index + 1) % _tracks.size()
 	push_warning("AudioManager: no music track could be loaded.")
 	return false
+
+
+## Cross-fades onto the idle player: the new track rises from silence while
+## the old one falls, both over Tuning.MUSIC_CROSSFADE, then the old stops.
+func _start_stream(index: int, stream: AudioStream) -> void:
+	var previous: AudioStreamPlayer = _music_players[_active_player]
+	var next_index: int = 1 - _active_player
+	var player: AudioStreamPlayer = _music_players[next_index]
+	_active_player = next_index
+	_current = index
+	if _fade_tween != null and _fade_tween.is_valid():
+		_fade_tween.kill()
+	player.stream = stream
+	player.volume_db = Tuning.MUSIC_SILENT_DB
+	player.play()
+	_fade_tween = create_tween().set_parallel(true)
+	_fade_tween.tween_property(player, "volume_db", 0.0, Tuning.MUSIC_CROSSFADE)
+	if previous.playing and previous != player:
+		_fade_tween.tween_property(
+			previous, "volume_db", Tuning.MUSIC_SILENT_DB, Tuning.MUSIC_CROSSFADE
+		)
+		_fade_tween.chain().tween_callback(previous.stop)
+	track_changed.emit(_track_names[index])
 
 
 func _load_track(path: String) -> AudioStream:
@@ -399,6 +439,7 @@ func set_bus_volume(bus: String, linear: float) -> void:
 	if bus == MUSIC_BUS:
 		var music_changed: bool = not is_equal_approx(_music_volume, clamped)
 		_music_volume = clamped
+		_apply_music_bus()
 		if music_changed:
 			settings_changed.emit()
 	elif bus == SFX_BUS:
@@ -448,6 +489,21 @@ func _apply_saved_settings() -> void:
 	set_mute(SaveData.muted)
 
 
+## The Music bus is the user's slider multiplied by the pause dip. The fades
+## themselves run on the players, so the two never overwrite each other.
+func _apply_music_bus() -> void:
+	var index: int = AudioServer.get_bus_index(MUSIC_BUS)
+	if index < 0:
+		return
+	var linear: float = clampf(_music_volume * _pause_gain, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(linear, 0.001)))
+	AudioServer.set_bus_mute(index, linear <= 0.001)
+
+
+func _on_game_state_changed(new_state: int) -> void:
+	_pause_target = Tuning.MUSIC_PAUSE_GAIN if new_state == GameState.State.PAUSED else 1.0
+
+
 func _load_streams() -> void:
 	for sound: String in SOUND_FILES:
 		var path: String = AUDIO_DIR + String(SOUND_FILES[sound])
@@ -463,11 +519,14 @@ func _build_players() -> void:
 	var music_bus: String = _resolve_bus(MUSIC_BUS)
 	var sfx_bus: String = _resolve_bus(SFX_BUS)
 
-	_music_player = AudioStreamPlayer.new()
-	_music_player.name = "MusicPlayer"
-	_music_player.bus = music_bus
-	_music_player.finished.connect(_on_music_finished)
-	add_child(_music_player)
+	for index: int in 2:
+		var music := AudioStreamPlayer.new()
+		music.name = "MusicPlayer%d" % index
+		music.bus = music_bus
+		music.volume_db = Tuning.MUSIC_SILENT_DB
+		music.finished.connect(_on_music_finished.bind(music))
+		add_child(music)
+		_music_players.append(music)
 
 	for index: int in SFX_POOL_SIZE:
 		var player := AudioStreamPlayer.new()
@@ -482,7 +541,11 @@ func _resolve_bus(bus: String) -> String:
 	return bus if AudioServer.get_bus_index(bus) >= 0 else MASTER_BUS
 
 
-func _on_music_finished() -> void:
-	if _tracks.size() <= 1:
+## Only the track that is actually on air advances the playlist; the player
+## fading out finishes nothing because it is stopped, not run out.
+func _on_music_finished(player: AudioStreamPlayer) -> void:
+	if _tracks.size() <= 1 or _music_players.is_empty():
+		return
+	if player != _music_players[_active_player]:
 		return
 	next_track()
