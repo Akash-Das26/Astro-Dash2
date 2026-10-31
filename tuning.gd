@@ -140,9 +140,13 @@ const WARP_SCALE: float = 0.24
 const WARP_FRAME_FPS: float = 12.0
 
 # --- Asteroids --------------------------------------------------------------
-const ASTEROID_LARGE_SCALE: float = 0.72
+## Large rocks are drawn at roughly three times the old size; tiny debris is
+## unchanged, so a split visibly scatters small pieces.
+const ASTEROID_LARGE_SCALE: float = 1.9
 const ASTEROID_TINY_SCALE: float = 0.6
-const ASTEROID_LARGE_RADIUS: float = 32.0
+const ASTEROID_LARGE_RADIUS: float = 46.0
+## A fresh large rock is pushed this far away if it would appear on the ship.
+const ASTEROID_SHIP_CLEARANCE: float = 130.0
 const ASTEROID_TINY_RADIUS: float = 9.0
 const ASTEROID_LARGE_HP: int = 3
 const ASTEROID_CONTACT_DAMAGE: int = 15
@@ -305,6 +309,12 @@ const GALAXY_TAP_RADIUS: float = 40.0
 const GALAXY_HOME_ANCHOR: Vector2 = Vector2(240.0, 760.0)
 ## Panning the map with WASD / the left stick, in pixels per second.
 const GALAXY_PAN_SPEED: float = 700.0
+## Zoom: wheel / pinch / +- around the cursor. The level lasts for the session
+## only and never touches the save.
+const GALAXY_ZOOM_MIN: float = 0.55
+const GALAXY_ZOOM_MAX: float = 1.7
+const GALAXY_ZOOM_STEP: float = 0.12
+const GALAXY_ZOOM_SMOOTH: float = 12.0
 
 ## Sprite and draw scale per body type. Planets are 64px art, stations 130x180
 ## and the warpgate 200x200; only `modulate` changes between two bodies.

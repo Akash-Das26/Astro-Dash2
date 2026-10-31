@@ -50,6 +50,15 @@ var _dragging: bool = false
 var _drag_moved: bool = false
 var _drag_start: Vector2 = Vector2.ZERO
 var _banner_tween: Tween
+## Map zoom. `_zoom` is what is drawn, `_zoom_target` what the wheel asked for;
+## the view eases between them around `_zoom_pivot`. Session-only on purpose.
+var _zoom: float = 1.0
+var _zoom_target: float = 1.0
+var _zoom_pivot: Vector2 = Tuning.VIEW_SIZE * 0.5
+## Finger positions while a pinch is running, by touch index.
+var _touches: Dictionary = {}
+var _pinching: bool = false
+var _pinch_distance: float = 0.0
 
 
 func _ready() -> void:
@@ -86,6 +95,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_zoom(delta)
 	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
 		return
 	_pan_with_stick(delta)
@@ -132,6 +142,9 @@ func _reload_map() -> void:
 	_focused = &""
 	_hovered = &""
 	_tooltip.visible = false
+	_zoom = 1.0
+	_zoom_target = 1.0
+	_zoom_pivot = Tuning.VIEW_SIZE * 0.5
 	_center_on(_galaxy.home_id)
 	_refresh()
 
@@ -139,14 +152,65 @@ func _reload_map() -> void:
 # --- Camera -----------------------------------------------------------------
 
 func _center_on(body_id: StringName) -> void:
-	_world.position = Tuning.VIEW_SIZE * 0.5 - _galaxy.position_of(body_id)
+	_world.scale = Vector2.ONE * _zoom
+	_world.position = Tuning.VIEW_SIZE * 0.5 - _galaxy.position_of(body_id) * _zoom
 	_clamp_pan()
 
 
+## The map may never show past its own edge. At a wide zoom the whole map can be
+## smaller than the view, and then it is centred instead.
 func _clamp_pan() -> void:
-	var limit: Vector2 = Tuning.GALAXY_MAP_SIZE - Tuning.VIEW_SIZE
-	_world.position.x = clampf(_world.position.x, -limit.x, 0.0)
-	_world.position.y = clampf(_world.position.y, -limit.y, 0.0)
+	var scaled: Vector2 = Tuning.GALAXY_MAP_SIZE * _zoom
+	var limit: Vector2 = scaled - Tuning.VIEW_SIZE
+	if limit.x <= 0.0:
+		_world.position.x = (Tuning.VIEW_SIZE.x - scaled.x) * 0.5
+	else:
+		_world.position.x = clampf(_world.position.x, -limit.x, 0.0)
+	if limit.y <= 0.0:
+		_world.position.y = (Tuning.VIEW_SIZE.y - scaled.y) * 0.5
+	else:
+		_world.position.y = clampf(_world.position.y, -limit.y, 0.0)
+
+
+## Asks for a new zoom; the view eases there and keeps `pivot` (a screen point)
+## over the same patch of map, so the wheel zooms around the cursor.
+func _zoom_to(target: float, pivot: Vector2) -> void:
+	_zoom_pivot = pivot
+	_zoom_target = clampf(target, Tuning.GALAXY_ZOOM_MIN, Tuning.GALAXY_ZOOM_MAX)
+
+
+func _update_zoom(delta: float) -> void:
+	if is_equal_approx(_zoom, _zoom_target):
+		return
+	var next: float = lerpf(_zoom, _zoom_target, 1.0 - exp(-Tuning.GALAXY_ZOOM_SMOOTH * delta))
+	if absf(next - _zoom_target) < 0.001:
+		next = _zoom_target
+	_set_zoom(next, _zoom_pivot)
+
+
+## Applies a zoom immediately, keeping the map point under the pivot fixed.
+func _set_zoom(value: float, pivot: Vector2) -> void:
+	var before: float = maxf(_zoom, 0.001)
+	var world_point: Vector2 = (pivot - _world.position) / before
+	_zoom = clampf(value, Tuning.GALAXY_ZOOM_MIN, Tuning.GALAXY_ZOOM_MAX)
+	_world.scale = Vector2.ONE * _zoom
+	_world.position = pivot - world_point * _zoom
+	_zoom_target = _zoom
+	_clamp_pan()
+
+
+func _touch_distance() -> float:
+	var points: Array = _touches.values()
+	if points.size() < 2:
+		return 0.0
+	return (points[0] as Vector2).distance_to(points[1] as Vector2)
+
+
+func _touch_midpoint() -> Vector2:
+	var points: Array = _touches.values()
+	if points.size() < 2:
+		return Tuning.VIEW_SIZE * 0.5
+	return ((points[0] as Vector2) + (points[1] as Vector2)) * 0.5
 
 
 func _pan_with_stick(delta: float) -> void:
@@ -160,7 +224,7 @@ func _pan_with_stick(delta: float) -> void:
 ## Screen point -> map point. There is no camera on this screen, so the pan is
 ## the only transform.
 func _to_world(point: Vector2) -> Vector2:
-	return point - _world.position
+	return (point - _world.position) / maxf(_zoom, 0.001)
 
 
 func _body_at(world_point: Vector2) -> StringName:
@@ -184,7 +248,16 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-		if button.button_index != MOUSE_BUTTON_LEFT:
+		if button.pressed and button.button_index in [
+			MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN
+		]:
+			var step: float = Tuning.GALAXY_ZOOM_STEP
+			if button.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				step = -step
+			_zoom_to(_zoom_target + step, button.position)
+			accept_event()
+			return
+		if button.button_index != MOUSE_BUTTON_LEFT or _pinching:
 			return
 		if button.pressed:
 			_begin_drag(button.position)
@@ -192,8 +265,43 @@ func _gui_input(event: InputEvent) -> void:
 			_end_drag(button.position)
 		accept_event()
 	elif event is InputEventMouseMotion:
-		if _dragging:
+		if _dragging and not _pinching:
 			_drag_by((event as InputEventMouseMotion).relative)
+	elif event is InputEventScreenTouch:
+		_handle_touch(event as InputEventScreenTouch)
+	elif event is InputEventScreenDrag:
+		_handle_touch_drag(event as InputEventScreenDrag)
+
+
+## Two fingers pinch-zoom around their midpoint; one finger keeps using the
+## emulated-mouse drag and tap path.
+func _handle_touch(touch: InputEventScreenTouch) -> void:
+	if touch.pressed:
+		_touches[touch.index] = touch.position
+		if _touches.size() >= 2:
+			_pinching = true
+			_dragging = false
+			_pinch_distance = _touch_distance()
+	else:
+		_touches.erase(touch.index)
+		if _touches.size() < 2:
+			_pinching = false
+			_pinch_distance = 0.0
+	accept_event()
+
+
+func _handle_touch_drag(drag: InputEventScreenDrag) -> void:
+	if not _touches.has(drag.index):
+		return
+	_touches[drag.index] = drag.position
+	if _touches.size() < 2:
+		return
+	var distance: float = _touch_distance()
+	if _pinch_distance > 1.0 and distance > 1.0:
+		_set_zoom(_zoom * (distance / _pinch_distance), _touch_midpoint())
+	_pinch_distance = distance
+	_pinching = true
+	accept_event()
 
 
 func _begin_drag(point: Vector2) -> void:
@@ -280,7 +388,7 @@ func _tooltip_text(body_id: StringName) -> String:
 
 
 func _place_tooltip(body_id: StringName) -> void:
-	var screen: Vector2 = _world.position + _galaxy.position_of(body_id)
+	var screen: Vector2 = _world.position + _galaxy.position_of(body_id) * _zoom
 	var tooltip_size: Vector2 = _tooltip.size
 	var point: Vector2 = screen + Vector2(30.0, -20.0)
 	point.x = clampf(point.x, 8.0, Tuning.VIEW_SIZE.x - tooltip_size.x - 8.0)
@@ -316,6 +424,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_card()
 			get_viewport().set_input_as_handled()
 		return
+	if event is InputEventKey:
+		var zoom_key := event as InputEventKey
+		if zoom_key.pressed and not zoom_key.echo:
+			if zoom_key.physical_keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]:
+				_zoom_to(_zoom_target + Tuning.GALAXY_ZOOM_STEP, Tuning.VIEW_SIZE * 0.5)
+				get_viewport().set_input_as_handled()
+				return
+			if zoom_key.physical_keycode in [KEY_MINUS, KEY_KP_SUBTRACT]:
+				_zoom_to(_zoom_target - Tuning.GALAXY_ZOOM_STEP, Tuning.VIEW_SIZE * 0.5)
+				get_viewport().set_input_as_handled()
+				return
 	if event.is_action_pressed("ui_right") or event.is_action_pressed("ui_down"):
 		_cycle(1)
 		get_viewport().set_input_as_handled()
@@ -364,7 +483,7 @@ func _focus_on(body_id: StringName) -> void:
 
 ## Nudge the pan until the focused body is inside the safe area.
 func _ensure_visible(body_id: StringName) -> void:
-	var screen: Vector2 = _world.position + _galaxy.position_of(body_id)
+	var screen: Vector2 = _world.position + _galaxy.position_of(body_id) * _zoom
 	var wanted: Vector2 = screen
 	if screen.x < FOCUS_MARGIN:
 		wanted.x = FOCUS_MARGIN

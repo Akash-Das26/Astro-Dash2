@@ -499,6 +499,14 @@ func _add_rock(rock: Asteroid) -> void:
 	if not _running:
 		rock.queue_free()
 		return
+	# A big rock must never materialise on top of the ship: push it out along
+	# the direction it came from until it is clear of the hull.
+	if rock.large and ship != null:
+		var offset: Vector2 = rock.position - ship.position
+		if offset.length() < Tuning.ASTEROID_SHIP_CLEARANCE:
+			var away: Vector2 = offset.normalized() if offset.length() > 0.5 \
+				else Vector2.RIGHT.rotated(randf() * TAU)
+			rock.position = ship.position + away * Tuning.ASTEROID_SHIP_CLEARANCE
 	asteroids.call_deferred("add_child", rock)
 
 

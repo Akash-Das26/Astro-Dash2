@@ -253,9 +253,9 @@ func _on_banner_timeout() -> void:
 ## total, plus the no-damage bonus line when it was earned.
 func show_victory(data: Dictionary) -> void:
 	_end_is_victory = true
-	_end_title.text = "VICTORY"
+	_end_title.text = "SECTOR SECURED!"
 	_end_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7))
-	_end_subtitle.text = String(data.get("name", ""))
+	_end_subtitle.text = "%s CONQUERED!" % String(data.get("name", "SECTOR")).to_upper()
 	_end_subtitle.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
 	var lines: PackedStringArray = []
 	lines.append("WAVES %d/%d   |   ENEMIES %d/%d" % [
