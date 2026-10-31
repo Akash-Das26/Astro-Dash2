@@ -34,6 +34,9 @@ const SHIP_SPAWN_POSITION: Vector2 = Vector2(480.0, 480.0)
 const SHIP_RADIUS: float = 14.0
 ## Distance from the hull centre where a shot leaves the muzzle.
 const SHIP_MUZZLE_OFFSET: float = 24.0
+## The ship wraps around the arena once its hull is fully past an edge; this
+## extra gap is how far outside the opposite edge it re-enters.
+const SHIP_WRAP_MARGIN: float = 8.0
 const SHIP_INVULNERABILITY: float = 0.9
 const SHIP_SHIELD_GRACE: float = 0.4
 const SHIP_BLINK_INTERVAL: float = 0.08

@@ -42,6 +42,15 @@ func set_base_scale(value: Vector2) -> void:
 		_apply()
 
 
+## Restart the loop from its first frame. The ship calls this when it wraps to
+## the far edge, so the flame never appears to streak across the screen.
+func snap() -> void:
+	frame = 0
+	if sprite_frames != null:
+		play(&"burn")
+	_apply()
+
+
 ## 0 = idle, 1 = full speed.
 func set_thrust(value: float) -> void:
 	_thrust = clampf(value, 0.0, 1.0)

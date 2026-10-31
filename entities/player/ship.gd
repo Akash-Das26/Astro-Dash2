@@ -234,11 +234,39 @@ func _update_movement(delta: float) -> void:
 		_velocity += input * acceleration * delta
 	_velocity = _velocity.limit_length(move_speed)
 	position += _velocity * delta
-	position.x = clampf(position.x, Tuning.ARENA_LEFT + Tuning.ARENA_MARGIN, Tuning.ARENA_RIGHT - Tuning.ARENA_MARGIN)
-	position.y = clampf(position.y, Tuning.ARENA_TOP + Tuning.ARENA_MARGIN, Tuning.ARENA_BOTTOM - Tuning.ARENA_MARGIN)
+	_wrap_position()
 	_thrust = lerpf(_thrust, clampf(_velocity.length() / maxf(move_speed, 1.0), 0.0, 1.0), 10.0 * delta)
 	_thruster.set_thrust(_thrust)
 
+
+## Asteroids-style wrap: the hull only wraps once it has completely left the
+## arena, and it re-enters just outside the opposite edge, so nothing pops in
+## the middle of the screen. Velocity is untouched, which keeps the drift
+## continuous, and the exhaust is restarted so no flame streaks across.
+## Bullets and enemy shots keep their own rule (they are freed off screen);
+## rocks and fighters also keep their current off-screen behaviour.
+func _wrap_position() -> void:
+	var half: Vector2 = _sprite.get_rect().size * 0.5 * _sprite.scale
+	var gap: float = Tuning.SHIP_WRAP_MARGIN
+	var left: float = Tuning.ARENA_LEFT - half.x - gap
+	var right: float = Tuning.ARENA_RIGHT + half.x + gap
+	var top: float = Tuning.ARENA_TOP - half.y - gap
+	var bottom: float = Tuning.ARENA_BOTTOM + half.y + gap
+	var wrapped: bool = false
+	if position.x < left:
+		position.x = right
+		wrapped = true
+	elif position.x > right:
+		position.x = left
+		wrapped = true
+	if position.y < top:
+		position.y = bottom
+		wrapped = true
+	elif position.y > bottom:
+		position.y = top
+		wrapped = true
+	if wrapped:
+		_thruster.snap()
 
 ## Three aim sources in priority order: the touch zone, the right stick, the
 ## mouse. With none of them active the nose keeps its last heading, so a
