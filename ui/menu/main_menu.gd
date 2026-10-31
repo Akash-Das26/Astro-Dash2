@@ -7,7 +7,7 @@ extends Control
 ## GameState pauses the tree on MENU, so this root runs with PROCESS_MODE_ALWAYS
 ## and the backdrop keeps moving behind the buttons.
 
-const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
+const GALAXY_SCENE: String = "res://ui/map/galaxy_map.tscn"
 
 @onready var _new_game: Button = $Buttons/NewGame
 @onready var _continue_button: Button = $Buttons/Continue

@@ -1,12 +1,12 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/hud/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://ui/touch_config/config/controls.gd" id="2_touch"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png" id="3_grey"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png" id="4_green"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png" id="5_blue"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_red.png" id="6_red"]
-[ext_resource type="PackedScene" path="res://ui/controls_card.tscn" id="7_controls"]
+[ext_resource type="PackedScene" path="res://ui/panels/controls_card.tscn" id="7_controls"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end"]
 bg_color = Color(0.035, 0.05, 0.1, 0.98)

@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Space Shooter"
-run/main_scene="res://ui/main_menu.tscn"
+run/main_scene="res://ui/menu/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -24,7 +24,7 @@ buses/default_bus_layout="res://default_bus_layout.tres"
 GameState="*res://autoload/game_state.gd"
 SaveData="*res://autoload/save_data.gd"
 AudioManager="*res://autoload/audio_manager.gd"
-UIOverlay="*res://ui/ui_overlay.gd"
+UIOverlay="*res://autoload/ui_overlay.gd"
 
 [display]
 

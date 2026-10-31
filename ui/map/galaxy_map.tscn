@@ -1,10 +1,10 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/galaxy_map.gd" id="1_map"]
+[ext_resource type="Script" path="res://ui/map/galaxy_map.gd" id="1_map"]
 [ext_resource type="Script" path="res://entities/fx/starfield.gd" id="2_stars"]
-[ext_resource type="Script" path="res://entities/map/galaxy_links.gd" id="3_links"]
-[ext_resource type="PackedScene" path="res://ui/upgrade_panel.tscn" id="4_upgrades"]
-[ext_resource type="PackedScene" path="res://ui/difficulty_picker.tscn" id="5_difficulty"]
+[ext_resource type="Script" path="res://ui/map/galaxy_links.gd" id="3_links"]
+[ext_resource type="PackedScene" path="res://ui/panels/upgrade_panel.tscn" id="4_upgrades"]
+[ext_resource type="PackedScene" path="res://ui/panels/difficulty_picker.tscn" id="5_difficulty"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
 content_margin_left = 10.0

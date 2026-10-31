@@ -20,7 +20,7 @@ func _show_controls(node: Node) -> void:
 
 func _ready() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	var scene_path: String = args[0] if args.size() > 0 else "res://ui/main_menu.tscn"
+	var scene_path: String = args[0] if args.size() > 0 else "res://ui/menu/main_menu.tscn"
 	var shot_name: String = args[1] if args.size() > 1 else "shot"
 	var frames: int = int(args[2]) if args.size() > 2 else 60
 

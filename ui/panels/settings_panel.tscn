@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/settings_panel.gd" id="1_settings"]
+[ext_resource type="Script" path="res://ui/panels/settings_panel.gd" id="1_settings"]
 
 [node name="SettingsPanel" type="VBoxContainer"]
 theme_override_constants/separation = 2

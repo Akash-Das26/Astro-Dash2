@@ -26,8 +26,8 @@ const SHIELD_PICKUP_SCENE: PackedScene = preload("res://entities/pickups/shield_
 const SHOCKWAVE_SCRIPT: GDScript = preload("res://entities/fx/shockwave.gd")
 const FLOAT_TEXT_SCRIPT: GDScript = preload("res://entities/fx/float_text.gd")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
-const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
-const MENU_SCENE: String = "res://ui/main_menu.tscn"
+const GALAXY_SCENE: String = "res://ui/map/galaxy_map.tscn"
+const MENU_SCENE: String = "res://ui/menu/main_menu.tscn"
 
 ## One sound per weapon, so the five guns never sound the same.
 const WEAPON_SOUNDS: Dictionary = {

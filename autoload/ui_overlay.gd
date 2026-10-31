@@ -7,7 +7,7 @@ extends CanvasLayer
 ## the card is never hidden behind a screen's own panels. Android Back and B
 ## close it from any screen.
 
-const CARD_SCENE: PackedScene = preload("res://ui/controls_card.tscn")
+const CARD_SCENE: PackedScene = preload("res://ui/panels/controls_card.tscn")
 
 var _card: ControlsCard
 var _paused_by_us: bool = false

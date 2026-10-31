@@ -8,7 +8,7 @@ extends Control
 ## and everything on this screen (markers included) keeps animating.
 
 const BATTLE_SCENE: String = "res://game/battle/battle_game.tscn"
-const MENU_SCENE: String = "res://ui/main_menu.tscn"
+const MENU_SCENE: String = "res://ui/menu/main_menu.tscn"
 const DEFAULT_HINT: String = "TAP SELECTS   |   DOUBLE-TAP CONQUERS   |   DRAG PANS   |   RIGHT STICK MOVES THE CURSOR"
 ## Seconds between frontier steps while the right stick is held.
 const STICK_CURSOR_RATE: float = 0.25

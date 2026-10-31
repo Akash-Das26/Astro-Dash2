@@ -248,10 +248,10 @@ asks where an input came from.
 ```
 project.godot            960x600 canvas, landscape, nearest filtering, input actions
 default_bus_layout.tres  Master / Music / SFX buses (declared in project settings)
-ui/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
-ui/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
-ui/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries
-ui/upgrade_panel.gd/.tscn  upgrade cards, current stats, skin picker
+ui/menu/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
+ui/menu/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
+ui/map/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries
+ui/panels/upgrade_panel.gd/.tscn  upgrade cards, current stats, skin picker
 config/ui_theme.gd           the one theme: pixel font (if present), sizes, colours
 config/config/skins.gd                 hull table, unlock thresholds, selected-skin validation
 game/campaign/galaxy.gd                seeded layout, graph, types, traits, names, battle_for()

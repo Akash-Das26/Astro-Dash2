@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/difficulty_picker.gd" id="1_picker"]
+[ext_resource type="Script" path="res://ui/panels/difficulty_picker.gd" id="1_picker"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
 bg_color = Color(0.45, 0.12, 0.14, 1)

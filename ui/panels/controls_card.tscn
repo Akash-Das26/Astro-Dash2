@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/controls_card.gd" id="1_controls"]
+[ext_resource type="Script" path="res://ui/panels/controls_card.gd" id="1_controls"]
 
 [node name="ControlsCard" type="Control"]
 visible = false
