@@ -4,12 +4,12 @@ A landscape twin-stick space shooter built with **Godot 4.7** (GL Compatibility)
 for desktop, the web and Android. Fly free in a 960x600 arena, shoot fighters and
 asteroids, chain kills for combo score, and take a galaxy one world at a time.
 
-This build is **stage 9: fixes, layout, wrap, input and polish**. The ship wraps
-around the arena, the drifting rocks are much larger, the galaxy map zooms, every
-key and gamepad button except the menu key can be rebound, and the UI uses
-Pixelify Sans for body copy with Press Start 2P for titles when those fonts are
-present. The campaign is still the seeded galaxy from 7B; the arena is the
-7A/8 battle.
+This build is **stage 11: difficulty modes, between-planet healing, thruster
+alignment and wired sound effects**. NEW GAME opens a five-mode difficulty
+picker, the hull heals between planets by mode, a defeat follows the mode's own
+rule (keep the planets, start a new galaxy, or wipe everything), the exhaust is
+anchored at every hull's tail, and the real SFX packs are mapped by keyword.
+The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
 
 ## Screenshots
 
@@ -143,10 +143,10 @@ once per missing file and those events stay silent.
 
 ## What is not in this build yet
 
-A how-to-play card, more weapon types, songs and sound effects, and real
-screenshots. The audio files are the only missing content: dropping them into
-`assests/audio/` with the names in `autoload/audio_manager.gd` turns sound on
-without a code change.
+A how-to-play card and real screenshots. Sound effects are now wired from the
+two packs already in `assests/audio/` (see `assests/audio/README.md`); music is
+a playlist from `assests/audio/music/`. The only open audio item is filling in
+the per-pack credit TODO lines.
 
 ## Controls
 
@@ -175,6 +175,8 @@ at startup; Esc and Back stay fixed so a remap can never lock the player out.
 | Upgrades | Click / tap **UPGRADE**, or focus it with the d-pad |
 | Close a card | `CANCEL`, `Esc` / `B`, or Android Back |
 | Back to the menu | `Esc` / `B` / Android Back on the bare map |
+| Zoom | Mouse wheel (around the cursor), pinch, or `+` / `-` |
+| Controls card | `C` anywhere |
 | Debug battle (debug builds) | `F9` starts the one-wave harness instead |
 
 ### Battle
@@ -187,13 +189,21 @@ at startup; Esc and Back stay fixed so a remap can never lock the player out.
 | Aim | Mouse (the nose follows the pointer once it moves) |
 | Fire primary | `Space` or hold left click |
 | Fire secondary | `Shift`, hold right click, or the touch **FIRE II** button |
+| Raise the manual shield | `Z` (MANUAL shield mode), or the touch **SHIELD** button |
 | Pause | `P` or `Esc` |
+| Controls card | `C` (pauses while open) |
+| Thruster overlay (debug builds) | `F3` draws every hull circle and exhaust anchor |
 | End card | `Enter` continues / retries, `Esc` / `B` Back |
 | Debug (debug builds) | `R` restarts the harness, `F9` starts it |
 
+**CLASSIC scheme** (Settings > CONTROL SCHEME): `Left` / `Right` or `A` / `D`
+turn, `Up` / `W` thrusts, `Down` / `S` brakes (it never reverses), and the nose
+is the aim. Both schemes' bindings persist.
+
 **Gamepad** (twin-stick): left stick moves, right stick aims, right trigger or
 `A` / Cross fires the primary, left shoulder or left trigger fires the
-secondary, `Start` pauses, d-pad and `A` navigate cards.
+secondary, `X` / Square raises the manual shield, `Start` pauses, d-pad and `A`
+navigate cards.
 
 **Touch:** virtual stick on the left half, aim-and-fire on the right half, a
 second 48px+ **FIRE II** button for the secondary, 48px pause button. On the map,
@@ -215,8 +225,13 @@ asks where an input came from.
    the last wave.
 4. Victory banks the conquest, run score, carried hull and energy, then
    **CONTINUE** returns to the map so glows and links update.
-5. Defeat ends the run on the game-over card. **TRY AGAIN** draws a new seed with
-   reset conquests and hull; energy, upgrade levels and skins are kept.
+5. A victory heals the hull by the mode's fraction of MAX HP (clamped), shown on
+   the victory card as `HULL +25%  (96/120)` or `HULL REPAIRED TO FULL`.
+6. Defeat ends the battle on the game-over card, which shows the mode and its
+   rule. CADET/VECTOR keep the galaxy and planets and restore the hull
+   (100% / 50%); SUPERNOVA/EVENT HORIZON draw a new galaxy while keeping energy,
+   upgrades and weapons; SINGULARITY also wipes the campaign's meta progression.
+   The button follows that rule: RETURN TO MAP, NEW GALAXY or START OVER.
 
 ## Project structure
 
@@ -300,7 +315,8 @@ depends on the exact values.
 | Shield drops and recharge | `SHIELD_DROP_CHANCE`, `SHIELD_DROP_FALL_SPEED`, `SHIELD_DROP_DRIFT`, `SHIELD_DROP_LIFE`, `SHIELD_DROP_RADIUS`, `SHIELD_DROP_VISUAL_RADIUS`, `SHIELD_RECHARGE_BASE`, `SHIELD_RECHARGE_STEP`, `SHIELD_RECHARGE_MIN`, `SHIELD_RECHARGE_DAMAGE_DELAY`, `SHIELD_BUBBLE_RADIUS` |
 | Enemy bullet art | `ENEMY_BULLET_VISUAL_RADIUS`, `ENEMY_BULLET_CORE_RADIUS`, `ENEMY_BULLET_HITBOX_RADIUS`, `ENEMY_BULLET_TRAIL_SEGMENTS`, `ENEMY_BULLET_TRAIL_SPACING`, `ENEMY_BULLET_GLOW_PULSE`, `ENEMY_BULLET_BODY`, `ENEMY_BULLET_CORE`, `ENEMY_BULLET_OUTLINE*`, `ENEMY_BULLET_OUTLINE_WIDTH*` |
 | Ship damage | `SHIP_INVULNERABILITY`, `SHIP_SHIELD_GRACE`, `MAX_SHIELD_CHARGES`, `SHIP_BLINK_*` |
-| Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE` |
+| Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE`, `THRUSTER_TAIL_GAP`, `THRUSTER_ROTATION`, `THRUSTER_ART_SIZE`, `THRUSTER_BAR_ROWS` |
+| Difficulty modes | `DIFFICULTIES` (heal, milestones, on_defeat, all battle multipliers), `DIFFICULTY_ORDER`, `DIFFICULTY_DEFAULT` (CADET), `DIFFICULTY_WIPE_LIST` |
 | Fighters | `ENEMY_TYPES`: per kind `hp`, `speed`, `points`, `radius`, `orbit_radius` (0 = dive), `fire_interval`, `bullet_speed`, `aim_error`, `effect_color` |
 | Fighter behaviour | `ENEMY_APPROACH_SLACK`, `ENEMY_ORBIT_SPEED_RATIO`, `ENEMY_WARP_TIME`, `WARP_SCALE`, `WARP_FRAME_FPS`, `ENEMY_CONTACT_DAMAGE`, `ENEMY_BULLET_*` |
 | Asteroids | `ASTEROID_LARGE_HP`, `ASTEROID_LARGE/TINY_SCALE` (large art is ~2.6x the old size), `ASTEROID_*_RADIUS`, `ASTEROID_SHIP_CLEARANCE`, `ASTEROID_CONTACT_DAMAGE`, `ASTEROID_SPEED_MIN/MAX`, `ASTEROID_SPIN_MIN/MAX`, `ASTEROID_SPLIT_MIN/MAX`, `ASTEROID_MAX_LIVE`, `ASTEROID_SPAWN_INTERVAL`, `ASTEROID_SPAWN_OFFSET` |
@@ -367,19 +383,41 @@ conquest bonus: MINOR PLANET x0.7 energy, RESOURCE RICH x1.8, FERTILE x1.2,
 FORTRESS x1.0, CITADEL x1.4, THE FINAL GATE x2.0. Citadels add 120 energy, the
 gate 250.
 
+## Difficulty
+
+Five modes live in `Tuning.DIFFICULTIES`, chosen on NEW GAME / NEW CAMPAIGN and
+fixed for the campaign. Healing is a fraction of **MAX HP**, added to the hull
+and clamped; the largest reached milestone **replaces** the per-planet heal.
+`Campaign.planets_conquered()` counts the home system, so the counter on the map
+is also the number used by the milestones. Every mode stacks its battle
+multipliers on top of the distance band and the body trait.
+
+| Mode | Heal per planet | Milestones | Defeat rule | Enemy HP | Enemy damage | Enemies/wave | Energy | Score | Shield drops |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CADET | 100% | — | keep planets, hull 100% | x0.8 | x0.8 | x0.9 | x1.0 | x1.0 | x1.5 |
+| VECTOR | 25% | 50% at 5, 100% at 10 | keep planets, hull 50% | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 | x1.0 |
+| SUPERNOVA | 10% | 25% at 5, 50% at 10 | new galaxy, meta kept | x1.25 | x1.2 | x1.1 | x1.1 | x1.25 | x0.8 |
+| EVENT HORIZON | 0% | 10% at 5, 25% at 10 | new galaxy, meta kept | x1.5 | x1.4 | x1.25 | x1.25 | x1.5 | x0.6 |
+| SINGULARITY | 0% | 5% at 10 | wipes campaign, energy, upgrades and weapons | x1.8 | x1.7 | x1.4 | x1.5 | x2.0 | x0.5 |
+
+High scores are stored per mode under `[high_scores]`; the game-over card and the
+menu footer show the record for the mode being played. A save from before this
+system loads as CADET, with its old `high_score` seeding CADET's record.
+
 ## Save file
 
 `user://save.cfg` keeps the meta-progression and the run:
 
 | Section | Keys |
 | --- | --- |
-| `progress` | `high_score`, `energy`, `skin` |
+| `progress` | `high_score` (legacy = CADET), `energy`, `skin` |
+| `high_scores` | one key per mode (`cadet`, `vector`, `supernova`, `event_horizon`, `singularity`) |
 | `upgrades` | `<kind>_level` for hull, speed, shield, fire |
 | `gameplay` | `reduce_motion`, `auto_fire`, `high_contrast_bullets` |
 | `weapons` | `owned` (list), `primary`, `secondary` — missing keys fall back to the pulse laser and an empty second slot, so older saves load |
 | `audio` | `music_volume`, `sfx_volume`, `muted` |
 | `gameplay` | `reduce_motion`, `auto_fire` |
-| `campaign` | `active`, `seed`, `score`, `hp`, `shields`, `conquered`, `best_score`, `best_planets` |
+| `campaign` | `active`, `seed`, `difficulty`, `score`, `hp`, `shields`, `conquered`, `best_score`, `best_planets` |
 
 The galaxy is rebuilt from `seed`; `conquered` stores the body ids that fell (home
 is implicit). `hp`/`shields` are written on every conquest, so a relaunch resumes
@@ -484,9 +522,13 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   license links), and the CC BY-SA track keeps its share-alike terms. The citadel
   theme is mapped in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it
   is kept out of the normal shuffle.
-- **Audio**: TODO — the project still ships no sound effects;
-  `assests/audio/README.md` lists every `.ogg` filename `AudioManager` expects,
-  the event each one is wired to, and the older names kept for compatibility.
+- **Sound effects**: TODO — add author, license and source for each pack used
+  by `AudioManager.SOUND_MAP`:
+  - The Essential Retro Video Game Sound Effects Collection (512 sounds) by
+    Juhani Junkala — TODO: license, source URL.
+  - Essential Game Audio pack by Ove Melaa — TODO: license, source URL.
+  `assests/audio/README.md` lists every event, the files behind it and the
+  per-sound volume trims.
 - Everything else (HUD, map markers and links, tooltips, cards, stick, particles,
   starfield, icon) is drawn in code or in `icon.svg` and was written for this
   project.

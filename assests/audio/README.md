@@ -1,13 +1,25 @@
 # Audio drop-off
 
-`autoload/audio_manager.gd` looks for these files here, by name. Drop the files
-in, keep the names, and they are picked up on the next run. Anything missing is
-skipped with one warning; the game never fails to start and never plays a broken
-sound.
+Sound effects are **not renamed** to match code. `autoload/audio_manager.gd`
+holds `SOUND_MAP`: a logical event (for example `shoot_pulse`) maps to a list of
+real files inside the packs under this folder. One file is picked at random per
+play, with a small pitch spread, and `SOUND_VOLUME_DB` trims the loud ones so
+they sit under the music. A missing file is skipped; events with no file at all
+are listed in **one** `push_warning` on startup, never one warning per path.
 
-**Format: OGG Vorbis (`.ogg`)** for every entry, mono or stereo. It is the
-safest format for the Windows, Web and Android exports and every event in the
-table is read as an `AudioStream`, so OGG is the tested path.
+Two packs are used:
+
+| Folder | Contents |
+| --- | --- |
+| `The Essential Retro Video Game Sound Effects Collection [512 sounds]/…By Juhani Junkala/` | weapons, explosions, impacts, pickups, menus, portals |
+| `EssentialGameAudiopackFixed/` | `RandomSfx/gem.ogg`, `click.ogg`, `lvlup.ogg`, `win.ogg` and unused full scores |
+
+The `.zip` archives mentioned earlier were **not present** in `assests/audio/`;
+everything was already extracted. There is therefore no `assests/audio/sfx/`
+copy, and nothing was moved or renamed.
+
+**Formats:** the map points at the pack files as shipped (`.ogg`, `.wav`,
+`.mp3`). Godot imports all three; keep the originals where they are.
 
 ## Music playlist
 
@@ -48,61 +60,60 @@ finds, sorted by file name.
   is not stored at its source path in a PCK: that is what makes the scan work on
   the Web and Android exports.
 
-## Weapons
+## Event map
 
-| File                  | Trigger                                    |
-| --------------------- | ------------------------------------------ |
-| `shoot_pulse.ogg`     | pulse laser fires (pitch jittered ±5%)      |
-| `shoot_cannon.ogg`    | heavy cannon fires                          |
-| `shoot_scatter.ogg`   | scatter shot fires (one sound per volley)   |
-| `shoot_rail.ogg`      | rail laser fires                            |
-| `missile_launch.ogg`  | homing missile leaves the hardpoint         |
+Paths are shortened to file names; the folder follows the table above.
 
-## Combat and pickups
+| Event | Files used |
+| --- | --- |
+| `shoot_pulse` | `sfx_wpn_laser1..4.wav` |
+| `shoot_cannon` | `sfx_wpn_cannon1..3.wav` |
+| `shoot_scatter` | `sfx_weapon_shotgun1..3.wav` |
+| `shoot_rail` | `sfx_wpn_laser10..12.wav` |
+| `missile_launch` | `sfx_wpn_missilelaunch.wav` |
+| `explosion_small` | `Explosions/Short/sfx_exp_short_hard1..3.wav` |
+| `explosion_large` | `Explosions/Long/sfx_exp_long1..3.wav` |
+| `energy_pickup` | `RandomSfx/gem.ogg`, `sfx_coin_cluster1..2.wav` |
+| `pickup` | `RandomSfx/gem.ogg`, `sfx_coin_cluster1.wav` |
+| `shield_pickup` | `sfx_sounds_powerup1..3.wav` |
+| `shield_up` | `sfx_sounds_powerup11..13.wav` |
+| `shield_hit` | `sfx_sounds_impact1..3.wav` |
+| `shield_down` | `sfx_sounds_error1..3.wav` |
+| `combo_up` | `sfx_sounds_powerup16..18.wav` |
+| `warp_in` | `sfx_movement_portal1..3.wav` |
+| `upgrade_buy` | `RandomSfx/lvlup.ogg` |
+| `upgrade_denied` | `sfx_sounds_error9..11.wav` |
+| `victory` | `RandomSfx/win.ogg`, `sfx_sounds_fanfare1..2.wav` |
+| `defeat` | `sfx_damage_hit1..2.wav`, `sfx_exp_medium1.wav` |
+| `map_click` | `RandomSfx/click.ogg`, `sfx_menu_select1.wav` |
+| `ui_click` | `sfx_sounds_button1..3.wav` |
+| `shoot` | `sfx_wpn_laser5..7.wav` (legacy callers) |
+| `enemy_death` | `Explosions/Shortest/sfx_exp_shortest_hard1..3.wav` |
+| `player_hit` | `sfx_damage_hit1..3.wav` |
+| `bomb` | `Explosions/Clusters/sfx_exp_cluster1..3.wav` |
+| `boss_spawn` | `sfx_alarm_loop1..2.wav` |
+| `wave` | `sfx_sound_neutral1..2.wav` |
+| `game_over` | `sfx_sounds_error13..15.wav` |
 
-| File                  | Trigger                                    |
-| --------------------- | ------------------------------------------ |
-| `explosion_small.ogg` | fighter destroyed, rock shattered            |
-| `explosion_large.ogg` | citadel station destroyed                    |
-| `warp_in.ogg`         | a fighter warps into the arena               |
-| `energy_pickup.ogg`   | energy orb collected                         |
-| `shield_pickup.ogg`   | shield drop collected                        |
-| `shield_hit.ogg`      | a shield charge absorbs a hit                |
-| `shield_down.ogg`     | the last shield charge is spent              |
-| `combo_up.ogg`        | every fifth kill in one combo chain          |
+Every logical name above has at least one existing file (checked against the
+folders). `bomb`, `boss_spawn`, `game_over` and `pickup` are mapped for
+compatibility but no current script calls them.
 
-## Progression and screens
+## Adding or replacing a sound
 
-| File                  | Trigger                                    |
-| --------------------- | ------------------------------------------ |
-| `upgrade_buy.ogg`     | an upgrade, weapon or hull was equipped      |
-| `upgrade_denied.ogg`  | a purchase was refused (energy, max, lock)  |
-| `victory.ogg`         | a battle is won                              |
-| `defeat.ogg`          | the ship is destroyed                        |
-| `map_click.ogg`       | a galaxy body opens its confirm card         |
-| `ui_click.ogg`        | menu, pause, settings, controls buttons      |
-| `wave.ogg`            | wave banner / battle launch                  |
-| `music.ogg`           | looping background music (Music bus)         |
-
-## Older names still in the table
-
-Kept so an older drop-off keeps working; the game no longer calls most of them.
-
-| File                  | Formerly used for                          |
-| --------------------- | ------------------------------------------ |
-| `shoot.ogg`           | the single pre-weapon laser                 |
-| `enemy_death.ogg`     | fighter destroyed                           |
-| `player_hit.ogg`      | hull damage                                 |
-| `pickup.ogg`          | any pickup                                  |
-| `bomb.ogg`            | bomb detonated                              |
-| `boss_spawn.ogg`      | boss enters                                 |
-| `game_over.ogg`       | run ends                                    |
+1. Drop the file into one of the pack folders (or a new folder under
+   `assests/audio/`).
+2. Add its path to the matching list in `SOUND_MAP` (all paths are relative to
+   `res://assests/audio/`).
+3. Add a `SOUND_VOLUME_DB` trim if it is much louder or quieter than the rest.
+4. Open the project once so Godot imports the file.
 
 ## Notes
 
 - SFX go to the `SFX` bus, music to the `Music` bus (see
   `default_bus_layout.tres`), so the two sliders in Settings stay independent.
-- Loop the music in the Import dock ("Loop" on); `AudioManager` also replays it
-  when the stream finishes.
 - A sound repeated within 30 ms is dropped, which is what stops a scatter volley
   from playing four reports at once.
+- **Credits TODO:** the Juhani Junkala 512-sound pack and Ove Melaa's Essential
+  pack each need an author/license/source line in the main README credits
+  section before shipping.

@@ -1,7 +1,8 @@
 extends Node
-## Global audio service. SFX streams are looked up by name in SOUND_FILES and
-## loaded from res://assests/audio/; anything missing only produces a warning so
-## a build without audio still runs normally.
+## Global audio service. SFX are looked up by logical name in SOUND_MAP, which
+## points at the real files inside the two packs under res://assests/audio/.
+## Several files may back one event; one is picked at random. Anything unmapped
+## only produces one summary warning, so a build without audio still runs.
 ##
 ## Music is a playlist, not a single track: every .ogg, .mp3 and .wav in
 ## res://assests/audio/music/ becomes a track, sorted by file name. The folder is
@@ -26,44 +27,101 @@ const SFX_POOL_SIZE: int = 8
 ## bullets per volley; one report is enough).
 const MIN_REPEAT_MS: int = 30
 
-## Name -> file in res://assests/audio/. Rename entries to match your files.
-## The first block is the current event table; the second keeps the older names
-## working so an older drop-off still plays.
-const SOUND_FILES: Dictionary = {
+## The audio packs keep their own file names, so nothing is renamed to match
+## code. Each logical event maps to a list of real files; one is picked at
+## random per play, with a little pitch spread. All paths are under AUDIO_DIR.
+##
+## Two packs are in res://assests/audio/: the Juhani Junkala 512-sound set
+## (weapons, explosions, UI, pickups) and Ove Melaa's Essential pack (gem,
+## click, lvlup, win). No .zip archives were present; everything was already
+## extracted, so there is no sfx/ copy and the originals stay where they are.
+const PACK: String = "The Essential Retro Video Game Sound Effects Collection [512 sounds]/The Essential Retro Video Game Sound Effects Collection [512 sounds] By Juhani Junkala/"
+const OVE: String = "EssentialGameAudiopackFixed/Sound Effects/RandomSfx/"
+const LASER: String = PACK + "Weapons/Lasers/sfx_wpn_laser"
+const CANNON: String = PACK + "Weapons/Cannon/sfx_wpn_cannon"
+const SHOTGUN: String = PACK + "Weapons/Shotgun/sfx_weapon_shotgun"
+const EXP_SHORT: String = PACK + "Explosions/Short/sfx_exp_short_hard"
+const EXP_LONG: String = PACK + "Explosions/Long/sfx_exp_long"
+const EXP_SHORTEST: String = PACK + "Explosions/Shortest/sfx_exp_shortest_hard"
+const EXP_CLUSTER: String = PACK + "Explosions/Clusters/sfx_exp_cluster"
+const EXP_MEDIUM: String = PACK + "Explosions/Medium Length/sfx_exp_medium"
+const COIN: String = PACK + "General Sounds/Coins/sfx_coin_cluster"
+const POWERUP: String = PACK + "General Sounds/Positive Sounds/sfx_sounds_powerup"
+const ERROR: String = PACK + "General Sounds/Negative Sounds/sfx_sounds_error"
+const DAMAGE: String = PACK + "General Sounds/Simple Damage Sounds/sfx_damage_hit"
+const IMPACT: String = PACK + "General Sounds/Impacts/sfx_sounds_impact"
+const BUTTON: String = PACK + "General Sounds/Buttons/sfx_sounds_button"
+const MENU_SELECT: String = PACK + "General Sounds/Menu Sounds/sfx_menu_select"
+const PORTAL: String = PACK + "Movement/Portals and Transitions/sfx_movement_portal"
+const FANFARE: String = PACK + "General Sounds/Fanfares/sfx_sounds_fanfare"
+const ALARM: String = PACK + "General Sounds/Alarms/Alarms/sfx_alarm_loop"
+const NEUTRAL: String = PACK + "General Sounds/Neutral Sounds/sfx_sound_neutral"
+
+const SOUND_MAP: Dictionary = {
 	# Weapons
-	"shoot_pulse": "shoot_pulse.ogg",
-	"shoot_cannon": "shoot_cannon.ogg",
-	"shoot_scatter": "shoot_scatter.ogg",
-	"shoot_rail": "shoot_rail.ogg",
-	"missile_launch": "missile_launch.ogg",
+	"shoot_pulse": [LASER + "1.wav", LASER + "2.wav", LASER + "3.wav", LASER + "4.wav"],
+	"shoot_cannon": [CANNON + "1.wav", CANNON + "2.wav", CANNON + "3.wav"],
+	"shoot_scatter": [SHOTGUN + "1.wav", SHOTGUN + "2.wav", SHOTGUN + "3.wav"],
+	"shoot_rail": [LASER + "10.wav", LASER + "11.wav", LASER + "12.wav"],
+	"missile_launch": [PACK + "Weapons/Grenade Whistles/sfx_wpn_missilelaunch.wav"],
 	# Combat
-	"explosion_small": "explosion_small.ogg",
-	"explosion_large": "explosion_large.ogg",
-	"energy_pickup": "energy_pickup.ogg",
-	"shield_pickup": "shield_pickup.ogg",
-	"shield_hit": "shield_hit.ogg",
-	"shield_up": "shield_up.ogg",
-	"shield_down": "shield_down.ogg",
-	"combo_up": "combo_up.ogg",
-	"warp_in": "warp_in.ogg",
+	"explosion_small": [EXP_SHORT + "1.wav", EXP_SHORT + "2.wav", EXP_SHORT + "3.wav"],
+	"explosion_large": [EXP_LONG + "1.wav", EXP_LONG + "2.wav", EXP_LONG + "3.wav"],
+	"energy_pickup": [OVE + "gem.ogg", COIN + "1.wav", COIN + "2.wav"],
+	"shield_pickup": [POWERUP + "1.wav", POWERUP + "2.wav", POWERUP + "3.wav"],
+	"shield_hit": [IMPACT + "1.wav", IMPACT + "2.wav", IMPACT + "3.wav"],
+	"shield_up": [POWERUP + "11.wav", POWERUP + "12.wav", POWERUP + "13.wav"],
+	"shield_down": [ERROR + "1.wav", ERROR + "2.wav", ERROR + "3.wav"],
+	"combo_up": [POWERUP + "16.wav", POWERUP + "17.wav", POWERUP + "18.wav"],
+	"warp_in": [PORTAL + "1.wav", PORTAL + "2.wav", PORTAL + "3.wav"],
 	# Progression and screens
-	"upgrade_buy": "upgrade_buy.ogg",
-	"upgrade_denied": "upgrade_denied.ogg",
-	"victory": "victory.ogg",
-	"defeat": "defeat.ogg",
-	"map_click": "map_click.ogg",
-	"ui_click": "ui_click.ogg",
+	"upgrade_buy": [OVE + "lvlup.ogg"],
+	"upgrade_denied": [ERROR + "9.wav", ERROR + "10.wav", ERROR + "11.wav"],
+	"victory": [OVE + "win.ogg", FANFARE + "1.wav", FANFARE + "2.wav"],
+	"defeat": [DAMAGE + "1.wav", DAMAGE + "2.wav", EXP_MEDIUM + "1.wav"],
+	"map_click": [OVE + "click.ogg", MENU_SELECT + "1.wav"],
+	"ui_click": [BUTTON + "1.wav", BUTTON + "2.wav", BUTTON + "3.wav"],
 	# Kept from the first sound table
-	"shoot": "shoot.ogg",
-	"enemy_death": "enemy_death.ogg",
-	"player_hit": "player_hit.ogg",
-	"pickup": "pickup.ogg",
-	"bomb": "bomb.ogg",
-	"boss_spawn": "boss_spawn.ogg",
-	"wave": "wave.ogg",
-	"game_over": "game_over.ogg",
-	# Music loops (the playlist scans the folder; this is the legacy slot)
-	"music": "music.ogg",
+	"shoot": [LASER + "5.wav", LASER + "6.wav", LASER + "7.wav"],
+	"enemy_death": [EXP_SHORTEST + "1.wav", EXP_SHORTEST + "2.wav", EXP_SHORTEST + "3.wav"],
+	"player_hit": [DAMAGE + "1.wav", DAMAGE + "2.wav", DAMAGE + "3.wav"],
+	"pickup": [OVE + "gem.ogg", COIN + "1.wav"],
+	"bomb": [EXP_CLUSTER + "1.wav", EXP_CLUSTER + "2.wav", EXP_CLUSTER + "3.wav"],
+	"boss_spawn": [ALARM + "1.wav", ALARM + "2.wav"],
+	"wave": [NEUTRAL + "1.wav", NEUTRAL + "2.wav"],
+	"game_over": [ERROR + "13.wav", ERROR + "14.wav", ERROR + "15.wav"],
+}
+## Per-sound level trim in dB. Negative keeps loud effects under the music,
+## which stays the quietest layer on the bus layout.
+const SOUND_VOLUME_DB: Dictionary = {
+	"shoot_pulse": -7.0,
+	"shoot_cannon": -5.0,
+	"shoot_scatter": -6.0,
+	"shoot_rail": -5.0,
+	"missile_launch": -5.0,
+	"shoot": -7.0,
+	"explosion_small": -5.0,
+	"explosion_large": -3.0,
+	"bomb": -3.0,
+	"energy_pickup": -7.0,
+	"pickup": -7.0,
+	"shield_pickup": -6.0,
+	"shield_up": -5.0,
+	"shield_hit": -5.0,
+	"shield_down": -5.0,
+	"combo_up": -6.0,
+	"warp_in": -6.0,
+	"upgrade_buy": -4.0,
+	"upgrade_denied": -6.0,
+	"victory": -3.0,
+	"defeat": -3.0,
+	"game_over": -4.0,
+	"map_click": -8.0,
+	"ui_click": -8.0,
+	"enemy_death": -6.0,
+	"player_hit": -4.0,
+	"boss_spawn": -4.0,
+	"wave": -8.0,
 }
 ## Random pitch spread per sound, as a fraction of 1.0 (+/-5% = 0.05).
 const PITCH_JITTER: Dictionary = {
@@ -82,6 +140,7 @@ signal track_changed(track: String)
 ## Shuffle / in-order was changed (from the settings card or the API).
 signal music_order_changed(order: StringName)
 
+## Logical name -> array of loaded variants. Empty when nothing was mapped.
 var _streams: Dictionary = {}
 var _last_played: Dictionary = {}
 var _sfx_players: Array[AudioStreamPlayer] = []
@@ -156,8 +215,8 @@ func _exit_tree() -> void:
 # --- SFX --------------------------------------------------------------------
 
 func play_sfx(sound: String) -> void:
-	var stream := _streams.get(sound) as AudioStream
-	if stream == null or _sfx_players.is_empty():
+	var variants: Array = _streams.get(sound, [])
+	if variants.is_empty() or _sfx_players.is_empty():
 		return
 	var now: int = Time.get_ticks_msec()
 	if now - int(_last_played.get(sound, -1000)) < MIN_REPEAT_MS:
@@ -165,7 +224,8 @@ func play_sfx(sound: String) -> void:
 	_last_played[sound] = now
 	var player: AudioStreamPlayer = _sfx_players[_next_sfx_player]
 	_next_sfx_player = (_next_sfx_player + 1) % _sfx_players.size()
-	player.stream = stream
+	player.stream = variants[randi() % variants.size()] as AudioStream
+	player.volume_db = float(SOUND_VOLUME_DB.get(sound, 0.0))
 	var jitter: float = float(PITCH_JITTER.get(sound, 0.0))
 	player.pitch_scale = 1.0 + randf_range(-jitter, jitter)
 	player.play()
@@ -592,15 +652,29 @@ func _on_game_state_changed(new_state: int) -> void:
 	_pause_target = Tuning.MUSIC_PAUSE_GAIN if new_state == GameState.State.PAUSED else 1.0
 
 
+## Loads every mapped variant. One summary warning lists the logical names that
+## found no file at all, instead of one warning per missing path.
 func _load_streams() -> void:
-	for sound: String in SOUND_FILES:
-		var path: String = AUDIO_DIR + String(SOUND_FILES[sound])
-		if not ResourceLoader.exists(path):
-			push_warning("AudioManager: missing %s for \"%s\"; that sound is disabled." % [path, sound])
-			continue
-		var stream := load(path) as AudioStream
-		if stream != null:
-			_streams[sound] = stream
+	_streams.clear()
+	var unmapped: PackedStringArray = []
+	for sound: String in SOUND_MAP:
+		var variants: Array = []
+		for relative: String in SOUND_MAP[sound]:
+			var path: String = AUDIO_DIR + relative
+			if not ResourceLoader.exists(path):
+				continue
+			var stream := load(path) as AudioStream
+			if stream != null:
+				variants.append(stream)
+		if variants.is_empty():
+			unmapped.append(sound)
+		else:
+			_streams[sound] = variants
+	if not unmapped.is_empty():
+		push_warning(
+			"AudioManager: no file mapped for %d sound(s): %s"
+			% [unmapped.size(), ", ".join(unmapped)]
+		)
 
 
 func _build_players() -> void:
