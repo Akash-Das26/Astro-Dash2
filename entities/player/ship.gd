@@ -43,6 +43,7 @@ var hp: int = Tuning.SHIP_MAX_HP
 var shields: int = 0
 ## How many charges the shield holds. The SHIELDS track raises it; a battle
 ## always starts full, so this is also the count shown on the HUD.
+var shield_capacity: int = Tuning.SHIELD_BASE_CAPACITY
 ## Seconds for the SHIELDS track to recharge one charge; 0 disables it.
 var shield_recharge_time: float = 0.0
 var alive: bool = true
