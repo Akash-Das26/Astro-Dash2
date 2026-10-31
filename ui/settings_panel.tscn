@@ -63,6 +63,37 @@ theme_override_font_sizes/font_size = 12
 text = "HIGH-CONTRAST BULLETS"
 button_pressed = true
 
+[node name="NowPlaying" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.95, 0.75, 1)
+theme_override_font_sizes/font_size = 11
+text = "NOW PLAYING: NONE"
+clip_text = true
+
+[node name="TrackRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PrevButton" type="Button" parent="TrackRow"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "PREV"
+
+[node name="OrderButton" type="Button" parent="TrackRow"]
+custom_minimum_size = Vector2(96, 26)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "SHUFFLE"
+
+[node name="NextButton" type="Button" parent="TrackRow"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "NEXT"
+
 [node name="ControlsButton" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 26)
 layout_mode = 2

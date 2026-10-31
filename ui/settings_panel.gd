@@ -18,6 +18,10 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _motion_check: CheckButton = $MotionCheck
 @onready var _auto_fire_check: CheckButton = $AutoFireCheck
 @onready var _contrast_check: CheckButton = $ContrastCheck
+@onready var _now_playing: Label = $NowPlaying
+@onready var _prev_button: Button = $TrackRow/PrevButton
+@onready var _next_button: Button = $TrackRow/NextButton
+@onready var _order_button: Button = $TrackRow/OrderButton
 @onready var _controls_button: Button = $ControlsButton
 @onready var _controls_note: Label = $ControlsNote
 @onready var _save_timer: Timer = $SaveTimer
@@ -39,6 +43,11 @@ func _ready() -> void:
 	_auto_fire_check.toggled.connect(_on_auto_fire_toggled)
 	_contrast_check.toggled.connect(_on_contrast_toggled)
 	_controls_button.pressed.connect(controls_requested.emit)
+	_prev_button.pressed.connect(_on_prev_track)
+	_next_button.pressed.connect(_on_next_track)
+	_order_button.pressed.connect(_on_order_pressed)
+	AudioManager.track_changed.connect(_on_track_changed)
+	AudioManager.music_order_changed.connect(_on_order_changed)
 	AudioManager.settings_changed.connect(_sync_from_settings)
 	_sync_from_settings()
 
@@ -53,7 +62,50 @@ func _sync_from_settings() -> void:
 	_contrast_check.button_pressed = SaveData.high_contrast_bullets
 	# The help line always shows the keys that are bound right now.
 	_controls_note.text = Controls.help_text()
+	_refresh_music()
 	_syncing = false
+
+
+## NOW PLAYING, the skip buttons and the shuffle/order toggle. The track name
+## is the file name AudioManager reports, without its extension.
+func _refresh_music() -> void:
+	var track: String = AudioManager.current_track_name()
+	_now_playing.text = "NOW PLAYING: %s" % (track if not track.is_empty() else "NONE")
+	_now_playing.add_theme_color_override(
+		"font_color", UITheme.COLOR_TEXT if not track.is_empty() else UITheme.COLOR_MUTED
+	)
+	var has_tracks: bool = AudioManager.track_count() > 0
+	_prev_button.disabled = not has_tracks
+	_next_button.disabled = not has_tracks
+	_order_button.disabled = not has_tracks
+	_order_button.text = (
+		"SHUFFLE" if SaveData.music_order == Tuning.MUSIC_ORDER_SHUFFLE else "IN ORDER"
+	)
+
+
+func _on_track_changed(_track: String) -> void:
+	_refresh_music()
+
+
+func _on_order_changed(_order: StringName) -> void:
+	_refresh_music()
+
+
+func _on_prev_track() -> void:
+	AudioManager.previous_track()
+	AudioManager.play_sfx("ui_click")
+
+
+func _on_next_track() -> void:
+	AudioManager.next_track()
+	AudioManager.play_sfx("ui_click")
+
+
+func _on_order_pressed() -> void:
+	AudioManager.toggle_music_order()
+	SaveData.music_order = AudioManager.music_order()
+	AudioManager.play_sfx("ui_click")
+	_save_timer.start()
 
 
 func _on_music_changed(value: float) -> void:
