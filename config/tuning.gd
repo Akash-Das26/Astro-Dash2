@@ -330,7 +330,7 @@ const SPAWN_STAGGER: float = 0.4
 const ENEMY_THINK_INTERVAL: float = 0.25
 
 # --- Battle presets ---------------------------------------------------------
-## A Battle resource is built from one of these rows (see battle.gd). `mix` is
+## A Battle resource is built from one of these rows (see game/battle/battle.gd). `mix` is
 ## { fighter kind: how many of the wave's enemies are that kind } and
 ## `asteroid_density` scales the drift-in rate (0 turns rocks off).
 ## The campaign builds its battles from the galaxy tables further down; these

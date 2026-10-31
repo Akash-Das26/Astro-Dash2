@@ -7,7 +7,7 @@ extends Control
 ## GameState pauses the tree on MAP, so the root runs with PROCESS_MODE_ALWAYS
 ## and everything on this screen (markers included) keeps animating.
 
-const BATTLE_SCENE: String = "res://battle_game.tscn"
+const BATTLE_SCENE: String = "res://game/battle/battle_game.tscn"
 const MENU_SCENE: String = "res://ui/main_menu.tscn"
 const DEFAULT_HINT: String = "TAP SELECTS   |   DOUBLE-TAP CONQUERS   |   DRAG PANS   |   RIGHT STICK MOVES THE CURSOR"
 ## Seconds between frontier steps while the right stick is held.

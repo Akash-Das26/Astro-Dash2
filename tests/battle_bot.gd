@@ -14,7 +14,7 @@ extends Node
 ## It never asserts: the judgement happens in the terminal run (errors, growth),
 ## so a pass here means "no error was printed", not "the game is correct".
 
-const BATTLE_SCENE: PackedScene = preload("res://battle_game.tscn")
+const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
 ## Seconds before the bot starts firing, so the arena stays live for the pause
 ## and wrap checks.
 const FIRE_AFTER: float = 12.0

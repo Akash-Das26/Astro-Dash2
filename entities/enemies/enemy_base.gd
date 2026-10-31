@@ -2,7 +2,7 @@ class_name EnemyBase
 extends Area2D
 ## Every fighter shares this: hp, score value, the hit flash, contact damage and
 ## the three-state AI (warp in, approach, orbit). `configure()` fills the stats
-## from Tuning.ENEMY_TYPES, so a new type is a row in config/tuning.gd, not a new
+## from Tuning.ENEMY_TYPES, so a new type is a row in config/config/tuning.gd, not a new
 ## script.
 ##
 ## It never spawns bullets itself: it emits `shot_requested` and the battle
