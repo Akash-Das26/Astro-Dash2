@@ -18,6 +18,7 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _motion_check: CheckButton = $MotionCheck
 @onready var _auto_fire_check: CheckButton = $AutoFireCheck
 @onready var _contrast_check: CheckButton = $ContrastCheck
+@onready var _scheme_button: Button = $SchemeButton
 @onready var _now_playing: Label = $NowPlaying
 @onready var _prev_button: Button = $TrackRow/PrevButton
 @onready var _next_button: Button = $TrackRow/NextButton
@@ -42,6 +43,7 @@ func _ready() -> void:
 	_motion_check.toggled.connect(_on_motion_toggled)
 	_auto_fire_check.toggled.connect(_on_auto_fire_toggled)
 	_contrast_check.toggled.connect(_on_contrast_toggled)
+	_scheme_button.pressed.connect(_on_scheme_pressed)
 	_controls_button.pressed.connect(controls_requested.emit)
 	_prev_button.pressed.connect(_on_prev_track)
 	_next_button.pressed.connect(_on_next_track)
@@ -60,10 +62,30 @@ func _sync_from_settings() -> void:
 	_motion_check.button_pressed = SaveData.reduce_motion
 	_auto_fire_check.button_pressed = SaveData.auto_fire
 	_contrast_check.button_pressed = SaveData.high_contrast_bullets
-	# The help line always shows the keys that are bound right now.
-	_controls_note.text = Controls.help_text()
+	# The help line always shows the scheme and the keys bound right now.
+	_refresh_controls_note()
 	_refresh_music()
 	_syncing = false
+
+
+func _refresh_controls_note() -> void:
+	_scheme_button.text = "SCHEME: %s" % Controls.scheme_label()
+	_controls_note.text = Controls.help_text()
+
+
+## Switching to CLASSIC also turns the manual bubble on, since that scheme has
+## no mouse aim to dodge with; the player can still change it back.
+func _on_scheme_pressed() -> void:
+	var classic: bool = SaveData.control_scheme != Tuning.CONTROL_SCHEME_CLASSIC
+	SaveData.control_scheme = (
+		Tuning.CONTROL_SCHEME_CLASSIC if classic else Tuning.CONTROL_SCHEME_FREE
+	)
+	SaveData.shield_mode = (
+		Tuning.SHIELD_MODE_MANUAL if classic else Tuning.SHIELD_MODE_AUTO
+	)
+	SaveData.save_data()
+	AudioManager.play_sfx("ui_click")
+	_refresh_controls_note()
 
 
 ## NOW PLAYING, the skip buttons and the shuffle/order toggle. The track name

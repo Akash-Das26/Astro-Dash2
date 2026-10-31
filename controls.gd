@@ -15,8 +15,16 @@ static var _defaults: Dictionary = {}
 static var _defaults_ready: bool = false
 
 
+## The actions the active scheme uses, which is what the remap card lists.
 static func actions() -> Array[StringName]:
-	return Tuning.CONTROL_ACTIONS.duplicate()
+	if SaveData.control_scheme == Tuning.CONTROL_SCHEME_CLASSIC:
+		return Tuning.CONTROL_ACTIONS_CLASSIC.duplicate()
+	return Tuning.CONTROL_ACTIONS_FREE.duplicate()
+
+
+static func scheme_label() -> String:
+	return "CLASSIC" if SaveData.control_scheme == Tuning.CONTROL_SCHEME_CLASSIC \
+		else "FREE AIM"
 
 
 static func is_fixed(action: StringName) -> bool:
@@ -151,14 +159,17 @@ static func _rebuild(action: StringName) -> void:
 			InputMap.action_add_event(action, pad_event)
 
 
-## A short line for the settings card, showing the keys actually in use.
+## The settings note and the read-only controls card: the active scheme and the
+## keys actually bound to it right now.
 static func help_text() -> String:
-	return "MOVE %s   |   FIRE %s   |   SECONDARY %s\nPAUSE %s (FIXED)   |   BACK %s   |   REMAP IN CONTROLS" % [
-		binding_text(&"move_up", false),
-		binding_text(&"shoot", false),
-		binding_text(&"shoot_alt", false),
+	var parts: PackedStringArray = []
+	for action: StringName in actions():
+		if action == &"pause":
+			continue
+		parts.append("%s %s" % [label(action), binding_text(action, false)])
+	var text: String = "%s   |   %s" % [scheme_label(), "   ".join(parts)]
+	return text + "\nPAUSE %s (FIXED)   |   ESC / B BACK   |   C CONTROLS" % [
 		binding_text(&"pause", false),
-		"ESC / B",
 	]
 
 

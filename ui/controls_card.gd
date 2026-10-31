@@ -41,9 +41,12 @@ func open() -> void:
 	visible = true
 	_capture_action = &""
 	_status.text = ""
+	# The scheme may have changed since the card was built, and each scheme
+	# lists a different set of actions.
+	_build_rows()
 	_refresh()
 	AudioManager.play_sfx("ui_click")
-	var first: Button = _key_buttons.get(Tuning.CONTROL_ACTIONS[0]) as Button
+	var first: Button = _key_buttons.get(Controls.actions()[0]) as Button
 	if first != null:
 		first.grab_focus()
 
@@ -58,7 +61,13 @@ func close() -> void:
 
 
 func _build_rows() -> void:
-	for action: StringName in Tuning.CONTROL_ACTIONS:
+	_key_buttons.clear()
+	_pad_buttons.clear()
+	_reset_buttons.clear()
+	for child: Node in _rows.get_children():
+		_rows.remove_child(child)
+		child.queue_free()
+	for action: StringName in Controls.actions():
 		var row := HBoxContainer.new()
 		row.name = "Row_%s" % String(action)
 		row.add_theme_constant_override("separation", 8)
@@ -100,7 +109,7 @@ func _make_cell(column_name: String) -> Button:
 
 
 func _refresh() -> void:
-	for action: StringName in Tuning.CONTROL_ACTIONS:
+	for action: StringName in Controls.actions():
 		var key_button: Button = _key_buttons[action]
 		var pad_button: Button = _pad_buttons[action]
 		var reset_button: Button = _reset_buttons[action]

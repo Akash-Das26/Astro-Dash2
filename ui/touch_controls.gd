@@ -127,7 +127,18 @@ func _update_aim(at: Vector2) -> void:
 	queue_redraw()
 
 
+## FREE AIM maps the stick to strafing; CLASSIC maps X to turn and Y to
+## thrust/brake, exactly like the keyboard scheme.
 func _apply_stick(vector: Vector2) -> void:
+	if SaveData.control_scheme == Tuning.CONTROL_SCHEME_CLASSIC:
+		_press_axis("turn_left", "turn_right", vector.x)
+		Input.action_release("thrust")
+		Input.action_release("brake")
+		if vector.y < -STICK_DEADZONE:
+			Input.action_press("thrust", absf(vector.y))
+		elif vector.y > STICK_DEADZONE:
+			Input.action_press("brake", vector.y)
+		return
 	_press_axis("move_left", "move_right", vector.x)
 	_press_axis("move_up", "move_down", vector.y)
 
@@ -174,6 +185,10 @@ func _release_all() -> void:
 	aim_changed.emit(Vector2.ZERO)
 	Input.action_release("shoot")
 	Input.action_release("shoot_alt")
+	Input.action_release("turn_left")
+	Input.action_release("turn_right")
+	Input.action_release("thrust")
+	Input.action_release("brake")
 	queue_redraw()
 
 

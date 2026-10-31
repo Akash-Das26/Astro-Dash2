@@ -76,22 +76,50 @@ const MUSIC_PAUSE_GAIN: float = 0.45
 const MUSIC_PAUSE_FADE: float = 2.0
 
 # --- Controls ---------------------------------------------------------------
-## Rebindable actions, in the order the CONTROLS card lists them. `pause` is
-## listed but fixed: Esc is the menu key, so no remap may take it away.
+## Two ways to fly. FREE AIM is the twin-stick scheme (mouse or right stick
+## aims, WASD strafes); CLASSIC turns and thrusts like the reference.
+const CONTROL_SCHEME_FREE: StringName = &"free_aim"
+const CONTROL_SCHEME_CLASSIC: StringName = &"classic"
+## Default scheme, so the whole build can be flipped in one place.
+const CONTROL_SCHEME_DEFAULT: StringName = CONTROL_SCHEME_FREE
+## Every bindable action, for persistence and the remap card's storage. The
+## card itself only lists the actions of the active scheme.
 const CONTROL_ACTIONS: Array[StringName] = [
+	&"move_up", &"move_down", &"move_left", &"move_right",
+	&"turn_left", &"turn_right", &"thrust", &"brake",
+	&"shoot", &"shoot_alt", &"pause",
+]
+const CONTROL_ACTIONS_FREE: Array[StringName] = [
 	&"move_up", &"move_down", &"move_left", &"move_right",
 	&"shoot", &"shoot_alt", &"pause",
 ]
+const CONTROL_ACTIONS_CLASSIC: Array[StringName] = [
+	&"turn_left", &"turn_right", &"thrust", &"brake",
+	&"shoot", &"shoot_alt", &"pause",
+]
+## `pause` is listed but fixed: Esc is the menu key, so no remap may take it away.
 const CONTROL_FIXED: Array[StringName] = [&"pause"]
 const CONTROL_LABELS: Dictionary = {
 	&"move_up": "MOVE UP",
 	&"move_down": "MOVE DOWN",
 	&"move_left": "MOVE LEFT",
 	&"move_right": "MOVE RIGHT",
+	&"turn_left": "TURN LEFT",
+	&"turn_right": "TURN RIGHT",
+	&"thrust": "THRUST",
+	&"brake": "BRAKE",
 	&"shoot": "PRIMARY FIRE",
 	&"shoot_alt": "SECONDARY FIRE",
 	&"pause": "PAUSE / MENU",
 }
+## Classic flight: how fast the hull turns, in radians per second.
+const SHIP_CLASSIC_TURN_RATE: float = 3.0
+## Shield behaviour. AUTO spends a charge on every hit (the original rule);
+## MANUAL spends one charge to raise a timed bubble that absorbs everything.
+const SHIELD_MODE_AUTO: StringName = &"auto"
+const SHIELD_MODE_MANUAL: StringName = &"manual"
+## Default shield mode, used when there is no save yet.
+const SHIELD_MODE_DEFAULT: StringName = SHIELD_MODE_AUTO
 
 # --- Thrusters --------------------------------------------------------------
 const THRUSTER_FRAME_FPS: float = 18.0

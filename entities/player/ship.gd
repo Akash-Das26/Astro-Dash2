@@ -42,6 +42,8 @@ var shield_recharge_time: float = 0.0
 var alive: bool = true
 ## Unit vector the nose is following.
 var aim: Vector2 = Vector2.UP
+## FREE AIM (today's twin-stick) or CLASSIC (turn + thrust along the nose).
+var control_scheme: StringName = Tuning.CONTROL_SCHEME_DEFAULT
 
 ## The upgrade totals for this battle, so a weapon can read its multipliers.
 var run_stats: Dictionary = {}
@@ -110,8 +112,15 @@ func apply_run_stats(stats: Dictionary) -> void:
 	bullet_tier = int(stats.get("bullet_tier", 0))
 	fire_interval = float(stats["fire_interval"])
 	shield_recharge_time = float(stats.get("shield_recharge", 0.0))
+	apply_controls()
 	revive()
 	set_shields(int(stats["shield_charges"]))
+
+
+## Reads the schemes from the save. Called at the start of every battle, so a
+## change in Settings applies without a restart.
+func apply_controls() -> void:
+	control_scheme = SaveData.control_scheme
 
 
 ## The two equipped weapons, from SaveData. An empty or unknown id leaves that
@@ -235,6 +244,9 @@ func heal(amount: int) -> void:
 # --- Movement and input -----------------------------------------------------
 
 func _update_movement(delta: float) -> void:
+	if control_scheme == Tuning.CONTROL_SCHEME_CLASSIC:
+		_update_classic_movement(delta)
+		return
 	# get_vector normalises the result and applies the actions' own deadzones,
 	# so a diagonal is exactly as fast as a straight line and a resting stick
 	# reads as zero instead of drifting on noise.
@@ -248,6 +260,27 @@ func _update_movement(delta: float) -> void:
 	position += _velocity * delta
 	_wrap_position()
 	_thrust = lerpf(_thrust, clampf(_velocity.length() / maxf(move_speed, 1.0), 0.0, 1.0), 10.0 * delta)
+	_thruster.set_thrust(_thrust)
+
+
+## Classic flight: left/right turn the hull, thrust pushes along the nose,
+## brake bleeds speed toward zero (it never reverses). Same exp() drag, top
+## speed and wrap as free aim, and the same thruster, driven by thrust input
+## rather than by the current speed.
+func _update_classic_movement(delta: float) -> void:
+	var turn: float = Input.get_axis("turn_left", "turn_right")
+	rotation += turn * Tuning.SHIP_CLASSIC_TURN_RATE * delta
+	var forward: Vector2 = Vector2.UP.rotated(rotation)
+	var thrust_input: float = Input.get_action_strength("thrust")
+	if thrust_input > 0.01 and not Input.is_action_pressed("brake"):
+		_velocity += forward * acceleration * thrust_input * delta
+	if Input.is_action_pressed("brake"):
+		_velocity = _velocity.move_toward(Vector2.ZERO, acceleration * delta)
+	_velocity *= exp(-drag * delta)
+	_velocity = _velocity.limit_length(move_speed)
+	position += _velocity * delta
+	_wrap_position()
+	_thrust = lerpf(_thrust, clampf(thrust_input, 0.0, 1.0), 10.0 * delta)
 	_thruster.set_thrust(_thrust)
 
 
@@ -284,6 +317,11 @@ func _wrap_position() -> void:
 ## mouse. With none of them active the nose keeps its last heading, so a
 ## keyboard-only player flies and shoots forward.
 func _update_aim(delta: float) -> void:
+	# Classic has no aim stick and no mouse aim: the nose is the aim, and the
+	# next shot goes wherever the hull points.
+	if control_scheme == Tuning.CONTROL_SCHEME_CLASSIC:
+		aim = Vector2.UP.rotated(rotation)
+		return
 	if _aim_override.length() > 0.1:
 		aim = _aim_override.normalized()
 	elif Input.is_action_pressed("aim"):
