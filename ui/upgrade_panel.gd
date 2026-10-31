@@ -18,20 +18,20 @@ const CARD_ROOT: Dictionary = {
 	&"fire": PAGE + "/Body/Grid/FireCard",
 }
 const SKIN_ICON_SIZE: Vector2 = Vector2(56.0, 40.0)
-## The preview draws a hull at about four times its in-battle size. Normalising
-## against the base 0.4 keeps the small green interceptor equally big.
-const BASE_SKIN_SCALE: float = 0.4
-const PREVIEW_ZOOM: float = 1.4
-## The preview box (must match the 210x130 control in the scene) and the point
-## the hull is drawn around. The hull sits high in the box so the flame has
-## room below it, clear of the skin name underneath.
-const PREVIEW_SIZE: Vector2 = Vector2(210.0, 130.0)
-const PREVIEW_CENTER: Vector2 = Vector2(105.0, 44.0)
-## The flame is scaled to whatever room is left under the tail, and hidden when
-## that is barely a spark, so it can never reach the name label.
-const PREVIEW_FLAME_SCALE: float = 0.9
-const PREVIEW_FLAME_MIN: float = 0.12
-const PREVIEW_FLAME_MARGIN: float = 4.0
+## The preview box (must match the 210x150 control in the scene) and the column
+## the hull and flame are centred on.
+const PREVIEW_SIZE: Vector2 = Vector2(210.0, 150.0)
+const PREVIEW_CENTER_X: float = 105.0
+## The multiplier applied to the skin's own battle scale, so every skin is
+## drawn at the same size whatever the source texture is.
+const PREVIEW_HULL_ZOOM: float = 1.7
+## Battle mounts the flame at 1.1 against the hull's scale (thruster.tscn).
+## Keeping that ratio is what makes the preview match the real ship: the whole
+## ship is scaled here, never the flame on its own.
+const PREVIEW_FLAME_SCALE: float = 1.1
+## The thrust the preview shows. 0.9 is nearly full, so the flame is long.
+const PREVIEW_THRUST: float = 0.9
+const PREVIEW_MARGIN: float = 4.0
 const LASER_NAMES: Array[String] = ["BLUE", "GREEN", "YELLOW"]
 const LASER_COLORS: Array[Color] = [
 	Color(0.55, 0.78, 1.0),
@@ -320,23 +320,24 @@ func _refresh_skins() -> void:
 	_skin_hint.text = "WEARING %s   |   %s" % [Skins.title(worn), next_text]
 
 
-## The flame hangs off the hull's tail exactly as it does in battle: the nose
-## points up, so the tail is half a hull below the centre and the flame burns
-## further down. The preview box is small, so the flame is shrunk to the room
-## left under the tail, and hidden outright if that room is too little.
-func _place_preview_thruster(zoom: float, hull_height: float, alpha: float) -> void:
-	var tail: float = PREVIEW_CENTER.y + hull_height * 0.5 + Tuning.THRUSTER_TAIL_GAP
-	_preview_thruster.position = Vector2(PREVIEW_CENTER.x, tail)
-	var room: float = PREVIEW_SIZE.y - PREVIEW_FLAME_MARGIN - tail
-	# The art is ART_SIZE long and the thrust stretch multiplies that again.
-	var longest: float = Tuning.THRUSTER_ART_SIZE * Tuning.THRUSTER_FULL_SCALE
-	var fit: float = room / longest if longest > 0.0 else 0.0
-	var flame: float = minf(zoom * PREVIEW_FLAME_SCALE, fit)
-	_preview_thruster.set_base_scale(Vector2.ONE * maxf(flame, 0.0))
-	_preview_thruster.set_thrust(0.9)
-	# `set_thrust` re-shows the flame whenever there is any thrust, so the
-	# fit check has to be the last word.
-	_preview_thruster.visible = flame >= PREVIEW_FLAME_MIN
+## Hull, tail gap and flame are laid out as one block and centred in the box,
+## the same way the ship is built in battle: the flame starts at the tail and
+## burns away from the nose. The block is sized below the box so the skin name
+## underneath stays clear at every skin size.
+func _place_preview_pair(hull_height: float, alpha: float) -> void:
+	var amount: float = lerpf(
+		Tuning.THRUSTER_IDLE_SCALE, Tuning.THRUSTER_FULL_SCALE, PREVIEW_THRUST
+	)
+	var flame_scale: float = PREVIEW_FLAME_SCALE * PREVIEW_HULL_ZOOM
+	var flame_length: float = Tuning.THRUSTER_ART_SIZE * flame_scale * amount
+	var block: float = hull_height + Tuning.THRUSTER_TAIL_GAP + flame_length
+	var top: float = maxf(PREVIEW_MARGIN, (PREVIEW_SIZE.y - block) * 0.5)
+	var tail: float = top + hull_height + Tuning.THRUSTER_TAIL_GAP
+	_preview_ship.position = Vector2(PREVIEW_CENTER_X, top + hull_height * 0.5)
+	_preview_thruster.position = Vector2(PREVIEW_CENTER_X, tail)
+	# The base scale is what `set_thrust` lerps from, so it stays separate.
+	_preview_thruster.set_base_scale(Vector2.ONE * flame_scale)
+	_preview_thruster.set_thrust(PREVIEW_THRUST)
 	_preview_thruster.modulate = Color(1.0, 1.0, 1.0, alpha)
 
 
@@ -350,16 +351,15 @@ func _refresh_preview() -> void:
 	var unlocked: bool = Skins.is_unlocked(id)
 	var equipped: bool = id == Skins.selected()
 	var texture: Texture2D = Skins.texture(id)
-	var zoom: float = PREVIEW_ZOOM * (Skins.scale_of(id) / BASE_SKIN_SCALE)
+	var zoom: float = PREVIEW_HULL_ZOOM * Skins.scale_of(id)
 	var alpha: float = 1.0 if unlocked else 0.4
 	_preview_ship.texture = texture
 	_preview_ship.scale = Vector2.ONE * zoom
-	_preview_ship.position = PREVIEW_CENTER
 	_preview_ship.modulate = Color(1.0, 1.0, 1.0, alpha)
 	var height: float = 0.0
 	if texture != null:
 		height = float(texture.get_height()) * zoom
-	_place_preview_thruster(zoom, height, alpha)
+	_place_preview_pair(height, alpha)
 	_preview_name.text = Skins.title(id)
 	_preview_name.add_theme_color_override(
 		"font_color", UITheme.COLOR_TEXT if unlocked else UITheme.COLOR_MUTED
