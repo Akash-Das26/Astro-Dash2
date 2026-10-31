@@ -21,9 +21,8 @@ var _base_scale: Vector2 = Vector2.ONE
 
 func _ready() -> void:
 	_base_scale = scale
-	# The art is a horizontal bar set; a quarter turn lays it along the hull's
-	# heading (the ships point up at rotation 0).
-	rotation = Tuning.THRUSTER_ROTATION
+	# No rotation: the art is a stack of horizontal bars, which is already
+	# perpendicular to the heading of a ship whose nose points up.
 	var frames := SpriteFrames.new()
 	frames.remove_animation(&"default")
 	frames.add_animation(&"burn")
@@ -39,16 +38,14 @@ func _ready() -> void:
 	_apply()
 
 
-## Each frame stacks one more pair of rows at the top of the 32x32 texture. The
-## frame is drawn behind the hull starting at the node origin, so the offset
-## re-centres the visible rows across the hull's centre line.
+## Every frame is top-aligned in the 32x32 texture and stacks its rows down from
+## there, so the offset pins that top edge to the node origin: the flame hangs
+## below the anchor, is centred across the hull, and a longer frame grows away
+## from the hull instead of jumping. Re-applied per frame so a frame drawn from
+## a different top row would still land correctly.
 func _sync_offset() -> void:
-	var index: int = clampi(frame, 0, Tuning.THRUSTER_BAR_ROWS.size() - 1)
-	var rows: float = float(Tuning.THRUSTER_BAR_ROWS[index])
 	var half: float = Tuning.THRUSTER_ART_SIZE * 0.5
-	# After the quarter turn: texture x -> local +y (away from the nose), and
-	# texture y -> local -x, so the offset centres the used rows on x = 0.
-	offset = Vector2(half, half - (rows - 1.0) * 0.5)
+	offset = Vector2(0.0, half)
 
 
 ## Per-fighter flame size. Kept separate from `scale` so the thrust lerp can

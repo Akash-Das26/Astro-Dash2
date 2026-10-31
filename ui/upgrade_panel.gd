@@ -24,7 +24,7 @@ const PREVIEW_SIZE: Vector2 = Vector2(210.0, 150.0)
 const PREVIEW_CENTER_X: float = 105.0
 ## The multiplier applied to the skin's own battle scale, so every skin is
 ## drawn at the same size whatever the source texture is.
-const PREVIEW_HULL_ZOOM: float = 1.7
+const PREVIEW_HULL_ZOOM: float = 2.0
 ## Battle mounts the flame at 1.1 against the hull's scale (thruster.tscn).
 ## Keeping that ratio is what makes the preview match the real ship: the whole
 ## ship is scaled here, never the flame on its own.
@@ -329,7 +329,9 @@ func _place_preview_pair(hull_height: float, alpha: float) -> void:
 		Tuning.THRUSTER_IDLE_SCALE, Tuning.THRUSTER_FULL_SCALE, PREVIEW_THRUST
 	)
 	var flame_scale: float = PREVIEW_FLAME_SCALE * PREVIEW_HULL_ZOOM
-	var flame_length: float = Tuning.THRUSTER_ART_SIZE * flame_scale * amount
+	# The bars run across the heading, so the flame is as wide as the 32 px art
+	# and only as long as the tallest frame's stack of rows.
+	var flame_length: float = Tuning.THRUSTER_BAR_ROWS.back() * flame_scale * amount
 	var block: float = hull_height + Tuning.THRUSTER_TAIL_GAP + flame_length
 	var top: float = maxf(PREVIEW_MARGIN, (PREVIEW_SIZE.y - block) * 0.5)
 	var tail: float = top + hull_height + Tuning.THRUSTER_TAIL_GAP

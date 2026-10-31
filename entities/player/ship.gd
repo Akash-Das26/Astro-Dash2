@@ -468,10 +468,18 @@ func _draw_thruster_debug() -> void:
 	draw_arc(Vector2.ZERO, Tuning.SHIP_RADIUS, 0.0, TAU, 32, tint, 1.5, true)
 	draw_line(Vector2.ZERO, _thruster.position, tint, 1.5)
 	draw_circle(_thruster.position, 3.0, tint)
+	# The flame's footprint: the row stack hangs behind the tail, and the bars
+	# are as wide as the art. Both follow the exhaust's current scale.
+	var faint := Color(tint.r, tint.g, tint.b, 0.5)
+	var flame_scale: float = _thruster.scale.y
+	var reach: float = Tuning.THRUSTER_BAR_ROWS.back() * flame_scale
+	var half_width: float = Tuning.THRUSTER_ART_SIZE * 0.5 * flame_scale
+	draw_line(_thruster.position, _thruster.position + Vector2(0.0, reach), faint, 1.0)
 	draw_line(
-		_thruster.position,
-		_thruster.position + Vector2(0.0, Tuning.THRUSTER_ART_SIZE),
-		Color(tint.r, tint.g, tint.b, 0.5), 1.0
+		_thruster.position + Vector2(-half_width, 0.0),
+		_thruster.position + Vector2(half_width, 0.0),
+		faint,
+		1.0
 	)
 
 
