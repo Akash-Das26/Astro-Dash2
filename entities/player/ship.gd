@@ -12,6 +12,9 @@ extends Node2D
 ## what a shot spawns; the ship only knows when each gun is ready.
 signal weapon_fired(slot: int, origin: Vector2, direction: Vector2)
 signal hurt(amount: int)
+## A shot was eaten by a shield charge, and the last one just went.
+signal shield_spent
+signal shield_broken
 signal hp_changed(hp: int, max_hp: int)
 signal shields_changed(charges: int)
 signal died
@@ -205,6 +208,9 @@ func take_damage(amount: int) -> void:
 		_since_damage = 0.0
 		_start_invulnerability(Tuning.SHIP_SHIELD_GRACE)
 		_play_hit_feedback(Color(0.5, 0.95, 1.0))
+		shield_spent.emit()
+		if shields == 0:
+			shield_broken.emit()
 		return
 	_since_damage = 0.0
 	hp = maxi(hp - amount, 0)

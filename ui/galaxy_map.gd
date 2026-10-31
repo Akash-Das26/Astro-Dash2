@@ -503,6 +503,7 @@ func _ensure_visible(body_id: StringName) -> void:
 func _open_card(body_id: StringName) -> void:
 	if not _galaxy.attackable(SaveData.campaign_conquered).has(body_id):
 		return
+	AudioManager.play_sfx("map_click")
 	_card_id = body_id
 	var data: Dictionary = _galaxy.body(body_id)
 	var body_trait: Dictionary = _galaxy.trait_row(body_id)

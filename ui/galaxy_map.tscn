@@ -268,8 +268,9 @@ theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
 layout_mode = 2
+theme_type_variation = "DisplayLabel"
 theme_override_colors/font_color = Color(0.85, 1, 0.9, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "CONQUER VELOS?"
 horizontal_alignment = 1
 
@@ -371,8 +372,9 @@ theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="ResultCard/Panel/Margin/Box"]
 layout_mode = 2
+theme_type_variation = "DisplayLabel"
 theme_override_colors/font_color = Color(0.55, 1, 0.7, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = "CAMPAIGN OVER"
 horizontal_alignment = 1
 

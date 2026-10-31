@@ -29,6 +29,15 @@ const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tsc
 const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
 const MENU_SCENE: String = "res://ui/main_menu.tscn"
 
+## One sound per weapon, so the five guns never sound the same.
+const WEAPON_SOUNDS: Dictionary = {
+	&"pulse": "shoot_pulse",
+	&"cannon": "shoot_cannon",
+	&"scatter": "shoot_scatter",
+	&"rail": "shoot_rail",
+	&"missile": "missile_launch",
+}
+
 const HIT_SHAKE: float = 0.5
 const KILL_SHAKE: float = 0.1
 const DEATH_SHAKE: float = 0.9
@@ -73,6 +82,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ship.weapon_fired.connect(_on_ship_weapon_fired)
 	ship.hurt.connect(_on_ship_hurt)
+	ship.shield_spent.connect(_on_ship_shield_spent)
+	ship.shield_broken.connect(_on_ship_shield_broken)
 	ship.hp_changed.connect(hud.set_hp)
 	ship.shields_changed.connect(hud.set_shields)
 	ship.died.connect(_on_ship_died)
@@ -189,7 +200,7 @@ func _end_battle(won: bool) -> void:
 	hud.set_score(score)
 	hud.set_energy(energy)
 	if won:
-		AudioManager.play_sfx("wave")
+		AudioManager.play_sfx("victory")
 		_shake(VICTORY_SHAKE)
 		hud.show_victory({
 			"name": String(result.get("name", battle.title)) if _campaign else battle.title,
@@ -203,7 +214,7 @@ func _end_battle(won: bool) -> void:
 			"perfect": perfect,
 		})
 	else:
-		AudioManager.play_sfx("game_over")
+		AudioManager.play_sfx("defeat")
 		_shake(DEATH_SHAKE)
 		hud.show_game_over({
 			"score": SaveData.campaign_score if _campaign else score,
@@ -313,7 +324,7 @@ func _on_ship_weapon_fired(slot: int, origin: Vector2, direction: Vector2) -> vo
 	var data: Dictionary = Weapons.entry(id)
 	if data.is_empty():
 		return
-	AudioManager.play_sfx("shoot")
+	AudioManager.play_sfx(String(WEAPON_SOUNDS.get(id, "shoot_pulse")))
 	var stats: Dictionary = ship.run_stats
 	var damage: int = Weapons.damage(id, stats)
 	var count: int = maxi(1, int(data["count"]))
@@ -379,6 +390,15 @@ func _on_ship_hurt(_amount: int) -> void:
 	_break_combo()
 
 
+func _on_ship_shield_spent() -> void:
+	AudioManager.play_sfx("shield_hit")
+	_shake(0.25)
+
+
+func _on_ship_shield_broken() -> void:
+	AudioManager.play_sfx("shield_down")
+
+
 func _on_ship_died() -> void:
 	_end_battle(false)
 
@@ -386,6 +406,7 @@ func _on_ship_died() -> void:
 # --- Enemy signals ----------------------------------------------------------
 
 func _on_enemy_spawned(enemy: EnemyBase) -> void:
+	AudioManager.play_sfx("warp_in")
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	enemy.damaged.connect(_on_enemy_damaged.bind(enemy))
 	enemy.shot_requested.connect(_on_enemy_shot_requested)
@@ -398,6 +419,7 @@ func _on_enemy_damaged(at: Vector2, enemy: EnemyBase) -> void:
 
 func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("enemy_death")
+	AudioManager.play_sfx("explosion_small")
 	kills += 1
 	_register_combo_kill()
 	var gained: int = int(round(float(points) * _combo_multiplier()))
@@ -472,7 +494,7 @@ func _on_boss_damaged(at: Vector2) -> void:
 
 func _on_boss_died(points: int) -> void:
 	var at: Vector2 = _boss.global_position if _boss != null else Tuning.VIEW_SIZE * 0.5
-	AudioManager.play_sfx("enemy_death")
+	AudioManager.play_sfx("explosion_large")
 	kills += 1
 	score += points
 	hud.set_score(score)
@@ -512,6 +534,7 @@ func _add_rock(rock: Asteroid) -> void:
 
 func _on_rock_shattered(at: Vector2, was_large: bool) -> void:
 	_spawn_explosion(at, Color(0.8, 0.82, 0.9), 8, 0.7, 0.3)
+	AudioManager.play_sfx("explosion_small")
 	if not was_large:
 		return
 	var debris: Array[Asteroid] = hazards.make_debris(
@@ -532,6 +555,8 @@ func _combo_multiplier() -> float:
 func _register_combo_kill() -> void:
 	_combo_chain += 1
 	_combo_time_left = Tuning.COMBO_WINDOW
+	if _combo_chain % 5 == 0:
+		AudioManager.play_sfx("combo_up")
 	hud.set_combo(_combo_chain, _combo_multiplier())
 
 
@@ -577,7 +602,7 @@ func _on_shield_collected() -> void:
 	if not _running:
 		return
 	ship.add_shield(1)
-	AudioManager.play_sfx("pickup")
+	AudioManager.play_sfx("shield_pickup")
 	_spawn_float_text(ship.global_position, "+1 SHIELD", Color(0.55, 0.95, 1.0))
 
 
@@ -585,7 +610,7 @@ func _on_energy_collected(value: int) -> void:
 	energy += value
 	SaveData.add_energy(value)
 	hud.set_energy(energy)
-	AudioManager.play_sfx("pickup")
+	AudioManager.play_sfx("energy_pickup")
 
 
 # --- Effects ----------------------------------------------------------------

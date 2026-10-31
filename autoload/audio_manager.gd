@@ -13,7 +13,32 @@ const SFX_POOL_SIZE: int = 8
 const MIN_REPEAT_MS: int = 30
 
 ## Name -> file in res://assests/audio/. Rename entries to match your files.
+## The first block is the current event table; the second keeps the older names
+## working so an older drop-off still plays.
 const SOUND_FILES: Dictionary = {
+	# Weapons
+	"shoot_pulse": "shoot_pulse.ogg",
+	"shoot_cannon": "shoot_cannon.ogg",
+	"shoot_scatter": "shoot_scatter.ogg",
+	"shoot_rail": "shoot_rail.ogg",
+	"missile_launch": "missile_launch.ogg",
+	# Combat
+	"explosion_small": "explosion_small.ogg",
+	"explosion_large": "explosion_large.ogg",
+	"energy_pickup": "energy_pickup.ogg",
+	"shield_pickup": "shield_pickup.ogg",
+	"shield_hit": "shield_hit.ogg",
+	"shield_down": "shield_down.ogg",
+	"combo_up": "combo_up.ogg",
+	"warp_in": "warp_in.ogg",
+	# Progression and screens
+	"upgrade_buy": "upgrade_buy.ogg",
+	"upgrade_denied": "upgrade_denied.ogg",
+	"victory": "victory.ogg",
+	"defeat": "defeat.ogg",
+	"map_click": "map_click.ogg",
+	"ui_click": "ui_click.ogg",
+	# Kept from the first sound table
 	"shoot": "shoot.ogg",
 	"enemy_death": "enemy_death.ogg",
 	"player_hit": "player_hit.ogg",
@@ -22,13 +47,16 @@ const SOUND_FILES: Dictionary = {
 	"boss_spawn": "boss_spawn.ogg",
 	"wave": "wave.ogg",
 	"game_over": "game_over.ogg",
-	"ui_click": "ui_click.ogg",
+	# Music loops
 	"music": "music.ogg",
 }
 ## Random pitch spread per sound, as a fraction of 1.0 (+/-5% = 0.05).
 const PITCH_JITTER: Dictionary = {
 	"shoot": 0.05,
+	"shoot_pulse": 0.05,
+	"shoot_scatter": 0.06,
 	"enemy_death": 0.05,
+	"explosion_small": 0.08,
 }
 
 ## Emitted whenever a real volume or mute change happens, so every settings

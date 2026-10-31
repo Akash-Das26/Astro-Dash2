@@ -69,14 +69,15 @@ color = Color(0.01, 0.015, 0.04, 0.5)
 [node name="Title" type="Label" parent="."]
 layout_mode = 0
 offset_left = 62.0
-offset_top = 48.0
+offset_top = 46.0
 offset_right = 880.0
-offset_bottom = 132.0
+offset_bottom = 124.0
 mouse_filter = 2
+theme_type_variation = "DisplayLabel"
 theme_override_colors/font_color = Color(0.86, 0.13, 0.16, 1)
 theme_override_colors/font_outline_color = Color(1, 0.85, 0.2, 1)
 theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 52
+theme_override_font_sizes/font_size = 40
 text = "ASTRO DASH 2"
 
 [node name="Subtitle" type="Label" parent="."]
@@ -193,7 +194,8 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="SettingsCard/Panel/Margin/Box/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
+theme_type_variation = "DisplayLabel"
+theme_override_font_sizes/font_size = 20
 text = "SETTINGS"
 vertical_alignment = 1
 
@@ -258,8 +260,9 @@ theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="ConfirmCard/Panel/Margin/Box"]
 layout_mode = 2
+theme_type_variation = "DisplayLabel"
 theme_override_colors/font_color = Color(1, 0.8, 0.45, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "ABANDON THIS RUN?"
 horizontal_alignment = 1
 

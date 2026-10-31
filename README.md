@@ -4,10 +4,12 @@ A landscape twin-stick space shooter built with **Godot 4.7** (GL Compatibility)
 for desktop, the web and Android. Fly free in a 960x600 arena, shoot fighters and
 asteroids, chain kills for combo score, and take a galaxy one world at a time.
 
-This build is **stage 7C: UI screens, progression and polish**. The front end, the
-ship upgrade screen with hull skins, the victory and game-over cards and the
-settings card are in, all on one pixel theme. The campaign is still the seeded
-galaxy from 7B; the arena is still the 7A battle.
+This build is **stage 9: fixes, layout, wrap, input and polish**. The ship wraps
+around the arena, the drifting rocks are much larger, the galaxy map zooms, every
+key and gamepad button except the menu key can be rebound, and the UI uses
+Pixelify Sans for body copy with Press Start 2P for titles when those fonts are
+present. The campaign is still the seeded galaxy from 7B; the arena is the
+7A/8 battle.
 
 ## Screenshots
 
@@ -127,10 +129,12 @@ to the menu.
 
 ### Settings
 
-Music and SFX sliders, mute, reduce motion, touch auto-fire and
+Music and SFX sliders, mute, reduce motion, touch auto-fire,
 **HIGH-CONTRAST BULLETS** (thicker outline, brighter halo; saved in
-`user://save.cfg`), plus a control scheme note. Audio files are still postponed:
-`AudioManager` warns once per missing file and the game runs silently.
+`user://save.cfg`) and **REMAP CONTROLS**, which opens the binding card. The note
+under the sliders always shows the keys that are bound right now. Audio files
+are still postponed: `AudioManager` warns once per missing file and the game runs
+silently.
 
 ## What is not in this build yet
 
@@ -140,6 +144,12 @@ screenshots. The audio files are the only missing content: dropping them into
 without a code change.
 
 ## Controls
+
+Every action except the menu key can be rebound in **Settings > REMAP CONTROLS**:
+one keyboard/mouse column, one gamepad column, a per-action reset and RESET TO
+DEFAULTS. A key already in use is taken from the other action (the card says
+which). Bindings are stored under `[controls]` in `user://save.cfg` and applied
+at startup; Esc and Back stay fixed so a remap can never lock the player out.
 
 ### Menu
 
@@ -288,7 +298,7 @@ depends on the exact values.
 | Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE` |
 | Fighters | `ENEMY_TYPES`: per kind `hp`, `speed`, `points`, `radius`, `orbit_radius` (0 = dive), `fire_interval`, `bullet_speed`, `aim_error`, `effect_color` |
 | Fighter behaviour | `ENEMY_APPROACH_SLACK`, `ENEMY_ORBIT_SPEED_RATIO`, `ENEMY_WARP_TIME`, `WARP_SCALE`, `WARP_FRAME_FPS`, `ENEMY_CONTACT_DAMAGE`, `ENEMY_BULLET_*` |
-| Asteroids | `ASTEROID_LARGE_HP`, `ASTEROID_LARGE/TINY_SCALE`, `ASTEROID_*_RADIUS`, `ASTEROID_CONTACT_DAMAGE`, `ASTEROID_SPEED_MIN/MAX`, `ASTEROID_SPIN_MIN/MAX`, `ASTEROID_SPLIT_MIN/MAX`, `ASTEROID_MAX_LIVE`, `ASTEROID_SPAWN_INTERVAL`, `ASTEROID_SPAWN_OFFSET` |
+| Asteroids | `ASTEROID_LARGE_HP`, `ASTEROID_LARGE/TINY_SCALE` (large art is ~2.6x the old size), `ASTEROID_*_RADIUS`, `ASTEROID_SHIP_CLEARANCE`, `ASTEROID_CONTACT_DAMAGE`, `ASTEROID_SPEED_MIN/MAX`, `ASTEROID_SPIN_MIN/MAX`, `ASTEROID_SPLIT_MIN/MAX`, `ASTEROID_MAX_LIVE`, `ASTEROID_SPAWN_INTERVAL`, `ASTEROID_SPAWN_OFFSET` |
 | Waves | `WAVE_GAP`, `SPAWN_STAGGER`, `ENEMY_THINK_INTERVAL` |
 | Battle presets (debug / fallback only) | `BATTLES` (`debug`, `tier1`, `tier2`, `tier3`), `DEFAULT_BATTLE`, `DEBUG_BATTLE` |
 | Combo | `COMBO_WINDOW`, `COMBO_SCORE_STEP` (multiplier is 1 + chain/step, no cap), `COMBO_FLOAT_LIFE`, `COMBO_FLOAT_RISE`, `COMBO_FLOAT_COLOR` |
@@ -298,8 +308,10 @@ depends on the exact values.
 | Perfect victory | `PERFECT_BONUS_SCORE` (500), `PERFECT_BONUS_ENERGY` (25) |
 | Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `skins.gd` |
 | Legacy single-laser values | `SHIP_FIRE_INTERVAL`, `SHIP_BULLET_*`, `SHIP_MUZZLE_OFFSET`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` (kept for the fallback bullet, superseded by `WEAPONS`) |
-| UI scale | `UITheme.SIZE_*`, `UITheme.COLOR_*` and the button/card styleboxes |
+| UI scale and fonts | `UITheme.SIZE_*` (including `SIZE_DISPLAY`), `UITheme.COLOR_*`, the font-name hints in `ui/ui_theme.gd` and the button/card styleboxes |
 | Galaxy layout | `GALAXY_MAP_SIZE`, `GALAXY_BODY_COUNT_MIN/MAX`, `GALAXY_MIN_SPACING`, `GALAXY_EDGE_MARGIN`, `GALAXY_LINKS_PER_BODY`, `GALAXY_MAX_LINK_LENGTH`, `GALAXY_HOME_ANCHOR`, `GALAXY_TAP_RADIUS`, `GALAXY_PAN_SPEED` |
+| Map zoom | `GALAXY_ZOOM_MIN` (0.55), `GALAXY_ZOOM_MAX` (1.7), `GALAXY_ZOOM_STEP`, `GALAXY_ZOOM_SMOOTH` |
+| Controls | `CONTROL_ACTIONS`, `CONTROL_FIXED` (pause only), `CONTROL_LABELS` |
 | Body art and tint | `GALAXY_BODY_ART`, `GALAXY_STATION_COLORS`, `GALAXY_TINTS`, `GALAXY_MARKER_TINTS`, `MAP_*` |
 | Map rules | `GALAXY_CITADEL_COUNT`, `GALAXY_CITADELS_FOR_GATE` |
 | Distance bands | `GALAXY_BANDS`: per band `max_distance`, `label`, `enemies`, `waves`, `mix`, `density`, `hp_scale`, `interval_scale`, `background` |
@@ -457,11 +469,12 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   asteroids, thrusters, warpgates, bars, planets) and
   `spacepixels_ships_stroked` (the stroked hulls).
 - **Kenney** (<https://kenney.nl>) space backgrounds (`assests/background-*.png`).
-- **Pixel font**: TODO — drop an OFL-licensed pixel font into
-  `assests/fonts/` and `UITheme` picks the first `.ttf/.otf/.woff` it finds.
-  Until then every screen falls back to Godot's default font with no error.
-- **Audio**: TODO — the project ships no sound files yet;
-  `assests/audio/README.md` lists the names `AudioManager` expects.
+- **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
+  numbers), both OFL, in `assests/fonts/`. `UITheme` finds them by filename and
+  falls back to Godot's default font, silently, when either is missing.
+- **Audio**: TODO — the project still ships no sound files;
+  `assests/audio/README.md` lists every `.ogg` filename `AudioManager` expects,
+  the event each one is wired to, and the older names kept for compatibility.
 - Everything else (HUD, map markers and links, tooltips, cards, stick, particles,
   starfield, icon) is drawn in code or in `icon.svg` and was written for this
   project.

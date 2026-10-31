@@ -55,7 +55,8 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="Panel/Margin/Box/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
+theme_type_variation = "DisplayLabel"
+theme_override_font_sizes/font_size = 20
 text = "CONTROLS"
 vertical_alignment = 1
 
