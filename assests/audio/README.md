@@ -7,12 +7,15 @@ play, with a small pitch spread, and `SOUND_VOLUME_DB` trims the loud ones so
 they sit under the music. A missing file is skipped; events with no file at all
 are listed in **one** `push_warning` on startup, never one warning per path.
 
-Two packs are used:
+Two packs are used, and **only the files the game actually plays are kept**:
+the unreferenced remainder of both packs was deleted, together with its
+`.import` files and the folders that became empty. Every remaining pack file is
+named by `SOUND_MAP`, and `assests/audio/music/` was not touched.
 
 | Folder | Contents |
 | --- | --- |
-| `The Essential Retro Video Game Sound Effects Collection [512 sounds]/…By Juhani Junkala/` | weapons, explosions, impacts, pickups, menus, portals |
-| `EssentialGameAudiopackFixed/` | `RandomSfx/gem.ogg`, `click.ogg`, `lvlup.ogg`, `win.ogg` and unused full scores |
+| `The Essential Retro Video Game Sound Effects Collection [512 sounds]/…By Juhani Junkala/` | the 69 weapon, explosion, impact, pickup, menu and portal files `SOUND_MAP` names, plus the pack's `INFO.txt` |
+| `EssentialGameAudiopackFixed/Sound Effects/RandomSfx/` | `gem.ogg`, `click.ogg`, `lvlup.ogg`, `win.ogg` |
 
 The `.zip` archives mentioned earlier were **not present** in `assests/audio/`;
 everything was already extracted. There is therefore no `assests/audio/sfx/`
@@ -116,4 +119,6 @@ compatibility but no current script calls them.
   from playing four reports at once.
 - **Credits TODO:** the Juhani Junkala 512-sound pack and Ove Melaa's Essential
   pack each need an author/license/source line in the main README credits
-  section before shipping.
+  section before shipping. Only the used files from each pack are still in the
+  repository; the deleted remainder does not need attribution but the kept
+  files do.

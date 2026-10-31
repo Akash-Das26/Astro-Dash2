@@ -536,7 +536,9 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
     Juhani Junkala — TODO: license, source URL.
   - Essential Game Audio pack by Ove Melaa — TODO: license, source URL.
   `assests/audio/README.md` lists every event, the files behind it and the
-  per-sound volume trims.
+  per-sound volume trims. **Only the files the game actually plays are kept**
+  from each pack (the unused remainder was deleted); the kept files are the ones
+  that need the attribution above.
 - Everything else (HUD, map markers and links, tooltips, cards, stick, particles,
   starfield, icon) is drawn in code or in `icon.svg` and was written for this
   project.

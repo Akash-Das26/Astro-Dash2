@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dogruk3sb14yq"
+path="res://.godot/imported/click.ogg-f02b80bd2e056d3ee670b085f76e5f19.oggvorbisstr"
+
+[deps]
+
+source_file="res://assests/audio/EssentialGameAudiopackFixed/Sound Effects/RandomSfx/click.ogg"
+dest_files=["res://.godot/imported/click.ogg-f02b80bd2e056d3ee670b085f76e5f19.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
