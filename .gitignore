@@ -9,3 +9,7 @@ export/
 # Editor leftovers and reference footage
 *.tmp
 *.mp4
+D:\Project\Game\Astro-Dash2\reference
+
+# Headless test output (run logs and captured PNGs)
+test_output/
