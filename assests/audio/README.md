@@ -114,7 +114,7 @@ compatibility but no current script calls them.
 ## Notes
 
 - SFX go to the `SFX` bus, music to the `Music` bus (see
-  `default_bus_layout.tres`), so the two sliders in Settings stay independent.
+  `resources/default_bus_layout.tres`), so the two sliders in Settings stay independent.
 - A sound repeated within 30 ms is dropped, which is what stops a scatter volley
   from playing four reports at once.
 - **Credits TODO:** the Juhani Junkala 512-sound pack and Ove Melaa's Essential

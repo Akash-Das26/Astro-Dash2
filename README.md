@@ -247,7 +247,7 @@ asks where an input came from.
 
 ```
 project.godot            960x600 canvas, landscape, nearest filtering, input actions
-default_bus_layout.tres  Master / Music / SFX buses (declared in project settings)
+resources/default_bus_layout.tres  Master / Music / SFX buses (declared in project settings)
 ui/menu/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
 ui/menu/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
 ui/map/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries

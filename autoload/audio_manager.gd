@@ -729,12 +729,12 @@ func _build_players() -> void:
 		_sfx_players.append(player)
 
 
-## Falls back to Master if default_bus_layout.tres was not picked up.
+## Falls back to Master if resources/default_bus_layout.tres was not picked up.
 func _resolve_bus(bus: String) -> String:
 	return bus if AudioServer.get_bus_index(bus) >= 0 else MASTER_BUS
 
 
-## The buses normally come from res://default_bus_layout.tres (pinned in
+## The buses normally come from res://resources/default_bus_layout.tres (pinned in
 ## project.godot). If that layout was not loaded -- a stripped export, a moved
 ## file, a project saved before the layout existed -- every player would fall
 ## back to Master and the sliders would write to buses that are not there, so
