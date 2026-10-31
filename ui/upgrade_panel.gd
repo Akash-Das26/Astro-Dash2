@@ -17,7 +17,7 @@ const CARD_ROOT: Dictionary = {
 	&"shield": PAGE + "/Body/Grid/ShieldCard",
 	&"fire": PAGE + "/Body/Grid/FireCard",
 }
-const SKIN_ICON_SIZE: Vector2 = Vector2(58.0, 48.0)
+const SKIN_ICON_SIZE: Vector2 = Vector2(56.0, 40.0)
 ## The preview draws a hull at about four times its in-battle size. Normalising
 ## against the base 0.4 keeps the small green interceptor equally big.
 const BASE_SKIN_SCALE: float = 0.4
@@ -30,7 +30,7 @@ const LASER_COLORS: Array[Color] = [
 	Color(1.0, 0.88, 0.35),
 ]
 ## Each weapon row is a fixed height so its three text lines never overlap.
-const WEAPON_CARD_HEIGHT: float = 64.0
+const WEAPON_CARD_HEIGHT: float = 60.0
 ## The preview column is narrower on the hull tab, where the 2x2 grid needs
 ## the room, and wider on the weapon tab, which has no grid.
 const STATS_WIDTH_HULL: float = 210.0
@@ -435,21 +435,21 @@ func _on_equip_weapon_pressed(slot: int) -> void:
 	_show_feedback("CANNOT EQUIP THAT PAIR", UITheme.COLOR_WARN)
 
 
-## One short line under the panel, faded out after two seconds, so a refused
-## purchase says why instead of doing nothing.
+## One short line under the tabs, faded out after two seconds, so a refused
+## purchase says why instead of doing nothing. The row is always present and
+## always 14 px tall: showing it never re-flows the tabs, which is what used to
+## push the buttons out of the panel.
 func _show_feedback(message: String, tint: Color) -> void:
 	if message.is_empty():
 		return
 	_feedback.text = message
 	_feedback.add_theme_color_override("font_color", tint)
-	_feedback.visible = true
 	_feedback.modulate.a = 1.0
 	if _feedback_tween != null and _feedback_tween.is_valid():
 		_feedback_tween.kill()
 	_feedback_tween = create_tween()
 	_feedback_tween.tween_interval(FEEDBACK_SECONDS)
 	_feedback_tween.tween_property(_feedback, "modulate:a", 0.0, 0.35)
-	_feedback_tween.tween_callback(_feedback.hide)
 
 
 ## HULL & SHIP swaps the 2x2 upgrade grid and the skin row for the weapon rack.
@@ -472,7 +472,7 @@ func _apply_tab_visibility() -> void:
 	_skins.visible = hull
 	_weapon_box.visible = not hull
 	_equip_button.visible = hull
-	# The whole preview box goes, not only its sprites: an empty 118 px control
+	# The whole preview box goes, not only its sprites: an empty preview control
 	# was what opened the big gap above the weapon icon.
 	_preview_box.visible = hull
 	_preview_ship.visible = hull

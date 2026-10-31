@@ -45,10 +45,10 @@ theme_override_constants/margin_bottom = 10
 
 [node name="Box" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="Panel/Margin/Box"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_constants/separation = 14
 
@@ -78,13 +78,13 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="HullTab" type="Button" parent="Panel/Margin/Box/Tabs"]
-custom_minimum_size = Vector2(150, 30)
+custom_minimum_size = Vector2(150, 28)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "HULL & SHIP"
 
 [node name="WeaponTab" type="Button" parent="Panel/Margin/Box/Tabs"]
-custom_minimum_size = Vector2(150, 30)
+custom_minimum_size = Vector2(150, 28)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "WEAPONS"
@@ -93,11 +93,12 @@ text = "WEAPONS"
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
 
 [node name="Page" type="VBoxContainer" parent="Panel/Margin/Box/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="Body" type="HBoxContainer" parent="Panel/Margin/Box/Scroll/Page"]
 layout_mode = 2
@@ -136,7 +137,7 @@ position = Vector2(105, 54)
 
 [node name="PreviewName" type="Label" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 text = "CRIMSON"
 horizontal_alignment = 1
 
@@ -163,7 +164,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="EquipButton" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "EQUIP"
@@ -197,7 +198,7 @@ theme_override_constants/v_separation = 12
 columns = 2
 
 [node name="HullCard" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Grid"]
-custom_minimum_size = Vector2(276, 118)
+custom_minimum_size = Vector2(276, 104)
 layout_mode = 2
 tooltip_text = "+20 MAX HP every 3 levels."
 
@@ -237,7 +238,7 @@ text = "COST 20"
 horizontal_alignment = 1
 
 [node name="SpeedCard" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Grid"]
-custom_minimum_size = Vector2(276, 118)
+custom_minimum_size = Vector2(276, 104)
 layout_mode = 2
 tooltip_text = "+12 px/s per level."
 
@@ -277,7 +278,7 @@ text = "COST 15"
 horizontal_alignment = 1
 
 [node name="ShieldCard" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Grid"]
-custom_minimum_size = Vector2(276, 118)
+custom_minimum_size = Vector2(276, 104)
 layout_mode = 2
 tooltip_text = "+1 shield charge every 3 levels, up to 3."
 
@@ -317,7 +318,7 @@ text = "COST 15"
 horizontal_alignment = 1
 
 [node name="FireCard" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Grid"]
-custom_minimum_size = Vector2(276, 118)
+custom_minimum_size = Vector2(276, 104)
 layout_mode = 2
 tooltip_text = "Multiplies both weapons' damage and shortens their cooldowns."
 
@@ -401,7 +402,6 @@ text = "WEARING CRIMSON   |   NEXT SKIN AT 5 PLANETS"
 autowrap_mode = 2
 
 [node name="Feedback" type="Label" parent="Panel/Margin/Box"]
-visible = false
 custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.4, 1)
