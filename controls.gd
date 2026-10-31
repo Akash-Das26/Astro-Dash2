@@ -168,8 +168,9 @@ static func help_text() -> String:
 			continue
 		parts.append("%s %s" % [label(action), binding_text(action, false)])
 	var text: String = "%s   |   %s" % [scheme_label(), "   ".join(parts)]
-	return text + "\nPAUSE %s (FIXED)   |   ESC / B BACK   |   C CONTROLS" % [
+	return text + "\nPAUSE %s (FIXED)   |   ESC / B BACK   |   %s CONTROLS" % [
 		binding_text(&"pause", false),
+		binding_text(&"controls", false),
 	]
 
 

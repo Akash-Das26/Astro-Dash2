@@ -87,15 +87,15 @@ const CONTROL_SCHEME_DEFAULT: StringName = CONTROL_SCHEME_FREE
 const CONTROL_ACTIONS: Array[StringName] = [
 	&"move_up", &"move_down", &"move_left", &"move_right",
 	&"turn_left", &"turn_right", &"thrust", &"brake",
-	&"shoot", &"shoot_alt", &"pause",
+	&"shoot", &"shoot_alt", &"shield", &"controls", &"pause",
 ]
 const CONTROL_ACTIONS_FREE: Array[StringName] = [
 	&"move_up", &"move_down", &"move_left", &"move_right",
-	&"shoot", &"shoot_alt", &"pause",
+	&"shoot", &"shoot_alt", &"shield", &"controls", &"pause",
 ]
 const CONTROL_ACTIONS_CLASSIC: Array[StringName] = [
 	&"turn_left", &"turn_right", &"thrust", &"brake",
-	&"shoot", &"shoot_alt", &"pause",
+	&"shoot", &"shoot_alt", &"shield", &"controls", &"pause",
 ]
 ## `pause` is listed but fixed: Esc is the menu key, so no remap may take it away.
 const CONTROL_FIXED: Array[StringName] = [&"pause"]
@@ -110,6 +110,8 @@ const CONTROL_LABELS: Dictionary = {
 	&"brake": "BRAKE",
 	&"shoot": "PRIMARY FIRE",
 	&"shoot_alt": "SECONDARY FIRE",
+	&"shield": "SHIELD",
+	&"controls": "CONTROLS CARD",
 	&"pause": "PAUSE / MENU",
 }
 ## Classic flight: how fast the hull turns, in radians per second.
@@ -363,6 +365,9 @@ const GALAXY_ZOOM_MIN: float = 0.55
 const GALAXY_ZOOM_MAX: float = 1.7
 const GALAXY_ZOOM_STEP: float = 0.12
 const GALAXY_ZOOM_SMOOTH: float = 12.0
+## Seconds inside which a second tap on the same body counts as a double-tap
+## and opens the CONQUER card. A single tap only selects the body.
+const MAP_DOUBLE_CLICK_TIME: float = 0.35
 
 ## Sprite and draw scale per body type. Planets are 64px art, stations 130x180
 ## and the warpgate 200x200; only `modulate` changes between two bodies.

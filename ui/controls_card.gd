@@ -17,6 +17,7 @@ const RESET_WIDTH: float = 40.0
 const AXIS_CAPTURE_THRESHOLD: float = 0.6
 
 @onready var _close_button: Button = $Panel/Margin/Box/Header/CloseButton
+@onready var _remap_button: Button = $Panel/Margin/Box/Header/RemapButton
 @onready var _rows: VBoxContainer = $Panel/Margin/Box/Scroll/Rows
 @onready var _reset_all: Button = $Panel/Margin/Box/Footer/ResetAll
 @onready var _status: Label = $Panel/Margin/Box/Footer/Status
@@ -27,11 +28,14 @@ var _reset_buttons: Dictionary = {}
 ## Action being rebound, and which column, while a capture is running.
 var _capture_action: StringName = &""
 var _capture_gamepad: bool = false
+## Read-only hides the editing controls; REMAP switches it back.
+var _read_only: bool = false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_close_button.pressed.connect(close)
+	_remap_button.pressed.connect(_on_remap_pressed)
 	_reset_all.pressed.connect(_on_reset_all)
 	_build_rows()
 	_refresh()
@@ -49,6 +53,23 @@ func open() -> void:
 	var first: Button = _key_buttons.get(Controls.actions()[0]) as Button
 	if first != null:
 		first.grab_focus()
+
+
+## Read-only mode (the C overlay): bindings are shown but cannot be captured
+## until REMAP is pressed.
+func configure_read_only(enabled: bool) -> void:
+	_read_only = enabled
+	_remap_button.visible = enabled
+	_refresh()
+
+
+func is_capturing() -> bool:
+	return _capture_action != &""
+
+
+func _on_remap_pressed() -> void:
+	configure_read_only(false)
+	_status.text = "SELECT A BINDING TO CHANGE IT"
 
 
 func close() -> void:
@@ -114,15 +135,16 @@ func _refresh() -> void:
 		var pad_button: Button = _pad_buttons[action]
 		var reset_button: Button = _reset_buttons[action]
 		var fixed: bool = Controls.is_fixed(action)
-		reset_button.disabled = fixed
+		_reset_all.disabled = _read_only
+		reset_button.disabled = fixed or _read_only
 		if fixed:
 			key_button.text = "ESC (FIXED)"
 			pad_button.text = "START (FIXED)"
 			key_button.disabled = true
 			pad_button.disabled = true
 			continue
-		key_button.disabled = false
-		pad_button.disabled = false
+		key_button.disabled = _read_only
+		pad_button.disabled = _read_only
 		if _capture_action == action and not _capture_gamepad:
 			key_button.text = "PRESS A KEY..."
 		else:
@@ -134,7 +156,7 @@ func _refresh() -> void:
 
 
 func _on_cell_pressed(action: StringName, gamepad: bool) -> void:
-	if Controls.is_fixed(action):
+	if _read_only or Controls.is_fixed(action):
 		return
 	_capture_action = action
 	_capture_gamepad = gamepad
@@ -146,7 +168,7 @@ func _on_cell_pressed(action: StringName, gamepad: bool) -> void:
 
 
 func _on_reset_pressed(action: StringName) -> void:
-	if Controls.is_fixed(action):
+	if _read_only or Controls.is_fixed(action):
 		return
 	Controls.reset_action(action)
 	_refresh()
@@ -155,6 +177,8 @@ func _on_reset_pressed(action: StringName) -> void:
 
 
 func _on_reset_all() -> void:
+	if _read_only:
+		return
 	Controls.reset_all()
 	_refresh()
 	_status.text = "ALL BINDINGS RESET TO DEFAULT"

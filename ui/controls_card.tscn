@@ -60,6 +60,13 @@ theme_override_font_sizes/font_size = 20
 text = "CONTROLS"
 vertical_alignment = 1
 
+[node name="RemapButton" type="Button" parent="Panel/Margin/Box/Header"]
+visible = false
+custom_minimum_size = Vector2(110, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "REMAP"
+
 [node name="CloseButton" type="Button" parent="Panel/Margin/Box/Header"]
 custom_minimum_size = Vector2(48, 44)
 layout_mode = 2
