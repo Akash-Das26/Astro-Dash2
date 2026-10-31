@@ -458,10 +458,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and key.physical_keycode == KEY_F9 \
 			and OS.is_debug_build():
-			# Debug harness: boot straight into the one-wave battle.
+			# Debug harness: boot straight into the one-wave battle. Mark the
+			# input handled *before* the scene change: the map leaves the tree
+			# during the change, and get_viewport() is null right after it.
+			get_viewport().set_input_as_handled()
 			Campaign.pending_id = &""
 			get_tree().change_scene_to_file(BATTLE_SCENE)
-			get_viewport().set_input_as_handled()
 			return
 	if _result_card.visible:
 		return
