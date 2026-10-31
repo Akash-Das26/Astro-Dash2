@@ -163,15 +163,32 @@ func set_hp(hp: int, max_hp: int) -> void:
 		_hp_bar.texture_progress = BAR_RED
 
 
+var _shield_charges: int = 0
+var _shield_seconds: float = 0.0
+
+
 ## The bar is the visual, the label is the exact count, and both stay readable
 ## at zero so the player knows a drop is worth grabbing.
 func set_shields(charges: int) -> void:
-	var capped: int = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
+	_shield_charges = clampi(charges, 0, Tuning.MAX_SHIELD_CHARGES)
 	_shield_bar.max_value = Tuning.MAX_SHIELD_CHARGES
-	_shield_bar.value = capped
-	_shield_bar.visible = capped > 0
-	if capped > 0:
-		_shield_label.text = "SHIELD x%d" % capped
+	_shield_bar.value = _shield_charges
+	_shield_bar.visible = _shield_charges > 0
+	_render_shield_label()
+
+
+## MANUAL bubble: how long the raised shield has left, next to the charge count.
+func set_shield_active(seconds: float) -> void:
+	_shield_seconds = maxf(seconds, 0.0)
+	_render_shield_label()
+
+
+func _render_shield_label() -> void:
+	if _shield_seconds > 0.05:
+		_shield_label.text = "SHIELD x%d   %.1fs" % [_shield_charges, _shield_seconds]
+		_shield_label.add_theme_color_override("font_color", Color(0.75, 1.0, 1.0))
+	elif _shield_charges > 0:
+		_shield_label.text = "SHIELD x%d" % _shield_charges
 		_shield_label.add_theme_color_override("font_color", Color(0.55, 0.95, 1.0))
 	else:
 		_shield_label.text = "NO SHIELD"

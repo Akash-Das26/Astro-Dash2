@@ -19,6 +19,7 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _auto_fire_check: CheckButton = $AutoFireCheck
 @onready var _contrast_check: CheckButton = $ContrastCheck
 @onready var _scheme_button: Button = $SchemeButton
+@onready var _shield_mode_button: Button = $ShieldModeButton
 @onready var _now_playing: Label = $NowPlaying
 @onready var _prev_button: Button = $TrackRow/PrevButton
 @onready var _next_button: Button = $TrackRow/NextButton
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_auto_fire_check.toggled.connect(_on_auto_fire_toggled)
 	_contrast_check.toggled.connect(_on_contrast_toggled)
 	_scheme_button.pressed.connect(_on_scheme_pressed)
+	_shield_mode_button.pressed.connect(_on_shield_mode_pressed)
 	_controls_button.pressed.connect(controls_requested.emit)
 	_prev_button.pressed.connect(_on_prev_track)
 	_next_button.pressed.connect(_on_next_track)
@@ -70,7 +72,18 @@ func _sync_from_settings() -> void:
 
 func _refresh_controls_note() -> void:
 	_scheme_button.text = "SCHEME: %s" % Controls.scheme_label()
+	_shield_mode_button.text = "SHIELD: %s" % String(SaveData.shield_mode).to_upper()
 	_controls_note.text = Controls.help_text()
+
+
+func _on_shield_mode_pressed() -> void:
+	SaveData.shield_mode = (
+		Tuning.SHIELD_MODE_AUTO if SaveData.shield_mode == Tuning.SHIELD_MODE_MANUAL \
+			else Tuning.SHIELD_MODE_MANUAL
+	)
+	SaveData.save_data()
+	AudioManager.play_sfx("ui_click")
+	_refresh_controls_note()
 
 
 ## Switching to CLASSIC also turns the manual bubble on, since that scheme has

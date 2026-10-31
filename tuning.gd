@@ -120,6 +120,11 @@ const SHIELD_MODE_AUTO: StringName = &"auto"
 const SHIELD_MODE_MANUAL: StringName = &"manual"
 ## Default shield mode, used when there is no save yet.
 const SHIELD_MODE_DEFAULT: StringName = SHIELD_MODE_AUTO
+## MANUAL: one charge raises the bubble for this long, with a short cooldown
+## before another charge can be spent. It flashes during its last second.
+const SHIELD_ACTIVE_SECONDS: float = 4.0
+const SHIELD_COOLDOWN_SECONDS: float = 1.0
+const SHIELD_LAST_SECOND: float = 1.0
 
 # --- Thrusters --------------------------------------------------------------
 const THRUSTER_FRAME_FPS: float = 18.0

@@ -84,6 +84,8 @@ func _ready() -> void:
 	ship.hurt.connect(_on_ship_hurt)
 	ship.shield_spent.connect(_on_ship_shield_spent)
 	ship.shield_broken.connect(_on_ship_shield_broken)
+	ship.shield_raised.connect(_on_ship_shield_raised)
+	ship.shield_timer_changed.connect(hud.set_shield_active)
 	ship.hp_changed.connect(hud.set_hp)
 	ship.shields_changed.connect(hud.set_shields)
 	ship.died.connect(_on_ship_died)
@@ -149,6 +151,7 @@ func _start_fight(fight: Battle) -> void:
 	_running = true
 	if battle.background != null:
 		backdrop.texture = battle.background
+	hud.set_shield_active(0.0)
 	ship.position = Tuning.SHIP_SPAWN_POSITION
 	ship.apply_run_stats(Upgrades.stats_for(SaveData.upgrade_levels))
 	if _campaign:
@@ -397,6 +400,10 @@ func _on_ship_shield_spent() -> void:
 
 func _on_ship_shield_broken() -> void:
 	AudioManager.play_sfx("shield_down")
+
+
+func _on_ship_shield_raised() -> void:
+	AudioManager.play_sfx("shield_up")
 
 
 func _on_ship_died() -> void:

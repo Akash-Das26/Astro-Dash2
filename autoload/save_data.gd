@@ -22,6 +22,7 @@ const KEY_AUTO_FIRE: String = "auto_fire"
 const KEY_HIGH_CONTRAST: String = "high_contrast_bullets"
 const KEY_MUSIC_ORDER: String = "music_order"
 const KEY_CONTROL_SCHEME: String = "control_scheme"
+const KEY_SHIELD_MODE: String = "shield_mode"
 const KEY_CAMPAIGN_ACTIVE: String = "active"
 const KEY_CAMPAIGN_SEED: String = "seed"
 const KEY_CAMPAIGN_SCORE: String = "score"
@@ -66,6 +67,8 @@ var keyboard_bindings: Dictionary = {}
 var gamepad_bindings: Dictionary = {}
 ## FREE AIM (twin-stick) or CLASSIC (turn/thrust); see Tuning.CONTROL_SCHEME_*.
 var control_scheme: StringName = Tuning.CONTROL_SCHEME_DEFAULT
+## AUTO or MANUAL shield (see Tuning.SHIELD_MODE_*).
+var shield_mode: StringName = Tuning.SHIELD_MODE_DEFAULT
 ## Playlist rotation, `shuffle` or `in_order` (see Tuning.MUSIC_ORDER_*).
 var music_order: StringName = Tuning.MUSIC_ORDER_SHUFFLE
 var music_volume: float = 0.8
@@ -230,6 +233,11 @@ func load_data() -> void:
 	)
 	if control_scheme != Tuning.CONTROL_SCHEME_CLASSIC:
 		control_scheme = Tuning.CONTROL_SCHEME_FREE
+	shield_mode = StringName(
+		String(config.get_value(SECTION_GAMEPLAY, KEY_SHIELD_MODE, String(Tuning.SHIELD_MODE_DEFAULT)))
+	)
+	if shield_mode != Tuning.SHIELD_MODE_MANUAL:
+		shield_mode = Tuning.SHIELD_MODE_AUTO
 	sfx_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8)), 0.0, 1.0)
 	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
 	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
@@ -305,6 +313,7 @@ func save_data() -> void:
 	config.set_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, auto_fire)
 	config.set_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, high_contrast_bullets)
 	config.set_value(SECTION_GAMEPLAY, KEY_CONTROL_SCHEME, String(control_scheme))
+	config.set_value(SECTION_GAMEPLAY, KEY_SHIELD_MODE, String(shield_mode))
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, campaign_active)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, campaign_seed)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, campaign_score)

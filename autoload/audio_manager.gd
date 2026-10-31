@@ -42,6 +42,7 @@ const SOUND_FILES: Dictionary = {
 	"energy_pickup": "energy_pickup.ogg",
 	"shield_pickup": "shield_pickup.ogg",
 	"shield_hit": "shield_hit.ogg",
+	"shield_up": "shield_up.ogg",
 	"shield_down": "shield_down.ogg",
 	"combo_up": "combo_up.ogg",
 	"warp_in": "warp_in.ogg",

@@ -15,6 +15,10 @@ signal hurt(amount: int)
 ## A shot was eaten by a shield charge, and the last one just went.
 signal shield_spent
 signal shield_broken
+## MANUAL mode: a charge raised the timed bubble.
+signal shield_raised
+## Seconds left on the manual bubble; 0 when it is down.
+signal shield_timer_changed(remaining: float)
 signal hp_changed(hp: int, max_hp: int)
 signal shields_changed(charges: int)
 signal died
@@ -44,6 +48,8 @@ var alive: bool = true
 var aim: Vector2 = Vector2.UP
 ## FREE AIM (today's twin-stick) or CLASSIC (turn + thrust along the nose).
 var control_scheme: StringName = Tuning.CONTROL_SCHEME_DEFAULT
+## AUTO spends a charge per hit; MANUAL spends one on a timed bubble.
+var shield_mode: StringName = Tuning.SHIELD_MODE_DEFAULT
 
 ## The upgrade totals for this battle, so a weapon can read its multipliers.
 var run_stats: Dictionary = {}
@@ -59,6 +65,9 @@ var _invulnerable_left: float = 0.0
 var _shield_flash: float = 0.0
 var _recharge_left: float = 0.0
 var _since_damage: float = 0.0
+## Manual bubble countdown and its post-raise cooldown.
+var _shield_active_left: float = 0.0
+var _shield_cooldown_left: float = 0.0
 var _blink_timer: float = 0.0
 var _base_scale: Vector2 = Vector2.ONE
 ## Touch sets this while a finger holds the right zone; zero means "no override".
@@ -121,6 +130,7 @@ func apply_run_stats(stats: Dictionary) -> void:
 ## change in Settings applies without a restart.
 func apply_controls() -> void:
 	control_scheme = SaveData.control_scheme
+	shield_mode = SaveData.shield_mode
 
 
 ## The two equipped weapons, from SaveData. An empty or unknown id leaves that
@@ -174,6 +184,9 @@ func revive() -> void:
 	_shield_flash = 0.0
 	_recharge_left = shield_recharge_time
 	_since_damage = 0.0
+	_shield_active_left = 0.0
+	_shield_cooldown_left = 0.0
+	shield_timer_changed.emit(0.0)
 	_sprite.modulate.a = 1.0
 	_flash.modulate.a = 0.0
 	hp_changed.emit(hp, max_hp)
@@ -209,6 +222,14 @@ func is_invulnerable() -> bool:
 ## A shield charge eats the whole hit; otherwise the hull takes it.
 func take_damage(amount: int) -> void:
 	if not alive or is_invulnerable():
+		return
+	# MANUAL: the timed bubble eats everything while it is up, and no charge is
+	# spent by the hit itself.
+	if shield_mode == Tuning.SHIELD_MODE_MANUAL and _shield_active_left > 0.0:
+		_shield_flash = 1.0
+		_start_invulnerability(Tuning.SHIP_SHIELD_GRACE)
+		_play_hit_feedback(Color(0.5, 0.95, 1.0))
+		shield_spent.emit()
 		return
 	if shields > 0:
 		set_shields(shields - 1)
@@ -401,12 +422,20 @@ func _update_invulnerability(delta: float) -> void:
 ## flashes when a charge is spent or picked up, and the recharge lights the
 ## ring a little brighter while a new charge is building.
 func _draw() -> void:
-	if shields <= 0:
+	var manual_active: bool = _shield_active_left > 0.0
+	if shields <= 0 and not manual_active:
 		return
 	var radius: float = Tuning.SHIELD_BUBBLE_RADIUS
 	var charging: bool = shield_recharge_time > 0.0 and shields < Tuning.MAX_SHIELD_CHARGES
 	var glow: float = 0.10 + 0.24 * _shield_flash + (0.04 if charging else 0.0)
 	var width: float = 2.0 + 1.5 * _shield_flash
+	if manual_active:
+		# Last second: the bubble pulses and its rim fades, so the drop is
+		# readable without watching the HUD.
+		glow += 0.16
+		radius += 1.5 * sin(_shield_active_left * 9.0)
+		if _shield_active_left < Tuning.SHIELD_LAST_SECOND:
+			width = 2.0 + 2.0 * absf(sin(_shield_active_left * 12.0))
 	draw_circle(Vector2.ZERO, radius, Color(0.4, 0.9, 1.0, glow))
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(0.5, 0.95, 1.0, 0.8), width, true)
 	for index: int in shields:
@@ -419,6 +448,25 @@ func _draw() -> void:
 func _update_shields(delta: float) -> void:
 	if _shield_flash > 0.0:
 		_shield_flash = maxf(_shield_flash - delta * 2.5, 0.0)
+		queue_redraw()
+	if _shield_cooldown_left > 0.0:
+		_shield_cooldown_left = maxf(_shield_cooldown_left - delta, 0.0)
+	if _shield_active_left > 0.0:
+		_shield_active_left = maxf(_shield_active_left - delta, 0.0)
+		shield_timer_changed.emit(_shield_active_left)
+		queue_redraw()
+		if _shield_active_left <= 0.0:
+			_shield_flash = 0.6
+			queue_redraw()
+	if shield_mode == Tuning.SHIELD_MODE_MANUAL and alive \
+			and _shield_active_left <= 0.0 and _shield_cooldown_left <= 0.0 \
+			and shields > 0 and Input.is_action_just_pressed("shield"):
+		set_shields(shields - 1)
+		_shield_active_left = Tuning.SHIELD_ACTIVE_SECONDS
+		_shield_cooldown_left = Tuning.SHIELD_COOLDOWN_SECONDS
+		_shield_flash = 0.8
+		shield_raised.emit()
+		shield_timer_changed.emit(_shield_active_left)
 		queue_redraw()
 	if shield_recharge_time <= 0.0:
 		return

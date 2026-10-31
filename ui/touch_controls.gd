@@ -24,6 +24,7 @@ var aim_origin: Node2D
 
 @onready var _pause_button: Button = $PauseButton
 @onready var _alt_fire_button: Button = $AltFireButton
+@onready var _shield_button: Button = $ShieldButton
 
 var _touch_seen: bool = false
 var _move_index: int = -1
@@ -42,6 +43,11 @@ func _ready() -> void:
 	_alt_fire_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
 	_alt_fire_button.button_down.connect(_on_alt_fire_down)
 	_alt_fire_button.button_up.connect(_on_alt_fire_up)
+	# MANUAL shield: hold does nothing, a press spends a charge and raises the
+	# timed bubble, exactly like Z / gamepad X.
+	_shield_button.custom_minimum_size = Vector2(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET)
+	_shield_button.button_down.connect(_on_shield_down)
+	_shield_button.button_up.connect(_on_shield_up)
 	GameState.state_changed.connect(_on_state_changed)
 	_touch_seen = DisplayServer.is_touchscreen_available()
 	_refresh_visibility()
@@ -169,6 +175,14 @@ func _on_alt_fire_up() -> void:
 	Input.action_release("shoot_alt")
 
 
+func _on_shield_down() -> void:
+	Input.action_press("shield")
+
+
+func _on_shield_up() -> void:
+	Input.action_release("shield")
+
+
 func _on_state_changed(_new_state: int) -> void:
 	_release_all()
 	_refresh_visibility()
@@ -185,6 +199,7 @@ func _release_all() -> void:
 	aim_changed.emit(Vector2.ZERO)
 	Input.action_release("shoot")
 	Input.action_release("shoot_alt")
+	Input.action_release("shield")
 	Input.action_release("turn_left")
 	Input.action_release("turn_right")
 	Input.action_release("thrust")
@@ -203,6 +218,7 @@ func _refresh_visibility() -> void:
 	var playing: bool = _touch_seen and GameState.is_playing()
 	_pause_button.visible = playing
 	_alt_fire_button.visible = playing
+	_shield_button.visible = playing
 
 
 func _draw() -> void:
