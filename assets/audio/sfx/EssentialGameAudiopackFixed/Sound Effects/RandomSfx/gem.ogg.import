@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bjkk16b5vurq6"
+path="res://.godot/imported/gem.ogg-000d43ca9349e198a9ed09824882957a.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/sfx/EssentialGameAudiopackFixed/Sound Effects/RandomSfx/gem.ogg"
+dest_files=["res://.godot/imported/gem.ogg-000d43ca9349e198a9ed09824882957a.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

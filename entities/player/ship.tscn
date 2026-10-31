@@ -1,14 +1,14 @@
-[gd_scene format=3 uid="uid://ouxsv4v68ul7"]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/player/ship.gd" id="1_ship"]
-[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png" id="2_ship"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png" id="2_ship"]
 [ext_resource type="PackedScene" path="res://entities/fx/thruster.tscn" id="3_thruster"]
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_hurtbox"]
-radius = 14.0
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_playerflash"]
 blend_mode = 1
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hurtbox"]
+radius = 14.0
 
 [node name="Ship" type="Node2D" unique_id=1168014697]
 script = ExtResource("1_ship")

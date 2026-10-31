@@ -6,7 +6,7 @@ extends Node2D
 
 signal collected(value: int)
 
-const TEXTURE: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png")
+const TEXTURE: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png")
 
 var value: int = 1
 

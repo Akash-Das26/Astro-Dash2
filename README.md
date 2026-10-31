@@ -143,19 +143,19 @@ persisted), mute (a Master-bus mute), reduce motion, touch auto-fire,
 under the sliders always shows the keys that are bound right now.
 
 Music is a playlist of every `.ogg` / `.mp3` / `.wav` in
-`assests/audio/music/`. Settings shows **NOW PLAYING**, **PREV**, **NEXT** and a
+`assets/audio/music/`. Settings shows **NOW PLAYING**, **PREV**, **NEXT** and a
 **SHUFFLE / IN ORDER** toggle. Shuffle uses a bag, so a full pass plays every
 track once and the track that just ended never starts the next pass; tracks
 cross-fade over 1.5 s. Releasing the SFX slider plays a short sample at the new
 level, and the saved volumes are applied before the first sound. Sound effects
-come from the two packs in `assests/audio/` through `AudioManager.SOUND_MAP`;
+come from the two packs in `assets/audio/sfx/` through `AudioManager.SOUND_MAP`;
 events with no file are reported in a single startup warning.
 
 ## What is not in this build yet
 
 A how-to-play card and real screenshots. Sound effects are now wired from the
-two packs already in `assests/audio/` (see `assests/audio/README.md`); music is
-a playlist from `assests/audio/music/`. The only open audio item is filling in
+two packs already in `assets/audio/sfx/` (see `assets/audio/README.md`); music is
+a playlist from `assets/audio/music/`. The only open audio item is filling in
 the per-pack credit TODO lines.
 
 ## Controls
@@ -548,12 +548,12 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 - **SpacePixels** sprite packs: `assests/spacepixels-0.2.0` (ships, lasers,
   asteroids, thrusters, warpgates, bars, planets) and
   `spacepixels_ships_stroked` (the stroked hulls).
-- **Kenney** (<https://kenney.nl>) space backgrounds (`assests/background-*.png`).
+- **Kenney** (<https://kenney.nl>) space backgrounds (`assets/backgrounds/background-*.png`).
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
-  numbers), both OFL, in `assests/fonts/`. `UITheme` finds them by filename and
+  numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
-- **Music**: the playlist in `assests/audio/music/`. **These tracks require
-  attribution**: `assests/audio/music/CREDITS.md` lists the title, author,
+- **Music**: the playlist in `assets/audio/music/`. **These tracks require
+  attribution**: `assets/audio/music/CREDITS.md` lists the title, author,
   license and source URL per track (CC BY 3.0, CC BY-SA 3.0 and CC0, with the
   license links), and the CC BY-SA track keeps its share-alike terms. The citadel
   theme is mapped in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it
@@ -563,7 +563,7 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   - The Essential Retro Video Game Sound Effects Collection (512 sounds) by
     Juhani Junkala — TODO: license, source URL.
   - Essential Game Audio pack by Ove Melaa — TODO: license, source URL.
-  `assests/audio/README.md` lists every event, the files behind it and the
+  `assets/audio/README.md` lists every event, the files behind it and the
   per-sound volume trims. **Only the files the game actually plays are kept**
   from each pack (the unused remainder was deleted); the kept files are the ones
   that need the attribution above.

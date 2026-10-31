@@ -13,44 +13,44 @@ const PLANETS_PER_UNLOCK: int = 5
 const LIST: Array[Dictionary] = [
 	{
 		"id": &"red", "title": "CRIMSON", "unlock": 0, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
 	},
 	{
 		"id": &"blue", "title": "COBALT", "unlock": 5, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue.png"),
 	},
 	{
 		"id": &"green", "title": "JADE", "unlock": 10, "scale": 0.55,
 		# The pack has no full-size green hull; this is its green interceptor.
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
 	},
 	{
 		"id": &"yellow", "title": "AMBER", "unlock": 15, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
 	},
 	{
 		"id": &"stroke_red", "title": "STROKED RED", "unlock": 20, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png"),
 	},
 	{
 		"id": &"stroke_blue", "title": "STROKED BLUE", "unlock": 25, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_blue_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_blue_stroked.png"),
 	},
 	{
 		"id": &"stroke_green", "title": "STROKED GREEN", "unlock": 30, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_green_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_green_stroked.png"),
 	},
 	{
 		"id": &"stroke_orange", "title": "STROKED ORANGE", "unlock": 35, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_orange_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_orange_stroked.png"),
 	},
 	{
 		"id": &"stroke_purple", "title": "STROKED PURPLE", "unlock": 40, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_purple_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_purple_stroked.png"),
 	},
 	{
 		"id": &"stroke_yellow", "title": "STROKED YELLOW", "unlock": 45, "scale": 0.4,
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_yellow_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_yellow_stroked.png"),
 	},
 ]
 

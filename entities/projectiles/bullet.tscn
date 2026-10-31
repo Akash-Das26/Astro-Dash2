@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://ceg6v11jr4qrl"]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/projectiles/bullet.gd" id="1_2kyv7"]
-[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png" id="1_78c8h"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png" id="1_78c8h"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bullet"]
 radius = 6.0

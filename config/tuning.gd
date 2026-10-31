@@ -342,7 +342,7 @@ const BATTLES: Dictionary = {
 		"enemies_per_wave": 10,
 		"mix": {&"scout": 6, &"gunner": 3, &"heavy": 1},
 		"asteroid_density": 0.6,
-		"background": preload("res://assests/background-black.png"),
+		"background": preload("res://assets/backgrounds/background-black.png"),
 	},
 	&"tier1": {
 		"title": "DRIFT BELT",
@@ -350,7 +350,7 @@ const BATTLES: Dictionary = {
 		"enemies_per_wave": 8,
 		"mix": {&"scout": 5, &"gunner": 3},
 		"asteroid_density": 0.7,
-		"background": preload("res://assests/background-black.png"),
+		"background": preload("res://assets/backgrounds/background-black.png"),
 	},
 	&"tier2": {
 		"title": "CINDER RUN",
@@ -358,7 +358,7 @@ const BATTLES: Dictionary = {
 		"enemies_per_wave": 10,
 		"mix": {&"scout": 4, &"gunner": 4, &"heavy": 2},
 		"asteroid_density": 1.0,
-		"background": preload("res://assests/background-black.png"),
+		"background": preload("res://assets/backgrounds/background-black.png"),
 	},
 	&"tier3": {
 		"title": "THE NEXUS",
@@ -366,7 +366,7 @@ const BATTLES: Dictionary = {
 		"enemies_per_wave": 12,
 		"mix": {&"scout": 4, &"gunner": 5, &"heavy": 3},
 		"asteroid_density": 1.4,
-		"background": preload("res://assests/background-black.png"),
+		"background": preload("res://assets/backgrounds/background-black.png"),
 	},
 }
 ## The fallback battle when no galaxy body was selected.
@@ -485,63 +485,63 @@ const MAP_DOUBLE_CLICK_TIME: float = 0.35
 const GALAXY_BODY_ART: Dictionary = {
 	&"minor": [
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png"),
 			"scale": 0.74,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_asteroid.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_asteroid.png"),
 			"scale": 0.74,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
 			"scale": 1.7,
 		},
 	],
 	&"rocky": [
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet5.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet5.png"),
 			"scale": 1.35,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet6.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet6.png"),
 			"scale": 1.35,
 		},
 	],
 	&"ocean": [
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet4.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet4.png"),
 			"scale": 1.35,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet3.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet3.png"),
 			"scale": 1.35,
 		},
 	],
 	&"gas": [
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet1.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet1.png"),
 			"scale": 1.35,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet2.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/planets/planet2.png"),
 			"scale": 1.35,
 		},
 	],
 	&"citadel": [
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_blue.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_blue.png"),
 			"scale": 0.44,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_green.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_green.png"),
 			"scale": 0.44,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_red.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_red.png"),
 			"scale": 0.44,
 		},
 		{
-			"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_yellow.png"),
+			"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_yellow.png"),
 			"scale": 0.44,
 		},
 	],
@@ -584,28 +584,28 @@ const GALAXY_BANDS: Array[Dictionary] = [
 		"enemies": 6, "waves": 1,
 		"mix": {&"scout": 5, &"gunner": 1},
 		"density": 0.55, "hp_scale": 1.0, "interval_scale": 1.1,
-		"background": preload("res://assests/background-black.png"),
+		"background": preload("res://assets/backgrounds/background-black.png"),
 	},
 	{
 		"max_distance": 5, "label": "BLUE VEIL",
 		"enemies": 9, "waves": 2,
 		"mix": {&"scout": 4, &"gunner": 3, &"heavy": 1},
 		"density": 0.85, "hp_scale": 1.15, "interval_scale": 1.0,
-		"background": preload("res://assests/background-blue.png"),
+		"background": preload("res://assets/backgrounds/background-blue.png"),
 	},
 	{
 		"max_distance": 8, "label": "PURPLE DEEP",
 		"enemies": 12, "waves": 2,
 		"mix": {&"scout": 3, &"gunner": 4, &"heavy": 2},
 		"density": 1.1, "hp_scale": 1.3, "interval_scale": 0.9,
-		"background": preload("res://assests/background-purple.png"),
+		"background": preload("res://assets/backgrounds/background-purple.png"),
 	},
 	{
 		"max_distance": 99, "label": "RED EXPANSE",
 		"enemies": 14, "waves": 3,
 		"mix": {&"scout": 3, &"gunner": 5, &"heavy": 3},
 		"density": 1.4, "hp_scale": 1.5, "interval_scale": 0.8,
-		"background": preload("res://assests/background-red.png"),
+		"background": preload("res://assets/backgrounds/background-red.png"),
 	},
 ]
 
@@ -664,7 +664,7 @@ const WEAPON_ORDER: Array[StringName] = [&"pulse", &"cannon", &"scatter", &"rail
 const WEAPONS: Dictionary = {
 	&"pulse": {
 		"title": "PULSE LASER",
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_blue.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_blue.png"),
 		"color": Color(0.55, 0.78, 1.0),
 		"damage": 3.0, "interval": 0.14, "speed": 780.0, "count": 1,
 		"spread": 0.0, "pierce": 0, "life": 1.3, "scale": 0.36,
@@ -674,7 +674,7 @@ const WEAPONS: Dictionary = {
 	},
 	&"cannon": {
 		"title": "HEAVY CANNON",
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_small_blue.png"),
 		"color": Color(0.85, 0.92, 1.0),
 		"damage": 9.0, "interval": 0.8, "speed": 620.0, "count": 1,
 		"spread": 0.0, "pierce": 0, "life": 1.2, "scale": 0.62,
@@ -684,7 +684,7 @@ const WEAPONS: Dictionary = {
 	},
 	&"scatter": {
 		"title": "SCATTER SHOT",
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_green.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_green.png"),
 		"color": Color(0.65, 1.0, 0.6),
 		"damage": 2.0, "interval": 0.6, "speed": 640.0, "count": 4,
 		"spread": 0.2, "pierce": 0, "life": 0.5, "scale": 0.26,
@@ -694,7 +694,7 @@ const WEAPONS: Dictionary = {
 	},
 	&"rail": {
 		"title": "RAIL LASER",
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png"),
 		"color": Color(1.0, 0.9, 0.4),
 		"damage": 12.0, "interval": 1.4, "speed": 1500.0, "count": 1,
 		"spread": 0.0, "pierce": 4, "life": 0.9, "scale": 0.44,
@@ -704,7 +704,7 @@ const WEAPONS: Dictionary = {
 	},
 	&"missile": {
 		"title": "HOMING MISSILE",
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_red.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_red.png"),
 		"color": Color(1.0, 0.62, 0.3),
 		"damage": 7.0, "interval": 1.1, "speed": 320.0, "count": 1,
 		"spread": 0.0, "pierce": 0, "life": 2.4, "scale": 0.34,

@@ -6,21 +6,21 @@ extends Node2D
 ## with simple sine drift so the front end costs nothing.
 
 const SHIP_TEXTURES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
 ]
 const ROCK_TEXTURES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_asteroid.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey_tiny.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_asteroid.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey_tiny.png"),
 ]
 const WARP_FRAMES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
 ]
 const THRUSTER_SCENE: PackedScene = preload("res://entities/fx/thruster.tscn")
 const WARP_FPS: float = 9.0

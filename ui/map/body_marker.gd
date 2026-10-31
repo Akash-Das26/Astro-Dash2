@@ -8,9 +8,9 @@ extends Node2D
 ## what is attackable and pushes that in through set_state().
 
 const WARP_FRAMES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
 ]
 const WARP_SCALES: Dictionary = {&"home": 0.52, &"gate": 0.44}
 const WARP_FPS: float = 9.0

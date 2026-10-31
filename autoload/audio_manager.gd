@@ -1,18 +1,18 @@
 extends Node
 ## Global audio service. SFX are looked up by logical name in SOUND_MAP, which
-## points at the real files inside the two packs under res://assests/audio/.
+## points at the real files inside the two packs under res://assets/audio/sfx/.
 ## Several files may back one event; one is picked at random. Anything unmapped
 ## only produces one summary warning, so a build without audio still runs.
 ##
 ## Music is a playlist, not a single track: every .ogg, .mp3 and .wav in
-## res://assests/audio/music/ becomes a track, sorted by file name. The folder is
+## res://assets/audio/music/ becomes a track, sorted by file name. The folder is
 ## rescanned once at startup. A track that is exported in more than one format
 ## is only played once (ogg beats mp3 beats wav). The old single
-## res://assests/audio/music.ogg still works as a one-track playlist.
+## res://assets/audio/music.ogg still works as a one-track playlist.
 
-const AUDIO_DIR: String = "res://assests/audio/"
-const MUSIC_DIR: String = "res://assests/audio/music/"
-const LEGACY_MUSIC: String = "res://assests/audio/music.ogg"
+const AUDIO_DIR: String = "res://assets/audio/sfx/"
+const MUSIC_DIR: String = "res://assets/audio/music/"
+const LEGACY_MUSIC: String = "res://assets/audio/music.ogg"
 const MUSIC_EXTENSIONS: Array[String] = ["ogg", "mp3", "wav"]
 ## When the same base name exists in several formats, the earlier one wins.
 const MUSIC_FORMAT_PRIORITY: Array[String] = ["ogg", "mp3", "wav"]
@@ -31,7 +31,7 @@ const MIN_REPEAT_MS: int = 30
 ## code. Each logical event maps to a list of real files; one is picked at
 ## random per play, with a little pitch spread. All paths are under AUDIO_DIR.
 ##
-## Two packs are in res://assests/audio/: the Juhani Junkala 512-sound set
+## Two packs are in res://assets/audio/sfx/: the Juhani Junkala 512-sound set
 ## (weapons, explosions, UI, pickups) and Ove Melaa's Essential pack (gem,
 ## click, lvlup, win). No .zip archives were present; everything was already
 ## extracted, so there is no sfx/ copy and the originals stay where they are.

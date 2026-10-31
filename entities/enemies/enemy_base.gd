@@ -18,23 +18,23 @@ enum State { WARP_IN, APPROACH, ORBIT }
 ## the same 40px ship the portrait build used.
 const SPRITES: Dictionary = {
 	&"scout": {
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue_small.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_blue_small.png"),
 		"scale": 0.62,
 	},
 	&"gunner": {
-		"texture": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red_small_2.png"),
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red_small_2.png"),
 		"scale": 0.68,
 	},
 	&"heavy": {
-		"texture": preload("res://assests/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png"),
+		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png"),
 		"scale": 0.6,
 	},
 }
 
 const WARP_FRAMES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_1.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_2.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/warpgate_3.png"),
 ]
 const TURN_LERP: float = 7.0
 const STEER_LERP: float = 3.5

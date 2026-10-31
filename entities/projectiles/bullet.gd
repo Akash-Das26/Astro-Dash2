@@ -11,9 +11,9 @@ extends Node2D
 ## (blue, green, yellow), which is what the PULSE LASER wants.
 
 const LASERS: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_blue.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_green.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_blue.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_green.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_laser_yellow.png"),
 ]
 
 ## A splash weapon landed: the battle spreads the damage around `at`.

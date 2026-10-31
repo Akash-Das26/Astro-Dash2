@@ -10,10 +10,10 @@ extends Area2D
 signal shattered(at: Vector2, was_large: bool)
 signal damaged(at: Vector2)
 
-const LARGE_TEXTURE: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png")
+const LARGE_TEXTURE: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png")
 const TINY_TEXTURES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey_tiny.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_tiny.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey_tiny.png"),
 ]
 
 @export var large: bool = true

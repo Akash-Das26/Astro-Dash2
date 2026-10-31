@@ -8,11 +8,11 @@ extends AnimatedSprite2D
 ## brightens and animates faster, and disappears below the idle threshold.
 
 const FRAMES: Array[Texture2D] = [
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/thruster-1.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/thruster-2.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/thruster-3.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/thruster-4.png"),
-	preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/thruster-5.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/thruster-1.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/thruster-2.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/thruster-3.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/thruster-4.png"),
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/thruster-5.png"),
 ]
 
 var _thrust: float = 0.0

@@ -18,11 +18,11 @@ signal end_retry_requested
 signal end_quit_requested
 signal menu_requested
 
-const BAR_GREY: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png")
-const BAR_GREEN: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png")
-const BAR_YELLOW: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_yellow.png")
-const BAR_RED: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_red.png")
-const BAR_BLUE: Texture2D = preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png")
+const BAR_GREY: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_grey.png")
+const BAR_GREEN: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png")
+const BAR_YELLOW: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_yellow.png")
+const BAR_RED: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_red.png")
+const BAR_BLUE: Texture2D = preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png")
 
 const BANNER_SECONDS: float = 1.4
 const BANNER_SCALE_FROM: float = 0.7

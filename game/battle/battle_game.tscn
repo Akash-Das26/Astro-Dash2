@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/battle/battle_game.gd" id="1_game"]
-[ext_resource type="Texture2D" path="res://assests/background-black.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/background-black.png" id="2_bg"]
 [ext_resource type="Script" path="res://entities/fx/starfield.gd" id="3_stars"]
 [ext_resource type="PackedScene" path="res://entities/player/ship.tscn" id="4_ship"]
 [ext_resource type="Script" path="res://entities/fx/shake_camera.gd" id="5_camera"]

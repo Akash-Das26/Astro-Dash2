@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_galaxy()
 	_test_audio()
 	_test_controls()
+	_test_paths()
 	_restore_save()
 	print("")
 	print("SUMMARY %d passed, %d failed" % [_passed, _failed])
@@ -606,6 +607,16 @@ func _test_audio() -> void:
 			0.05
 		)
 	AudioManager.stop_music()
+
+
+# --- 4.9 Project paths ------------------------------------------------------
+
+## Every res:// path in the project, the retired ones and the .uid/.import
+## partners. Kept last: it reads the whole tree.
+func _test_paths() -> void:
+	PathCheck.run(func(name: String, ok: bool, detail: String) -> void:
+		check(name, ok, detail)
+	)
 
 
 # --- 4.8 Controls -----------------------------------------------------------

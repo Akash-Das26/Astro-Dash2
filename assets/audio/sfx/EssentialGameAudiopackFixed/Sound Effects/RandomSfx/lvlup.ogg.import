@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://leb6se2qk7r"
+path="res://.godot/imported/lvlup.ogg-67f0f7a0014d9e2347f994d5db978123.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/sfx/EssentialGameAudiopackFixed/Sound Effects/RandomSfx/lvlup.ogg"
+dest_files=["res://.godot/imported/lvlup.ogg-67f0f7a0014d9e2347f994d5db978123.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

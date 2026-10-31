@@ -2,7 +2,7 @@ class_name UITheme
 extends RefCounted
 ## The one theme every screen uses.
 ##
-## Two optional OFL pixel fonts are loaded from `res://assests/fonts/`
+## Two optional OFL pixel fonts are loaded from `res://assets/fonts/`
 ## (searched one folder deep): Pixelify Sans for body copy and Press Start 2P
 ## for titles, banners and big numbers. The display font is exposed as the
 ## `DisplayLabel` / `DisplayButton` type variations, so a scene only has to set
@@ -13,7 +13,7 @@ extends RefCounted
 ## so screens still load and nothing errors. Sizes and colours live here, not in
 ## each scene, so the whole UI stays on one scale.
 
-const FONT_DIR: String = "res://assests/fonts"
+const FONT_DIR: String = "res://assets/fonts"
 ## Only importable formats: a stray .bdf/.fnt without an import file would make
 ## ResourceLoader log an error, so those are skipped silently instead.
 const FONT_EXTENSIONS: Array[String] = ["ttf", "otf", "woff", "woff2"]

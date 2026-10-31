@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://entities/hazards/asteroid.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png" id="2_rock"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png" id="2_rock"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rock"]
 radius = 32.0

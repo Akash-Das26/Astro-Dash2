@@ -13,10 +13,10 @@ signal died(points: int)
 signal shot_requested(origin: Vector2, direction: Vector2)
 
 const STATION_ART: Dictionary = {
-	&"blue": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_blue.png"),
-	&"green": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_green.png"),
-	&"red": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_red.png"),
-	&"yellow": preload("res://assests/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_yellow.png"),
+	&"blue": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_blue.png"),
+	&"green": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_green.png"),
+	&"red": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_red.png"),
+	&"yellow": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_yellow.png"),
 }
 
 @export var max_hp: int = Tuning.BOSS_HP
