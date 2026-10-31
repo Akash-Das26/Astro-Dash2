@@ -99,6 +99,9 @@ var _sfx_volume: float = 0.8
 var _tracks: Array[String] = []
 var _track_names: Array[String] = []
 var _current: int = -1
+## Web will not play audio until a user gesture; the first key, click, tap or
+## pad press starts the playlist, once.
+var _music_started: bool = false
 ## Shuffle bag: each track lands in it once per reshuffle, so a full pass plays
 ## everything before anything repeats, and the bag never starts with the track
 ## that just ended.
@@ -119,7 +122,6 @@ func _ready() -> void:
 	GameState.state_changed.connect(_on_game_state_changed)
 	_pause_target = Tuning.MUSIC_PAUSE_GAIN if GameState.state == GameState.State.PAUSED else 1.0
 	_pause_gain = _pause_target
-	start_music()
 
 
 func _process(delta: float) -> void:
@@ -127,6 +129,25 @@ func _process(delta: float) -> void:
 		return
 	_pause_gain = move_toward(_pause_gain, _pause_target, delta * Tuning.MUSIC_PAUSE_FADE)
 	_apply_music_bus()
+
+
+## The first user gesture unlocks audio (a Web requirement) and starts the
+## playlist. From then on the autoload keeps it running across the menu, the
+## map and battles, so a scene change never restarts the music.
+func _input(event: InputEvent) -> void:
+	if _music_started or not event.is_pressed():
+		return
+	if event is InputEventKey or event is InputEventMouseButton \
+			or event is InputEventScreenTouch or event is InputEventJoypadButton:
+		start_music()
+
+
+## Quitting stops cleanly instead of leaving a stream running into teardown.
+func _exit_tree() -> void:
+	if _fade_tween != null and _fade_tween.is_valid():
+		_fade_tween.kill()
+	for player: AudioStreamPlayer in _music_players:
+		player.stop()
 
 
 # --- SFX --------------------------------------------------------------------
@@ -166,6 +187,7 @@ func current_track_name() -> String:
 
 ## Starts the playlist at the current (or first) track. Safe to call twice.
 func start_music() -> void:
+	_music_started = true
 	if _music_players.is_empty() or _tracks.is_empty():
 		return
 	if _music_players[_active_player].playing:
