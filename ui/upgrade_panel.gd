@@ -47,6 +47,7 @@ enum Tab { HULL, WEAPONS }
 @onready var _body: HBoxContainer = $Panel/Margin/Box/Scroll/Page/Body
 @onready var _stats_column: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Stats
 @onready var _stats_label: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/Value
+@onready var _preview_box: Control = $Panel/Margin/Box/Scroll/Page/Body/Stats/Preview
 @onready var _preview_ship: Sprite2D = $Panel/Margin/Box/Scroll/Page/Body/Stats/Preview/ShipSprite
 @onready var _preview_thruster: Thruster = $Panel/Margin/Box/Scroll/Page/Body/Stats/Preview/Thruster
 @onready var _preview_name: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/PreviewName
@@ -471,6 +472,9 @@ func _apply_tab_visibility() -> void:
 	_skins.visible = hull
 	_weapon_box.visible = not hull
 	_equip_button.visible = hull
+	# The whole preview box goes, not only its sprites: an empty 118 px control
+	# was what opened the big gap above the weapon icon.
+	_preview_box.visible = hull
 	_preview_ship.visible = hull
 	_preview_thruster.visible = hull
 	_weapon_icon.visible = not hull
