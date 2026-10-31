@@ -214,6 +214,12 @@ func _exit_tree() -> void:
 		_fade_tween.kill()
 	for player: AudioStreamPlayer in _music_players:
 		player.stop()
+	# A player left holding a stream keeps that AudioStreamWAV alive through
+	# teardown, so quitting used to report "resources still in use at exit".
+	for player: AudioStreamPlayer in _sfx_players:
+		player.stop()
+		player.stream = null
+	_streams.clear()
 
 
 # --- SFX --------------------------------------------------------------------
