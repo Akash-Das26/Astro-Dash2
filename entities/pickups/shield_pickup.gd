@@ -52,8 +52,14 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 2.4, Color(0.9, 1.0, 1.0, 0.95))
 
 
+## The overlap is the ship's Hurtbox (an Area2D), never the Ship node itself.
+## Its parent is the Ship, so read it through the parent and treat a missing
+## parent as a miss rather than casting the Area2D.
 func _on_area_entered(area: Area2D) -> void:
-	if not area is Ship:
+	if area == null:
+		return
+	var ship := area.get_parent() as Ship
+	if ship == null or not ship.alive:
 		return
 	collected.emit()
 	queue_free()
