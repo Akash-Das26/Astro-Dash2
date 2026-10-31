@@ -318,6 +318,8 @@ const GALAXY_CITADEL_COUNT: int = 5
 const GALAXY_CITADELS_FOR_GATE: int = 3
 ## Tap / click radius of a body, in map pixels.
 const GALAXY_TAP_RADIUS: float = 40.0
+## Space between a body and its tooltip, on top of the tap radius.
+const GALAXY_TOOLTIP_GAP: float = 16.0
 ## The home system is placed nearest this map point, so the map opens rightward.
 const GALAXY_HOME_ANCHOR: Vector2 = Vector2(240.0, 760.0)
 ## Panning the map with WASD / the left stick, in pixels per second.

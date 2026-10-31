@@ -387,16 +387,34 @@ func _tooltip_text(body_id: StringName) -> String:
 	return "\n".join(lines)
 
 
+## Beside the body, never on top of it: right first, then left, above, below,
+## with the first candidate that fits the visible area. The size comes from the
+## label (the panel is content-sized) and the whole thing lives in the map's UI
+## layer, so zoom never scales or moves it relative to the screen.
 func _place_tooltip(body_id: StringName) -> void:
 	var screen: Vector2 = _world.position + _galaxy.position_of(body_id) * _zoom
-	var tooltip_size: Vector2 = _tooltip.size
-	var point: Vector2 = screen + Vector2(30.0, -20.0)
-	point.x = clampf(point.x, 8.0, Tuning.VIEW_SIZE.x - tooltip_size.x - 8.0)
-	point.y = clampf(
-		point.y,
-		Tuning.HUD_BAR_HEIGHT + 8.0,
-		Tuning.VIEW_SIZE.y - tooltip_size.y - 34.0
-	)
+	var tooltip_size: Vector2 = _tooltip.get_combined_minimum_size()
+	var gap: float = Tuning.GALAXY_TAP_RADIUS + Tuning.GALAXY_TOOLTIP_GAP
+	var margin: float = 8.0
+	var top: float = Tuning.HUD_BAR_HEIGHT + 6.0
+	var bottom: float = Tuning.VIEW_SIZE.y - 34.0
+	var candidates: Array[Vector2] = [
+		screen + Vector2(gap, -tooltip_size.y * 0.5),
+		screen + Vector2(-gap - tooltip_size.x, -tooltip_size.y * 0.5),
+		screen + Vector2(-tooltip_size.x * 0.5, -gap - tooltip_size.y),
+		screen + Vector2(-tooltip_size.x * 0.5, gap),
+	]
+	var point: Vector2 = candidates[0]
+	for candidate: Vector2 in candidates:
+		if candidate.x >= margin \
+				and candidate.x + tooltip_size.x <= Tuning.VIEW_SIZE.x - margin \
+				and candidate.y >= top \
+				and candidate.y + tooltip_size.y <= bottom:
+			point = candidate
+			break
+	point.x = clampf(point.x, margin, Tuning.VIEW_SIZE.x - tooltip_size.x - margin)
+	point.y = clampf(point.y, top, bottom - tooltip_size.y)
+	_tooltip.size = tooltip_size
 	_tooltip.position = point
 
 
