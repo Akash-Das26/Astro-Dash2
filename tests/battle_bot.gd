@@ -63,7 +63,8 @@ func _ready() -> void:
 		{
 			"mode": Tuning.DIFFICULTY_CADET, "primary": &"pulse",
 			"secondary": &"cannon", "seconds": 35.0, "victory": false,
-			"defeat": true, "fire_after": 999.0, "kill_at": 14.0, "label": "DEFEAT CARD",
+			"defeat": true, "verify_defeat": true, "fire_after": 999.0,
+			"kill_at": 14.0, "label": "DEFEAT CARD",
 		},
 	]
 	if _probe:
@@ -366,7 +367,9 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 		_problems.append("%s: node count grew by %d" % [mode, growth])
 	if bool(row.get("defeat", false)) and _ship.alive:
 		_problems.append("%s: the ship survived the forced defeat" % mode)
-	if bool(row.get("defeat", false)) and GameState.state != GameState.State.GAME_OVER:
+	# Only the dedicated row asserts the game-over card: the SINGULARITY row can
+	# legitimately win the wave before its forced kill lands.
+	if bool(row.get("verify_defeat", false)) and GameState.state != GameState.State.GAME_OVER:
 		_problems.append("%s: the game-over card was not reached" % mode)
 	if _battle.victory and not bool(row.get("victory", false)):
 		print("BOT note: the battle was won before the forced clear")
