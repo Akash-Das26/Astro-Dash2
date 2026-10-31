@@ -178,9 +178,9 @@ var _shield_seconds: float = 0.0
 ## The bar is the visual, the label reads `current/capacity`, and both stay
 ## readable at zero so the player knows a drop is worth grabbing.
 func set_shields(charges: int, capacity: int = Tuning.SHIELD_BASE_CAPACITY) -> void:
-	_shield_capacity = clampi(
-		capacity, Tuning.SHIELD_BASE_CAPACITY, Tuning.MAX_SHIELD_CHARGES
-	)
+	# Capacity 0 is a real state (SUPERNOVA and up start there), so the floor
+	# is 0 and the label falls back to NO SHIELD.
+	_shield_capacity = clampi(capacity, 0, Tuning.MAX_SHIELD_CHARGES)
 	_shield_charges = clampi(charges, 0, _shield_capacity)
 	_shield_bar.max_value = _shield_capacity
 	_shield_bar.value = _shield_charges

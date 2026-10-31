@@ -136,9 +136,11 @@ func apply_run_stats(stats: Dictionary) -> void:
 	bullet_tier = int(stats.get("bullet_tier", 0))
 	fire_interval = float(stats["fire_interval"])
 	shield_recharge_time = float(stats.get("shield_recharge", 0.0))
+	# The floor is 0, not SHIELD_BASE_CAPACITY: SUPERNOVA and above start at
+	# capacity 0, where a drop is the only shield until the track reaches level 3.
 	shield_capacity = clampi(
 		int(stats.get("shield_charges", Tuning.SHIELD_BASE_CAPACITY)),
-		Tuning.SHIELD_BASE_CAPACITY,
+		0,
 		Tuning.MAX_SHIELD_CHARGES
 	)
 	apply_controls()
