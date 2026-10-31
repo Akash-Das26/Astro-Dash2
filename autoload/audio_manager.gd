@@ -153,6 +153,7 @@ var _fade_tween: Tween
 var _pause_gain: float = 1.0
 var _pause_target: float = 1.0
 var _muted: bool = false
+var _master_volume: float = 0.8
 var _music_volume: float = 0.8
 var _sfx_volume: float = 0.8
 ## Playlist: res:// paths and display names, same order.
@@ -176,6 +177,9 @@ var _history: Array[int] = []
 func _ready() -> void:
 	# Keep running while the tree is paused so music and UI clicks survive.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Buses first: the players are given their bus by name, so they have to
+	# exist before the pools are built.
+	_ensure_buses()
 	_load_streams()
 	_build_players()
 	_build_playlist()
@@ -576,13 +580,26 @@ func _set_loop(stream: AudioStream, enabled: bool) -> void:
 
 # --- Volume and settings ----------------------------------------------------
 
-## linear is 0.0 (silent) to 1.0 (full).
+## linear is 0.0 (silent) to 1.0 (full). Every slider goes through here, so a
+## missing bus is repaired instead of silently doing nothing.
 func set_bus_volume(bus: String, linear: float) -> void:
 	var index: int = AudioServer.get_bus_index(bus)
+	if index < 0:
+		_ensure_buses()
+		index = AudioServer.get_bus_index(bus)
 	if index < 0:
 		return
 	var clamped: float = clampf(linear, 0.0, 1.0)
 	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(clamped, 0.001)))
+	if bus == MASTER_BUS:
+		# Master mute belongs to the mute button; 0 on the slider is already
+		# -60 dB, so the bus is never muted behind the button's back.
+		var master_changed: bool = not is_equal_approx(_master_volume, clamped)
+		_master_volume = clamped
+		if master_changed:
+			_log_buses("master")
+			settings_changed.emit()
+		return
 	AudioServer.set_bus_mute(index, clamped <= 0.001)
 	if bus == MUSIC_BUS:
 		var music_changed: bool = not is_equal_approx(_music_volume, clamped)
@@ -602,6 +619,10 @@ func get_bus_volume(bus: String) -> float:
 	if index < 0:
 		return 0.0
 	return clampf(db_to_linear(AudioServer.get_bus_volume_db(index)), 0.0, 1.0)
+
+
+func master_volume() -> float:
+	return _master_volume
 
 
 func music_volume() -> float:
@@ -632,9 +653,13 @@ func toggle_mute() -> bool:
 
 
 func _apply_saved_settings() -> void:
+	# Master first, then the two child buses, and all of it before the first
+	# track can start, so the game never opens louder than the saved level.
+	set_bus_volume(MASTER_BUS, SaveData.master_volume)
 	set_bus_volume(MUSIC_BUS, SaveData.music_volume)
 	set_bus_volume(SFX_BUS, SaveData.sfx_volume)
 	set_mute(SaveData.muted)
+	_log_buses("saved settings")
 
 
 ## The Music bus is the user's slider multiplied by the pause dip. The fades
@@ -701,6 +726,43 @@ func _build_players() -> void:
 ## Falls back to Master if default_bus_layout.tres was not picked up.
 func _resolve_bus(bus: String) -> String:
 	return bus if AudioServer.get_bus_index(bus) >= 0 else MASTER_BUS
+
+
+## The buses normally come from res://default_bus_layout.tres (pinned in
+## project.godot). If that layout was not loaded -- a stripped export, a moved
+## file, a project saved before the layout existed -- every player would fall
+## back to Master and the sliders would write to buses that are not there, so
+## the volume controls would do nothing. Creating them here makes the mixer
+## work either way; the names match the layout file exactly.
+func _ensure_buses() -> void:
+	var created: bool = false
+	for bus: String in [MUSIC_BUS, SFX_BUS]:
+		if AudioServer.get_bus_index(bus) >= 0:
+			continue
+		AudioServer.add_bus()
+		var index: int = AudioServer.get_bus_count() - 1
+		AudioServer.set_bus_name(index, bus)
+		AudioServer.set_bus_send(index, MASTER_BUS)
+		created = true
+	if OS.is_debug_build():
+		_log_buses("startup" if not created else "buses created")
+
+
+## One line in the debug log: every bus, its dB and whether it is muted. Enough
+## to tell a working slider from a slider writing to nothing.
+func _log_buses(reason: String) -> void:
+	if not OS.is_debug_build():
+		return
+	var parts: PackedStringArray = []
+	for index: int in AudioServer.get_bus_count():
+		parts.append(
+			"%s %.1f dB%s" % [
+				AudioServer.get_bus_name(index),
+				AudioServer.get_bus_volume_db(index),
+				" MUTED" if AudioServer.is_bus_mute(index) else "",
+			]
+		)
+	print("AudioManager [%s]: %s" % [reason, " | ".join(parts)])
 
 
 ## Only the track that is actually on air advances the playlist; the player

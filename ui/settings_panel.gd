@@ -12,6 +12,7 @@ signal controls_requested
 
 const SAVE_DEBOUNCE_SECONDS: float = 0.4
 
+@onready var _master_slider: HSlider = $MasterRow/MasterSlider
 @onready var _music_slider: HSlider = $MusicRow/MusicSlider
 @onready var _sfx_slider: HSlider = $SfxRow/SfxSlider
 @onready var _mute_check: CheckButton = $MuteCheck
@@ -37,6 +38,7 @@ func _ready() -> void:
 	_save_timer.wait_time = SAVE_DEBOUNCE_SECONDS
 	_save_timer.one_shot = true
 	_save_timer.timeout.connect(_flush_settings)
+	_master_slider.value_changed.connect(_on_master_changed)
 	_music_slider.value_changed.connect(_on_music_changed)
 	_sfx_slider.value_changed.connect(_on_sfx_changed)
 	_sfx_slider.drag_ended.connect(_on_sfx_drag_ended)
@@ -58,6 +60,7 @@ func _ready() -> void:
 
 func _sync_from_settings() -> void:
 	_syncing = true
+	_master_slider.value = SaveData.master_volume
 	_music_slider.value = SaveData.music_volume
 	_sfx_slider.value = SaveData.sfx_volume
 	_mute_check.button_pressed = SaveData.muted
@@ -143,6 +146,14 @@ func _on_order_pressed() -> void:
 	_save_timer.start()
 
 
+func _on_master_changed(value: float) -> void:
+	if _syncing:
+		return
+	SaveData.master_volume = value
+	AudioManager.set_bus_volume(AudioManager.MASTER_BUS, value)
+	_save_timer.start()
+
+
 func _on_music_changed(value: float) -> void:
 	if _syncing:
 		return
@@ -159,6 +170,8 @@ func _on_sfx_changed(value: float) -> void:
 	_save_timer.start()
 
 
+## The sample plays on release, at the level the slider was just set to, so the
+## change is audible without waiting for a battle sound.
 func _on_sfx_drag_ended(value_changed: bool) -> void:
 	if value_changed:
 		AudioManager.play_sfx("ui_click")

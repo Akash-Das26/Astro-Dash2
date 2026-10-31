@@ -24,6 +24,7 @@ const KEY_MUTED: String = "muted"
 const KEY_AUTO_FIRE: String = "auto_fire"
 const KEY_HIGH_CONTRAST: String = "high_contrast_bullets"
 const KEY_MUSIC_ORDER: String = "music_order"
+const KEY_MASTER_VOLUME: String = "master_volume"
 const KEY_CONTROL_SCHEME: String = "control_scheme"
 const KEY_SHIELD_MODE: String = "shield_mode"
 const KEY_CAMPAIGN_ACTIVE: String = "active"
@@ -78,6 +79,7 @@ var control_scheme: StringName = Tuning.CONTROL_SCHEME_DEFAULT
 var shield_mode: StringName = Tuning.SHIELD_MODE_DEFAULT
 ## Playlist rotation, `shuffle` or `in_order` (see Tuning.MUSIC_ORDER_*).
 var music_order: StringName = Tuning.MUSIC_ORDER_SHUFFLE
+var master_volume: float = 0.8
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -267,6 +269,7 @@ func load_data() -> void:
 			0,
 			Tuning.UPGRADE_MAX_LEVEL
 		)
+	master_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MASTER_VOLUME, 0.8)), 0.0, 1.0)
 	music_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, 0.8)), 0.0, 1.0)
 	music_order = StringName(String(config.get_value(SECTION_AUDIO, KEY_MUSIC_ORDER, "shuffle")))
 	control_scheme = StringName(
@@ -351,6 +354,7 @@ func save_data() -> void:
 	config.set_value(SECTION_PROGRESS, KEY_SKIN, String(skin_id))
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		config.set_value(SECTION_UPGRADES, String(kind) + "_level", level_of(kind))
+	config.set_value(SECTION_AUDIO, KEY_MASTER_VOLUME, master_volume)
 	config.set_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, music_volume)
 	config.set_value(SECTION_AUDIO, KEY_MUSIC_ORDER, String(music_order))
 	config.set_value(SECTION_AUDIO, KEY_SFX_VOLUME, sfx_volume)
