@@ -266,8 +266,9 @@ func _on_state_changed(new_state: int) -> void:
 			GameState.back_handler = Callable()
 			hud.show_playing()
 		GameState.State.PAUSED:
-			# Android Back resumes instead of leaving a screen with no menu on it.
-			GameState.back_handler = _resume
+			# Android Back resumes instead of leaving a screen with no menu on
+			# it; the HUD gets the call first so an open controls card closes.
+			GameState.back_handler = hud.handle_pause_back
 			hud.show_paused()
 		GameState.State.GAME_OVER:
 			GameState.back_handler = _go_to_menu

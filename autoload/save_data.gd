@@ -10,6 +10,7 @@ const SECTION_GAMEPLAY: String = "gameplay"
 const SECTION_UPGRADES: String = "upgrades"
 const SECTION_CAMPAIGN: String = "campaign"
 const SECTION_WEAPONS: String = "weapons"
+const SECTION_CONTROLS: String = "controls"
 const KEY_HIGH_SCORE: String = "high_score"
 const KEY_ENERGY: String = "energy"
 const KEY_SKIN: String = "skin"
@@ -57,6 +58,10 @@ var weapons_owned: Array[StringName] = [Weapons.DEFAULT_ID]
 var weapon_primary: StringName = Weapons.DEFAULT_ID
 ## Empty means the secondary hardpoint has no gun equipped yet.
 var weapon_secondary: StringName = &""
+## Rebound inputs, serialized InputEvents per action. A missing entry means
+## "use the project's own binding", so old saves keep working unchanged.
+var keyboard_bindings: Dictionary = {}
+var gamepad_bindings: Dictionary = {}
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
 var muted: bool = false
@@ -72,6 +77,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_reset_upgrade_levels()
 	load_data()
+	# The InputMap is rebuilt once, before any screen reads an action.
+	Controls.apply_saved()
 
 
 ## Records a finished run. Returns true when it beat the stored record.
@@ -256,6 +263,19 @@ func load_data() -> void:
 		weapon_secondary = &""
 	else:
 		weapon_secondary = stored_secondary
+	keyboard_bindings.clear()
+	gamepad_bindings.clear()
+	for action: StringName in Tuning.CONTROL_ACTIONS:
+		var key_text: String = String(
+			config.get_value(SECTION_CONTROLS, String(action) + "_key", "")
+		)
+		var pad_text: String = String(
+			config.get_value(SECTION_CONTROLS, String(action) + "_pad", "")
+		)
+		if not key_text.is_empty():
+			keyboard_bindings[action] = key_text
+		if not pad_text.is_empty():
+			gamepad_bindings[action] = pad_text
 
 
 func save_data() -> void:
@@ -288,6 +308,13 @@ func save_data() -> void:
 	config.set_value(SECTION_WEAPONS, KEY_WEAPONS_OWNED, owned_weapons)
 	config.set_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(weapon_primary))
 	config.set_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, String(weapon_secondary))
+	for action: StringName in Tuning.CONTROL_ACTIONS:
+		config.set_value(
+			SECTION_CONTROLS, String(action) + "_key", String(keyboard_bindings.get(action, ""))
+		)
+		config.set_value(
+			SECTION_CONTROLS, String(action) + "_pad", String(gamepad_bindings.get(action, ""))
+		)
 	var error: Error = config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save data to %s (error %d)." % [SAVE_PATH, error])

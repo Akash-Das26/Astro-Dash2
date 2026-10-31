@@ -16,6 +16,8 @@ const GALAXY_SCENE: String = "res://ui/galaxy_map.tscn"
 @onready var _footer: Label = $Footer
 @onready var _settings_card: Control = $SettingsCard
 @onready var _settings_close: Button = $SettingsCard/Panel/Margin/Box/Header/CloseButton
+@onready var _settings_panel: SettingsPanel = $SettingsCard/Panel/Margin/Box/SettingsPanel
+@onready var _controls_card: ControlsCard = $ControlsCard
 @onready var _confirm_card: Control = $ConfirmCard
 @onready var _confirm_start: Button = $ConfirmCard/Panel/Margin/Box/Buttons/StartButton
 @onready var _confirm_cancel: Button = $ConfirmCard/Panel/Margin/Box/Buttons/CancelButton
@@ -35,6 +37,8 @@ func _ready() -> void:
 	_settings_close.pressed.connect(_close_settings)
 	_confirm_start.pressed.connect(_on_confirm_new_run)
 	_confirm_cancel.pressed.connect(_close_confirm)
+	_settings_panel.controls_requested.connect(_open_controls)
+	_controls_card.closed.connect(_on_controls_closed)
 	_continue_button.disabled = not SaveData.campaign_active
 	_footer.text = "ENERGY %d      BEST %d PLANETS      HIGH SCORE %d" % [
 		SaveData.energy, SaveData.campaign_best_planets, SaveData.high_score,
@@ -84,6 +88,14 @@ func _close_confirm() -> void:
 	_new_game.grab_focus()
 
 
+func _open_controls() -> void:
+	_controls_card.open()
+
+
+func _on_controls_closed() -> void:
+	_settings_close.grab_focus()
+
+
 func _quit() -> void:
 	get_tree().quit()
 
@@ -93,6 +105,9 @@ func _quit() -> void:
 ## out of the game.
 func _handle_back() -> void:
 	GameState.back_handler = _handle_back
+	if _controls_card.visible:
+		_controls_card.close()
+		return
 	if _settings_card.visible:
 		_close_settings()
 		return

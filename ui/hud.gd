@@ -60,6 +60,8 @@ var _weapon_cooldowns: Array[TextureProgressBar] = []
 @onready var _pause_panel: Control = $Root/PausePanel
 @onready var _resume_button: Button = $Root/PausePanel/Box/ResumeButton
 @onready var _menu_button: Button = $Root/PausePanel/Box/MenuButton
+@onready var _controls_button: Button = $Root/PausePanel/Box/ControlsButton
+@onready var _controls_card: ControlsCard = $Root/ControlsCard
 @onready var _pause_confirm_label: Label = $Root/PausePanel/Box/ConfirmLabel
 @onready var _pause_confirm_row: HBoxContainer = $Root/PausePanel/Box/ConfirmRow
 @onready var _pause_confirm_yes: Button = $Root/PausePanel/Box/ConfirmRow/ConfirmMenuButton
@@ -79,6 +81,8 @@ func _ready() -> void:
 	_resume_button.pressed.connect(resume_requested.emit)
 	$Root/PausePanel/Box/RestartButton.pressed.connect(restart_requested.emit)
 	_menu_button.pressed.connect(_show_menu_confirm)
+	_controls_button.pressed.connect(_controls_card.open)
+	_controls_card.closed.connect(_on_controls_closed)
 	_pause_confirm_yes.pressed.connect(menu_requested.emit)
 	_pause_confirm_no.pressed.connect(_hide_menu_confirm)
 	_touch_controls.pause_requested.connect(pause_requested.emit)
@@ -330,6 +334,7 @@ func show_paused() -> void:
 
 func show_playing() -> void:
 	_pause_panel.visible = false
+	_controls_card.close()
 	_hide_menu_confirm()
 
 
@@ -350,8 +355,30 @@ func _hide_menu_confirm() -> void:
 		_menu_button.grab_focus()
 
 
-## Gamepad B (ui_cancel) on the pause card resumes, like Android Back and Esc.
+## The controls card is the top-most layer while it is open: Back and B close
+## it before they touch the pause card underneath.
 func _unhandled_input(event: InputEvent) -> void:
-	if _pause_panel.visible and event.is_action_pressed("ui_cancel"):
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	if _controls_card.visible:
+		_controls_card.close()
+		get_viewport().set_input_as_handled()
+		return
+	if _pause_panel.visible:
 		resume_requested.emit()
 		get_viewport().set_input_as_handled()
+
+
+func _on_controls_closed() -> void:
+	if _pause_panel.visible:
+		_controls_button.grab_focus()
+
+
+## Android Back while paused: close the controls card if it is open, else
+## resume. Re-armed on every request, because GameState consumes it.
+func handle_pause_back() -> void:
+	GameState.back_handler = handle_pause_back
+	if _controls_card.visible:
+		_controls_card.close()
+		return
+	resume_requested.emit()

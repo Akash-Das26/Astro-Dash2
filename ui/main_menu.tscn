@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://entities/effects/starfield.gd" id="2_stars"]
 [ext_resource type="Script" path="res://ui/menu_backdrop.gd" id="3_backdrop"]
 [ext_resource type="PackedScene" path="res://ui/settings_panel.tscn" id="4_settings"]
+[ext_resource type="PackedScene" path="res://ui/controls_card.tscn" id="5_controls"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
 bg_color = Color(0.45, 0.12, 0.14, 1)
@@ -293,3 +294,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 17
 text = "CANCEL"
+
+[node name="ControlsCard" parent="." instance=ExtResource("5_controls")]
+layout_mode = 1

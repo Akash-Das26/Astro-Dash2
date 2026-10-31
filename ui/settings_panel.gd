@@ -8,6 +8,8 @@ extends VBoxContainer
 ## `settings_changed` signal instead of reading each other. Slider changes are
 ## saved on a short debounce so dragging does not hit the disk every frame.
 
+signal controls_requested
+
 const SAVE_DEBOUNCE_SECONDS: float = 0.4
 
 @onready var _music_slider: HSlider = $MusicRow/MusicSlider
@@ -16,6 +18,8 @@ const SAVE_DEBOUNCE_SECONDS: float = 0.4
 @onready var _motion_check: CheckButton = $MotionCheck
 @onready var _auto_fire_check: CheckButton = $AutoFireCheck
 @onready var _contrast_check: CheckButton = $ContrastCheck
+@onready var _controls_button: Button = $ControlsButton
+@onready var _controls_note: Label = $ControlsNote
 @onready var _save_timer: Timer = $SaveTimer
 
 ## True while the controls are being filled in, so echoed values neither
@@ -34,6 +38,7 @@ func _ready() -> void:
 	_motion_check.toggled.connect(_on_motion_toggled)
 	_auto_fire_check.toggled.connect(_on_auto_fire_toggled)
 	_contrast_check.toggled.connect(_on_contrast_toggled)
+	_controls_button.pressed.connect(controls_requested.emit)
 	AudioManager.settings_changed.connect(_sync_from_settings)
 	_sync_from_settings()
 
@@ -46,6 +51,8 @@ func _sync_from_settings() -> void:
 	_motion_check.button_pressed = SaveData.reduce_motion
 	_auto_fire_check.button_pressed = SaveData.auto_fire
 	_contrast_check.button_pressed = SaveData.high_contrast_bullets
+	# The help line always shows the keys that are bound right now.
+	_controls_note.text = Controls.help_text()
 	_syncing = false
 
 

@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_green.png" id="4_green"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_blue.png" id="5_blue"]
 [ext_resource type="Texture2D" path="res://assests/spacepixels-0.2.0/spacepixels-0.2.0/horizontal_bar_red.png" id="6_red"]
+[ext_resource type="PackedScene" path="res://ui/controls_card.tscn" id="7_controls"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end"]
 bg_color = Color(0.035, 0.05, 0.1, 0.98)
@@ -493,6 +494,9 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_end_quit")
 theme_override_styles/focus = SubResource("StyleBoxFlat_end_quit_hover")
 text = "QUIT"
 
+[node name="ControlsCard" parent="Root" instance=ExtResource("7_controls")]
+layout_mode = 1
+
 [node name="TouchControls" type="Control" parent="Root"]
 layout_mode = 1
 anchors_preset = 15
@@ -590,6 +594,12 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "MAIN MENU"
+
+[node name="ControlsButton" type="Button" parent="Root/PausePanel/Box"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "CONTROLS"
 
 [node name="ConfirmLabel" type="Label" parent="Root/PausePanel/Box"]
 visible = false
