@@ -9,7 +9,9 @@ extends Control
 
 const BATTLE_SCENE: String = "res://battle_game.tscn"
 const MENU_SCENE: String = "res://ui/main_menu.tscn"
-const DEFAULT_HINT: String = "DRAG TO PAN   |   TAP A GLOWING WORLD   |   LEFT/RIGHT CYCLE   |   ENTER ATTACK"
+const DEFAULT_HINT: String = "TAP SELECTS   |   DOUBLE-TAP CONQUERS   |   DRAG PANS   |   RIGHT STICK MOVES THE CURSOR"
+## Seconds between frontier steps while the right stick is held.
+const STICK_CURSOR_RATE: float = 0.25
 const BANNER_SECONDS: float = 2.6
 ## Screen margin the keyboard cursor keeps between itself and the map edge.
 const FOCUS_MARGIN: float = 110.0
@@ -94,11 +96,18 @@ func _ready() -> void:
 		_show_result(result)
 
 
+## Last tapped body and when, for the double-tap window on the map.
+var _last_tap_id: StringName = &""
+var _last_tap_ms: int = 0
+var _stick_cursor_cooldown: float = 0.0
+
+
 func _process(delta: float) -> void:
 	_update_zoom(delta)
 	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
 		return
 	_pan_with_stick(delta)
+	_stick_cursor(delta)
 	_update_hover()
 
 
@@ -221,6 +230,18 @@ func _pan_with_stick(delta: float) -> void:
 	_clamp_pan()
 
 
+## Right stick moves a cursor over the frontier: every nudge steps to the next
+## attackable body, which is the only place the cursor may land.
+func _stick_cursor(delta: float) -> void:
+	if _stick_cursor_cooldown > 0.0:
+		_stick_cursor_cooldown = maxf(0.0, _stick_cursor_cooldown - delta)
+	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+	if stick.length() < 0.6 or _stick_cursor_cooldown > 0.0:
+		return
+	_stick_cursor_cooldown = STICK_CURSOR_RATE
+	_cycle(1)
+
+
 ## Screen point -> map point. There is no camera on this screen, so the pan is
 ## the only transform.
 func _to_world(point: Vector2) -> Vector2:
@@ -329,12 +350,24 @@ func _end_drag(point: Vector2) -> void:
 		return
 	_hovered = body_id
 	_show_tooltip(body_id)
-	if _galaxy.attackable(SaveData.campaign_conquered).has(body_id):
-		_focused = body_id
-		_refresh()
+	_focused = body_id
+	_refresh()
+	if not _galaxy.attackable(SaveData.campaign_conquered).has(body_id):
+		if body_id == _galaxy.gate_id:
+			_show_banner(_galaxy.status_of(body_id, SaveData.campaign_conquered))
+		return
+	# The first tap only selects, so panning the map never starts a battle by
+	# accident; a second tap inside the window opens the CONQUER card.
+	var now: int = Time.get_ticks_msec()
+	var window_ms: int = int(Tuning.MAP_DOUBLE_CLICK_TIME * 1000.0)
+	if body_id == _last_tap_id and now - _last_tap_ms <= window_ms:
+		_last_tap_id = &""
+		_last_tap_ms = 0
 		_open_card(body_id)
-	elif body_id == _galaxy.gate_id:
-		_show_banner(_galaxy.status_of(body_id, SaveData.campaign_conquered))
+		return
+	_last_tap_id = body_id
+	_last_tap_ms = now
+	_hint.text = "DOUBLE-TAP OR PRESS ENTER TO CONQUER"
 
 
 # --- Tooltip ----------------------------------------------------------------
