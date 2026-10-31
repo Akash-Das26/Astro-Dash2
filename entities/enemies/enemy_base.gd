@@ -133,7 +133,9 @@ func _apply_kind() -> void:
 	_sprite.scale = Vector2.ONE * art_scale
 	_flash.scale = Vector2.ONE * art_scale
 	_sprite.modulate = Color.WHITE
-	_thruster.position = Vector2(0.0, body_radius + 7.0)
+	# Anchor the exhaust at this art's rear edge, not at a fixed pixel count.
+	var hull_half: float = _sprite.get_rect().size.y * 0.5 * _sprite.scale.y
+	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
 	_thruster.set_base_scale(Vector2.ONE * clampf(body_radius / 11.0, 0.8, 1.8))
 
 
@@ -159,6 +161,8 @@ func _build_warp_frames() -> void:
 func _process(delta: float) -> void:
 	if not _active:
 		return
+	if Tuning.thruster_debug:
+		queue_redraw()
 	if state == State.WARP_IN:
 		_tick_warp(delta)
 		return
@@ -291,3 +295,14 @@ func _flash_hit() -> void:
 	_flash.modulate.a = 0.9
 	_flash_tween = create_tween()
 	_flash_tween.tween_property(_flash, "modulate:a", 0.0, hit_flash_time)
+
+
+## F3 overlay: the body circle and the exhaust anchor in the fighter's frame.
+func _draw() -> void:
+	if not Tuning.thruster_debug:
+		return
+	var tint: Color = Tuning.THRUSTER_DEBUG_COLOR
+	draw_circle(Vector2.ZERO, body_radius, Color(tint.r, tint.g, tint.b, 0.18))
+	draw_arc(Vector2.ZERO, body_radius, 0.0, TAU, 28, tint, 1.0, true)
+	draw_line(Vector2.ZERO, _thruster.position, tint, 1.0)
+	draw_circle(_thruster.position, 2.0, tint)

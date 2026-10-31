@@ -117,7 +117,8 @@ func _build_ships() -> void:
 		ship.modulate = Color(1.0, 1.0, 1.0, 0.7)
 		add_child(ship)
 		var thruster := THRUSTER_SCENE.instantiate() as Thruster
-		thruster.position = Vector2(0.0, 16.0)
+		var hull_half: float = ship.texture.get_height() * 0.5 * ship.scale.y
+		thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
 		thruster.set_base_scale(Vector2(0.85, 0.85))
 		ship.add_child(thruster)
 		thruster.set_thrust(0.85)

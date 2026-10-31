@@ -376,6 +376,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not OS.is_debug_build() or _campaign:
 				return
 			_start_battle(Tuning.DEBUG_BATTLE)
+		KEY_F3:
+			if not OS.is_debug_build():
+				return
+			# Hull circle + exhaust anchor on every ship, for alignment checks.
+			Tuning.thruster_debug = not Tuning.thruster_debug
+			ship.queue_redraw()
+			for child: Node in enemies.get_children():
+				(child as CanvasItem).queue_redraw()
 		_:
 			return
 	get_viewport().set_input_as_handled()

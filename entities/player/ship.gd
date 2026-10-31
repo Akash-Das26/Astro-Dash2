@@ -98,6 +98,8 @@ func _physics_process(delta: float) -> void:
 	_update_shooting(delta)
 	_update_invulnerability(delta)
 	_update_shields(delta)
+	if Tuning.thruster_debug:
+		queue_redraw()
 
 
 # --- Run setup --------------------------------------------------------------
@@ -107,12 +109,19 @@ func _physics_process(delta: float) -> void:
 func _apply_skin() -> void:
 	var id: StringName = Skins.selected()
 	var texture: Texture2D = Skins.texture(id)
-	var art_scale: float = Skins.scale_of(id)
-	if texture != null:
+	var art_scale: float = Skins.scale_of(id)	if texture != null:
 		_sprite.texture = texture
 		_flash.texture = texture
-	_sprite.scale = Vector2.ONE * art_scale
-	_flash.scale = Vector2.ONE * art_scale
+		_sprite.scale = Vector2.ONE * art_scale
+		_flash.scale = Vector2.ONE * art_scale
+	# The exhaust starts at the hull's rear edge, whatever the skin's size.
+	_thruster.position = Vector2(0.0, _hull_half_length() + Tuning.THRUSTER_TAIL_GAP)
+
+
+## Half of the drawn hull's long axis, from the sprite itself rather than a
+## constant, so every skin and size puts the flame in the right place.
+func _hull_half_length() -> float:
+	return _sprite.get_rect().size.y * 0.5 * _sprite.scale.y
 
 ## Totals from the upgrade shop, applied at the start of a battle.
 func apply_run_stats(stats: Dictionary) -> void:
@@ -445,6 +454,23 @@ func _draw() -> void:
 	for index: int in shields:
 		var angle: float = -PI * 0.5 + float(index) * (TAU / float(Tuning.MAX_SHIELD_CHARGES))
 		draw_circle(Vector2(cos(angle), sin(angle)) * radius, 2.5, Color(0.75, 1.0, 1.0, 0.9))
+	if Tuning.thruster_debug:
+		_draw_thruster_debug()
+
+
+## F3 overlay: the hurtbox circle and where the exhaust is anchored. The anchor
+## is drawn in the hull's own frame, so a wrong offset is obvious at a glance.
+func _draw_thruster_debug() -> void:
+	var tint: Color = Tuning.THRUSTER_DEBUG_COLOR
+	draw_circle(Vector2.ZERO, Tuning.SHIP_RADIUS, Color(tint.r, tint.g, tint.b, 0.18))
+	draw_arc(Vector2.ZERO, Tuning.SHIP_RADIUS, 0.0, TAU, 32, tint, 1.5, true)
+	draw_line(Vector2.ZERO, _thruster.position, tint, 1.5)
+	draw_circle(_thruster.position, 3.0, tint)
+	draw_line(
+		_thruster.position,
+		_thruster.position + Vector2(0.0, Tuning.THRUSTER_ART_SIZE),
+		Color(tint.r, tint.g, tint.b, 0.5), 1.0
+	)
 
 
 ## Shield charges: the SHIELDS track recharges one charge after a quiet

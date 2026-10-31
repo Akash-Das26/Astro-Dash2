@@ -3,6 +3,6 @@
 [ext_resource type="Script" path="res://entities/fx/thruster.gd" id="1_thruster"]
 
 [node name="Thruster" type="AnimatedSprite2D"]
-position = Vector2(0, 17)
+position = Vector2(0, 0)
 scale = Vector2(1.1, 1.1)
 script = ExtResource("1_thruster")

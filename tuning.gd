@@ -211,6 +211,19 @@ const THRUSTER_FRAME_FPS: float = 18.0
 const THRUSTER_IDLE_SCALE: float = 0.7
 const THRUSTER_FULL_SCALE: float = 1.35
 const THRUSTER_MIN_VISIBLE: float = 0.06
+## Exhaust geometry: the thruster textures are 32x32 horizontal bar sets with
+## the bars stacked at the TOP of the frame, so the sprite is turned a quarter
+## turn to lay them along the hull's heading, and its `offset` is re-aligned for
+## each frame (the stack grows downward as the flame gets longer).
+const THRUSTER_TAIL_GAP: float = 3.0
+const THRUSTER_ROTATION: float = PI * 0.5
+const THRUSTER_ART_SIZE: float = 32.0
+## Rows of pixels used by thruster-1..5, measured from the art (2, 6, 10, 14,
+## 18). Used to keep every frame centred on the hull's centre line.
+const THRUSTER_BAR_ROWS: Array[int] = [2, 6, 10, 14, 18]
+## F3 debug overlay: hull circle and thruster anchor on every ship.
+const THRUSTER_DEBUG_COLOR: Color = Color(0.3, 1.0, 0.5, 0.85)
+static var thruster_debug: bool = false
 
 # --- Enemies ----------------------------------------------------------------
 ## One row per fighter type. `orbit_radius` is how far it tries to sit from the
