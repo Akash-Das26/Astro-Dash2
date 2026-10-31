@@ -9,6 +9,40 @@ sound.
 safest format for the Windows, Web and Android exports and every event in the
 table is read as an `AudioStream`, so OGG is the tested path.
 
+## Music playlist
+
+Music lives in `assests/audio/music/`, not next to the effects. `AudioManager`
+scans that folder once at startup and plays every `.ogg`, `.mp3` and `.wav` it
+finds, sorted by file name.
+
+- **Rotation.** When a track ends the next one starts; tracks are never looped
+  (`loop` is cleared on Ogg/MP3 and `loop_mode` is disabled on WAV at runtime).
+  A playlist with a single track loops that track.
+- **SHUFFLE** (default) draws from a shuffled bag: every track plays once before
+  anything repeats, and the track that just ended never starts the next pass.
+  **IN ORDER** walks the sorted list. Switch it in Settings; the choice is saved
+  in `user://save.cfg`.
+- **Crossfade.** Two players on the `Music` bus fade 1.5 s between tracks
+  (`Tuning.MUSIC_CROSSFADE`). The pause card dips the Music bus to 45%, and the
+  volume slider and mute still apply on top.
+- **Duplicates.** A base name exported in several formats is played once;
+  ogg beats mp3 beats wav (`MUSIC_FORMAT_PRIORITY`).
+- **Start.** Music starts after the first key, click, tap or pad press (Web will
+  not play audio before a user gesture), and then carries across the menu, the
+  map and battles without restarting. Quitting stops it cleanly.
+- **Adding a track.** Drop the file in this folder, open the project once so
+  Godot imports it, and the next launch includes it. A file that cannot be
+  loaded is skipped with one warning.
+- **Fallback.** With an empty or missing folder, the old single
+  `assests/audio/music.ogg` still plays as a one-track playlist; with neither,
+  music is off after one warning and nothing errors.
+- **Exports.** The listing comes from `ResourceLoader.list_directory` when the
+  engine has it, plus a `DirAccess` scan with `.import` / `.remap` suffixes
+  stripped. Each export preset also includes the raw files under
+  `assests/audio/music/` (`include_filter`), because an imported audio resource
+  is not stored at its source path in a PCK: that is what makes the scan work on
+  the Web and Android exports.
+
 ## Weapons
 
 | File                  | Trigger                                    |

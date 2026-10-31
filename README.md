@@ -132,9 +132,14 @@ to the menu.
 Music and SFX sliders, mute, reduce motion, touch auto-fire,
 **HIGH-CONTRAST BULLETS** (thicker outline, brighter halo; saved in
 `user://save.cfg`) and **REMAP CONTROLS**, which opens the binding card. The note
-under the sliders always shows the keys that are bound right now. Audio files
-are still postponed: `AudioManager` warns once per missing file and the game runs
-silently.
+under the sliders always shows the keys that are bound right now.
+
+Music is a playlist of every `.ogg` / `.mp3` / `.wav` in
+`assests/audio/music/`. Settings shows **NOW PLAYING**, **PREV**, **NEXT** and a
+**SHUFFLE / IN ORDER** toggle. Shuffle uses a bag, so a full pass plays every
+track once and the track that just ended never starts the next pass; tracks
+cross-fade over 1.5 s. Sound effects are still postponed: `AudioManager` warns
+once per missing file and those events stay silent.
 
 ## What is not in this build yet
 
@@ -311,6 +316,7 @@ depends on the exact values.
 | UI scale and fonts | `UITheme.SIZE_*` (including `SIZE_DISPLAY`), `UITheme.COLOR_*`, the font-name hints in `ui/ui_theme.gd` and the button/card styleboxes |
 | Galaxy layout | `GALAXY_MAP_SIZE`, `GALAXY_BODY_COUNT_MIN/MAX`, `GALAXY_MIN_SPACING`, `GALAXY_EDGE_MARGIN`, `GALAXY_LINKS_PER_BODY`, `GALAXY_MAX_LINK_LENGTH`, `GALAXY_HOME_ANCHOR`, `GALAXY_TAP_RADIUS`, `GALAXY_PAN_SPEED` |
 | Map zoom | `GALAXY_ZOOM_MIN` (0.55), `GALAXY_ZOOM_MAX` (1.7), `GALAXY_ZOOM_STEP`, `GALAXY_ZOOM_SMOOTH` |
+| Music playlist | `MUSIC_ORDER_SHUFFLE` / `MUSIC_ORDER_IN_ORDER`, `MUSIC_CROSSFADE` (1.5 s), `MUSIC_SILENT_DB` (-40), `MUSIC_PAUSE_GAIN` (0.45), `MUSIC_PAUSE_FADE`; the folder and formats in `autoload/audio_manager.gd` (`MUSIC_DIR`, `MUSIC_EXTENSIONS`, `MUSIC_FORMAT_PRIORITY`) |
 | Controls | `CONTROL_ACTIONS`, `CONTROL_FIXED` (pause only), `CONTROL_LABELS` |
 | Body art and tint | `GALAXY_BODY_ART`, `GALAXY_STATION_COLORS`, `GALAXY_TINTS`, `GALAXY_MARKER_TINTS`, `MAP_*` |
 | Map rules | `GALAXY_CITADEL_COUNT`, `GALAXY_CITADELS_FOR_GATE` |
@@ -472,7 +478,10 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assests/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
-- **Audio**: TODO — the project still ships no sound files;
+- **Music**: the playlist in `assests/audio/music/`. Per-track credits (title,
+  author, license, source URL) are in `assests/audio/music/CREDITS.md`, with
+  TODO lines to fill in.
+- **Audio**: TODO — the project still ships no sound effects;
   `assests/audio/README.md` lists every `.ogg` filename `AudioManager` expects,
   the event each one is wired to, and the older names kept for compatibility.
 - Everything else (HUD, map markers and links, tooltips, cards, stick, particles,
