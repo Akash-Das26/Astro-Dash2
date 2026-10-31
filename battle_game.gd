@@ -168,6 +168,11 @@ func _start_fight(fight: Battle) -> void:
 	hud.set_weapon_cooldowns(0.0, 0.0)
 	director.start(battle, ship)
 	hazards.start(battle.asteroid_density)
+	# A citadel gets its own theme; every other fight uses the normal rotation.
+	if battle.has_boss():
+		AudioManager.play_context(&"boss")
+	else:
+		AudioManager.release_context()
 	GameState.change_state(GameState.State.PLAYING)
 
 
@@ -176,6 +181,7 @@ func _end_battle(won: bool) -> void:
 		return
 	_running = false
 	victory = won
+	AudioManager.release_context()
 	director.stop()
 	hazards.stop()
 	hud.set_combo(0, 1.0)
@@ -250,6 +256,7 @@ func _on_retry_campaign() -> void:
 func _go_to_menu() -> void:
 	# Only this battle is abandoned: the campaign, the hull from the last victory
 	# and the energy already banked stay in the save, so CONTINUE is offered.
+	AudioManager.release_context()
 	GameState.back_handler = Callable()
 	get_tree().change_scene_to_file(MENU_SCENE)
 

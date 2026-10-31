@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b7qmuid7yfw01"
+path="res://.godot/imported/n-Dimensions (Main Theme - Retro Ver.mp3-2670fef1dc995f04cc24cb3eec5d8e93.mp3str"
+
+[deps]
+
+source_file="res://assests/audio/music/n-Dimensions (Main Theme - Retro Ver.mp3"
+dest_files=["res://.godot/imported/n-Dimensions (Main Theme - Retro Ver.mp3-2670fef1dc995f04cc24cb3eec5d8e93.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

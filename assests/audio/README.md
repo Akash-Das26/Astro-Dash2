@@ -36,6 +36,11 @@ finds, sorted by file name.
 - **Fallback.** With an empty or missing folder, the old single
   `assests/audio/music.ogg` still plays as a one-track playlist; with neither,
   music is off after one warning and nothing errors.
+- **Boss context.** `Tuning.MUSIC_CONTEXTS` maps a track's base name to a
+  context; `Orbital Colossus` is the `boss` theme. A citadel battle calls
+  `AudioManager.play_context(&"boss")` and the normal rotation resumes with
+  `release_context()` after the fight. Mapped tracks are left out of the shuffle
+  bag and the in-order walk; if the file is missing the context is ignored.
 - **Exports.** The listing comes from `ResourceLoader.list_directory` when the
   engine has it, plus a `DirAccess` scan with `.import` / `.remap` suffixes
   stripped. Each export preset also includes the raw files under

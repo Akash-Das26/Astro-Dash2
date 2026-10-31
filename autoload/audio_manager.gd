@@ -107,6 +107,8 @@ var _music_started: bool = false
 ## everything before anything repeats, and the bag never starts with the track
 ## that just ended.
 var _order: StringName = Tuning.MUSIC_ORDER_SHUFFLE
+## Context track currently playing (empty during the normal rotation).
+var _context: StringName = &""
 var _bag: Array[int] = []
 ## Tracks played before the current one, newest last, for PREVIOUS.
 var _history: Array[int] = []
@@ -193,7 +195,10 @@ func start_music() -> void:
 		return
 	if _music_players[_active_player].playing:
 		return
-	_play_index(_first_index())
+	var index: int = _first_index()
+	if index < 0:
+		return
+	_play_index(index)
 
 
 ## Kept for callers from the single-track era. A known name or path plays that
@@ -204,6 +209,45 @@ func play_music(track: String = "") -> void:
 		_play_index(index)
 	else:
 		start_music()
+
+
+## Plays the track mapped to `context` in Tuning.MUSIC_CONTEXTS, crossfading
+## like any other change. Unknown or missing context does nothing at all.
+func play_context(context: StringName) -> void:
+	var index: int = _context_index(context)
+	if index < 0:
+		return
+	_context = context
+	_music_started = true
+	if _music_players.is_empty():
+		return
+	if index == _current and _music_players[_active_player].playing:
+		return
+	_play_index(index)
+
+
+## Ends the context: the boss track is replaced by the normal rotation.
+func release_context() -> void:
+	if _context == &"":
+		return
+	var was_context: bool = _context_index(_context) == _current
+	_context = &""
+	if was_context:
+		next_track()
+
+
+func _context_index(context: StringName) -> int:
+	for index: int in _track_names.size():
+		var mapped: String = String(Tuning.MUSIC_CONTEXTS.get(_track_names[index], ""))
+		if mapped == String(context):
+			return index
+	return -1
+
+
+func _is_context_index(index: int) -> bool:
+	if index < 0 or index >= _track_names.size():
+		return false
+	return Tuning.MUSIC_CONTEXTS.has(_track_names[index])
 
 
 func next_track() -> void:
@@ -258,9 +302,15 @@ func _normalise_order(order: StringName) -> StringName:
 
 
 func _first_index() -> int:
-	if _order == Tuning.MUSIC_ORDER_IN_ORDER or _tracks.size() <= 1:
-		return 0
-	return randi() % _tracks.size()
+	var candidates: Array[int] = []
+	for index: int in _tracks.size():
+		if not _is_context_index(index):
+			candidates.append(index)
+	if candidates.is_empty():
+		return -1
+	if _order == Tuning.MUSIC_ORDER_IN_ORDER or candidates.size() == 1:
+		return candidates[0]
+	return candidates[randi() % candidates.size()]
 
 
 ## In order: the next slot. Shuffle: draw from the bag, reshuffling when it is
@@ -271,18 +321,33 @@ func _pick_next_index() -> int:
 	if _tracks.size() == 1:
 		return 0
 	if _order == Tuning.MUSIC_ORDER_IN_ORDER:
-		return (_current + 1) % _tracks.size() if _current >= 0 else 0
+		return _next_in_order()
 	if _bag.is_empty():
 		_bag.clear()
 		for index: int in _tracks.size():
-			_bag.append(index)
+			# Boss and other context tracks never enter the normal rotation.
+			if not _is_context_index(index):
+				_bag.append(index)
 		_bag.shuffle()
 		if _bag.size() > 1 and _bag[0] == _current:
 			var last: int = _bag.size() - 1
 			var swapped: int = _bag[0]
 			_bag[0] = _bag[last]
 			_bag[last] = swapped
+	if _bag.is_empty():
+		return -1
 	return _bag.pop_front()
+
+
+## In-order walk that skips context tracks, so a boss theme never lands in the
+## middle of normal play.
+func _next_in_order() -> int:
+	var start: int = _current + 1 if _current >= 0 else 0
+	for step: int in _tracks.size():
+		var index: int = (start + step) % _tracks.size()
+		if not _is_context_index(index):
+			return index
+	return -1
 
 
 func stop_music() -> void:

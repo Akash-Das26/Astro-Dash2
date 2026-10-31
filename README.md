@@ -478,9 +478,12 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assests/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
-- **Music**: the playlist in `assests/audio/music/`. Per-track credits (title,
-  author, license, source URL) are in `assests/audio/music/CREDITS.md`, with
-  TODO lines to fill in.
+- **Music**: the playlist in `assests/audio/music/`. **These tracks require
+  attribution**: `assests/audio/music/CREDITS.md` lists the title, author,
+  license and source URL per track (CC BY 3.0, CC BY-SA 3.0 and CC0, with the
+  license links), and the CC BY-SA track keeps its share-alike terms. The citadel
+  theme is mapped in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it
+  is kept out of the normal shuffle.
 - **Audio**: TODO — the project still ships no sound effects;
   `assests/audio/README.md` lists every `.ogg` filename `AudioManager` expects,
   the event each one is wired to, and the older names kept for compatibility.
