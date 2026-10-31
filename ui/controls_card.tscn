@@ -72,6 +72,7 @@ theme_override_font_sizes/font_size = 20
 text = "X"
 
 [node name="Scroll" type="ScrollContainer" parent="Panel/Margin/Box"]
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
