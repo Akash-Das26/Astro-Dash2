@@ -45,6 +45,8 @@ const WEAPON_CARD_HEIGHT: float = 60.0
 const STATS_WIDTH_HULL: float = 210.0
 const STATS_WIDTH_WEAPONS: float = 300.0
 const FEEDBACK_SECONDS: float = 2.0
+## Clearance above the card grid so the focus ring never touches the tab row.
+const TAB_FOCUS_GAP: float = 8.0
 
 ## The panel has two views: ship upgrades plus hull skins, or the weapon rack.
 ## Both share the left column preview.
@@ -53,6 +55,7 @@ enum Tab { HULL, WEAPONS }
 @onready var _energy_label: Label = $Panel/Margin/Box/Header/EnergyLabel
 @onready var _close_button: Button = $Panel/Margin/Box/Header/CloseButton
 @onready var _scroll: ScrollContainer = $Panel/Margin/Box/Scroll
+@onready var _page: VBoxContainer = $Panel/Margin/Box/Scroll/Page
 @onready var _body: HBoxContainer = $Panel/Margin/Box/Scroll/Page/Body
 @onready var _stats_column: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Stats
 @onready var _stats_label: Label = $Panel/Margin/Box/Scroll/Page/Body/Stats/Value
@@ -93,6 +96,13 @@ var _feedback_tween: Tween
 
 
 func _ready() -> void:
+	# The first card's focus ring is drawn outside its own rect; without a gap
+	# under the tab row it pokes up into the tabs.
+	var spacer := Control.new()
+	spacer.name = "FocusGap"
+	spacer.custom_minimum_size = Vector2(0.0, TAB_FOCUS_GAP)
+	_page.add_child(spacer)
+	_page.move_child(spacer, 0)
 	_preview_id = Skins.selected()
 	_preview_weapon = SaveData.weapon_primary
 	_close_button.pressed.connect(close)
@@ -369,7 +379,9 @@ func _refresh_preview() -> void:
 		"font_color", UITheme.COLOR_TEXT if unlocked else UITheme.COLOR_MUTED
 	)
 	if equipped:
-		_preview_status.text = "EQUIPPED"
+		# The EQUIP button already reads EQUIPPED; saying it twice under the name
+		# was the duplicate. This line reports the unlock state only.
+		_preview_status.text = "UNLOCKED"
 		_preview_status.add_theme_color_override("font_color", UITheme.COLOR_ACCENT)
 	elif unlocked:
 		_preview_status.text = "UNLOCKED"
