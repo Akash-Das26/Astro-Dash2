@@ -105,10 +105,12 @@ const ART: Array[Dictionary] = [
 		"url": "https://hexadecimalwtf.itch.io/space-pixels",
 	},
 	{
-		"title": "Space backgrounds pack",
-		"author": "TODO",
-		"license": "TODO",
-		"url": "TODO",
+		"title": "Backgrounds (black/blue/purple/red tiles)",
+		"author": "unknown",
+		"license": "unknown",
+		"url": "",
+		# The card shows this line instead of "title — author (license)".
+		"display": "Backgrounds: source to be confirmed",
 	},
 ]
 

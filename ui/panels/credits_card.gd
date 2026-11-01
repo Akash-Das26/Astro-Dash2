@@ -103,13 +103,15 @@ func _build() -> void:
 			String(group.get("title", "")), GROUP_SIZE, Color(1.0, 0.85, 0.45), width
 		)
 		for entry: Dictionary in group.get("entries", []):
-			_add_line(
-				"%s — %s (%s)" % [
+			# An entry with "display" writes its own line: the background tiles have
+			# no known author, so they must not read "unknown — unknown".
+			var line_text: String = String(entry.get("display", ""))
+			if line_text.is_empty():
+				line_text = "%s — %s (%s)" % [
 					String(entry.get("title", "")), String(entry.get("author", "")),
 					String(entry.get("license", "")),
-				],
-				ENTRY_SIZE, Color(0.86, 0.92, 1.0), width
-			)
+				]
+			_add_line(line_text, ENTRY_SIZE, Color(0.86, 0.92, 1.0), width)
 			var detail: String = _detail_for(entry)
 			if not detail.is_empty():
 				_add_line(detail, DETAIL_SIZE, Color(0.55, 0.64, 0.8), width)

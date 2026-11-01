@@ -644,7 +644,7 @@ publishing; nothing was invented.
 | Asset | Author | License | Attribution | Source |
 | --- | --- | --- | --- | --- |
 | Space Pixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | Hex | Free-use terms (author's statement, not a standard license) | not required (credit given) | <https://hexadecimalwtf.itch.io/space-pixels> |
-| Space backgrounds (`assets/backgrounds/background-*.png`) | **TODO — asked in docs/todo.md** | TODO | TODO | TODO |
+| Backgrounds (black/blue/purple/red tiles, `assets/backgrounds/`) | **unknown** | unknown | — | TODO — I must check where these were downloaded |
 | Pixelify Sans font | Stefie Justprince | SIL OFL 1.1 | required (OFL kept at `assets/fonts/pixelify-sans/OFL.txt`) | <https://fonts.google.com/specimen/Pixelify+Sans> |
 | Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (OFL kept at `assets/fonts/Press_Start_2P/OFL.txt`) | <https://fonts.google.com/specimen/Press+Start+2P> |
 | Music — Space Boss Battle Theme (`Orbital Colossus.mp3`) | Matthew Pablo | CC BY 3.0 | required | <https://opengameart.org/content/space-boss-battle-theme> |
