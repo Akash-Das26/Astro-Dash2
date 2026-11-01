@@ -37,9 +37,11 @@ stay in the git-ignored `test_output/`).
 - **A drawn title** (`ASTRO DASH 2`, red with a yellow outline) over an animated
   backdrop: ships with thrusters and asteroids drifting across, a large rock on
   the left, a parallax starfield and a slowly turning warpgate.
-- **NEW GAME / CONTINUE / SETTINGS / QUIT**, left-aligned, with hover and focus
-  highlight from the shared theme. CONTINUE is disabled when no campaign is
-  saved. NEW GAME asks first when a run is in progress.
+- **NEW GAME / CONTINUE / SETTINGS / CREDITS / QUIT**, left-aligned, with hover
+  and focus highlight from the shared theme. CONTINUE is disabled when no
+  campaign is saved. NEW GAME asks first when a run is in progress. CREDITS
+  opens a rolled list of every asset, its author and its license; any key or
+  click pauses the roll, `Esc` / `B` closes it.
 - The footer shows banked energy, the best planets-conquered run and the high
   score.
 
@@ -600,16 +602,25 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
 - **Music**: the playlist in `assets/audio/music/`. **These tracks require
-  attribution**: `assets/audio/music/CREDITS.md` lists the title, author,
-  license and source URL per track (CC BY 3.0, CC BY-SA 3.0 and CC0, with the
-  license links), and the CC BY-SA track keeps its share-alike terms. The citadel
-  theme is mapped in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it
-  is kept out of the normal shuffle.
-- **Sound effects**: TODO — add author, license and source for each pack used
-  by `AudioManager.SOUND_MAP`:
-  - The Essential Retro Video Game Sound Effects Collection (512 sounds) by
-    Juhani Junkala — TODO: license, source URL.
-  - Essential Game Audio pack by Ove Melaa — TODO: license, source URL.
+  attribution** and every one is credited in `config/credits.gd`, in
+  `assets/audio/music/CREDITS.md` (title, author, license, source URL) and on
+  the in-game CREDITS card:
+  - *Space Boss Battle Theme* (`Orbital Colossus.mp3`) — Matthew Pablo, CC BY 3.0
+  - *Space Dimensions (8bit/Retro Version)* — Matthew Pablo, CC BY 3.0
+  - *8-bit Perilous Dungeon* — HydroGene, CC0
+  - *8bit thingy* — extenz, CC BY 3.0
+  - *Prepare for War* — Trevor Lentz, CC BY-SA 3.0 (share-alike; see below)
+
+  Settings shows **NOW PLAYING** as title and author. The citadel theme is mapped
+  in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it is kept out of
+  the normal shuffle.
+- **Sound effects**, from the two packs under `assets/audio/sfx/`:
+  - *512 Sound Effects (8-bit style)* (The Essential Retro Video Game Sound
+    Effects Collection) — SubspaceAudio (Juhani Junkala), CC0, credit given
+    though not required. https://opengameart.org/content/512-sound-effects-8-bit-style
+  - *Ove's Essential Game Audio Pack Collection* — OveMelaa, CC BY 3.0,
+    attribution required. Used files: `gem.ogg`, `click.ogg`, `lvlup.ogg`,
+    `win.ogg`. https://opengameart.org/content/oves-essential-game-audio-pack-collection-160-files-updated
   `assets/audio/README.md` lists every event, the files behind it and the
   per-sound volume trims. **Only the files the game actually plays are kept**
   from each pack (the unused remainder was deleted); the kept files are the ones
@@ -625,17 +636,17 @@ publishing; nothing was invented.
 
 | Asset | Author | License | Attribution | Source |
 | --- | --- | --- | --- | --- |
-| SpacePixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | SpacePixels | TODO | required | TODO |
-| Space backgrounds (`assets/backgrounds/background-*.png`) | Kenney | CC0 | not required | <https://kenney.nl> |
-| Pixelify Sans font | Pixelify Sans authors | SIL OFL 1.1 | required (keep the license with the font) | TODO |
-| Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (keep the license with the font) | TODO |
-| Music — Orbital Colossus (Space Boss Battle Theme) | Matthew Pablo | CC BY 3.0 | required | TODO |
-| Music — Space Dimensions (8bit/Retro Version) | Matthew Pablo | CC BY 3.0 | required | TODO |
-| Music — 8-bit Perilous Dungeon | HydroGene | CC0 | optional | TODO |
-| Music — 8bit thingy | extenz | CC BY 3.0 | required | TODO |
-| Music — Prepare for War | Trevor Lentz | CC BY-SA 3.0 | required — **share-alike: decide whether to keep before publishing** | TODO |
-| SFX — The Essential Retro Video Game Sound Effects Collection | Juhani Junkala | TODO | required | TODO |
-| SFX — Essential Game Audio | Ove Melaa | TODO | required | TODO |
+| SpacePixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | **TODO — asked in docs/todo.md** | TODO | TODO | TODO |
+| Space backgrounds (`assets/backgrounds/background-*.png`) | **TODO — asked in docs/todo.md** | TODO | TODO | TODO |
+| Pixelify Sans font | Stefie Justprince | SIL OFL 1.1 | required (OFL kept at `assets/fonts/pixelify-sans/OFL.txt`) | <https://fonts.google.com/specimen/Pixelify+Sans> |
+| Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (OFL kept at `assets/fonts/Press_Start_2P/OFL.txt`) | <https://fonts.google.com/specimen/Press+Start+2P> |
+| Music — Space Boss Battle Theme (`Orbital Colossus.mp3`) | Matthew Pablo | CC BY 3.0 | required | <https://opengameart.org/content/space-boss-battle-theme> |
+| Music — Space Dimensions (8bit/Retro Version) | Matthew Pablo | CC BY 3.0 | required | <https://opengameart.org/content/space-dimensions-8bitretro-version> |
+| Music — 8-bit Perilous Dungeon | HydroGene | CC0 | optional | <https://opengameart.org/content/8-bit-perilous-dungeon> |
+| Music — 8bit thingy | extenz | CC BY 3.0 | required | <https://opengameart.org/content/8bit-thingy> |
+| Music — Prepare for War | Trevor Lentz | CC BY-SA 3.0 | required — **share-alike: decide whether to keep before publishing** | <https://opengameart.org/content/prepare-for-war> |
+| SFX — 512 Sound Effects (8-bit style) | SubspaceAudio (Juhani Junkala) | CC0 | not required (credit given) | <https://opengameart.org/content/512-sound-effects-8-bit-style> |
+| SFX — Ove's Essential Game Audio Pack Collection | OveMelaa | CC BY 3.0 | required | <https://opengameart.org/content/oves-essential-game-audio-pack-collection-160-files-updated> |
 
 ## License
 

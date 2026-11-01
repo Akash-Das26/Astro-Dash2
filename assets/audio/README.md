@@ -117,8 +117,15 @@ compatibility but no current script calls them.
   `resources/default_bus_layout.tres`), so the two sliders in Settings stay independent.
 - A sound repeated within 30 ms is dropped, which is what stops a scatter volley
   from playing four reports at once.
-- **Credits TODO:** the Juhani Junkala 512-sound pack and Ove Melaa's Essential
-  pack each need an author/license/source line in the main README credits
-  section before shipping. Only the used files from each pack are still in the
-  repository; the deleted remainder does not need attribution but the kept
-  files do.
+- **Credits.** Both packs are credited in the README, in the in-game CREDITS
+  card (`config/credits.gd`) and here:
+  - *512 Sound Effects (8-bit style)* (The Essential Retro Video Game Sound
+    Effects Collection) — SubspaceAudio (Juhani Junkala), CC0, credit given
+    though not required. https://opengameart.org/content/512-sound-effects-8-bit-style
+  - *Ove's Essential Game Audio Pack Collection* — OveMelaa, CC BY 3.0,
+    attribution required. Used files: `gem.ogg`, `click.ogg`, `lvlup.ogg`,
+    `win.ogg`.
+    https://opengameart.org/content/oves-essential-game-audio-pack-collection-160-files-updated
+
+  Only the used files from each pack are still in the repository; the deleted
+  remainder does not need attribution but the kept files do.
