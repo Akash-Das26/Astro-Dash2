@@ -246,48 +246,32 @@ asks where an input came from.
 ## Project structure
 
 ```
-project.godot            960x600 canvas, landscape, nearest filtering, input actions
-resources/default_bus_layout.tres  Master / Music / SFX buses (declared in project settings)
-ui/menu/main_menu.gd/.tscn    front end: title, buttons, settings card, confirm card
-ui/menu/menu_backdrop.gd      drifting ships, rocks and warpgate behind the menu
-ui/map/galaxy_map.gd/.tscn   campaign hub: pan, tooltip, confirm card, summaries
-ui/panels/upgrade_panel.gd/.tscn  upgrade cards, current stats, skin picker
-config/ui_theme.gd           the one theme: pixel font (if present), sizes, colours
-config/config/skins.gd                 hull table, unlock thresholds, selected-skin validation
-game/campaign/galaxy.gd                seeded layout, graph, types, traits, names, battle_for()
-game/campaign/campaign.gd              run state: galaxy cache, pending body, victories/defeats
-game/battle/battle_game.gd/.tscn     arena root: score, combo, energy, waves, boss, end cards
-game/battle/battle.gd                Battle resource (waves, mix, density, difficulty, boss)
-config/config/weapons.gd               the weapon table readers and formatting helpers
-config/config/tuning.gd                every balance number, in one file (see Balancing)
-config/config/upgrades.gd              upgrade table -> prices, ship stats, card labels
-
-autoload/
-  game_state.gd          MENU / PLAYING / PAUSED / GAME_OVER / MAP / BATTLE_WON,
-                         owns tree pause, focus loss and the back button
-  save_data.gd           ConfigFile persistence in user://save.cfg
-  audio_manager.gd       bus volumes, pooled SFX players, music, pitch jitter
-
-entities/
-  player/ship.gd/.tscn   flight, aim, HP, shields, fire, carried hull, skin
-  fx/                    thruster.tscn (shared five-frame flame)
-  enemies/               enemy_base (AI + stats), enemy_bullet, boss_station
-  hazards/               asteroid, hazard_field (drift-in + debris)
-  spawner/               wave_director (Battle -> waves)
-  map/                   body_marker (planet/glow/arrow/check), galaxy_links
-  bullet/                player projectile with three laser tiers
-  effects/               explosion, shockwave, float_text, energy_mote, starfield,
-                         shake_camera
-
-ui/
-  hud.gd/.tscn           landscape bars, boss bar, pause card, victory/game-over cards
-  touch_config/config/controls.gd      virtual stick, aim zone, pause button
-  settings_panel.gd/.tscn  sliders, mute, reduce motion, auto-fire, control notes
-
-tests/                   headless suite and battle bot (see Tests)
-assests/                 sprite packs, backgrounds, fonts and the audio packs; the
-                         name is misspelled on purpose, paths depend on it
+project.godot, export_presets.cfg, icon.svg, icon-192.png, README.md
+                    the root holds nothing but these (and .gitignore)
+autoload/           the four global services: GameState, SaveData, AudioManager,
+                    UIOverlay
+game/battle/        arena root (battle_game), the Battle resource, hazard field,
+                    wave director
+game/campaign/      campaign run state, seeded galaxy
+autoload/           (see above)
+entities/           player/, enemies/, projectiles/, pickups/, fx/, hazards/,
+                    map/ - the things inside the arena
+config/             data and tables only: tuning, difficulty, upgrades, weapons,
+                    skins, controls, ui_theme
+ui/                 menu/, map/, hud/, panels/ (upgrade, settings, controls,
+                    difficulty picker, end/pause/confirm cards)
+assets/             sprites/ (the pack structure is kept), audio/sfx/,
+                    audio/music/, fonts/, backgrounds/
+resources/          default_bus_layout.tres and other shared .tres
+resources/          (further shared resources, if any)
+tests/              headless suite, battle bot, screenshot runner, path checks
+docs/               ARCHITECTURE.md, reorg_plan.md, orphans.md
+reference/          reference videos and screenshots, with a .gdignore so Godot
+                    never imports them
 ```
+
+Dependency rules and the menu -> difficulty -> map -> battle -> result flow are
+in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Collision layers
 
@@ -318,9 +302,11 @@ reference to the ship, and the ship never needs one to them.
 Two headless entry points, no editor needed:
 
 ```bash
-# Logic suite: 123 checks over difficulty healing and defeat rules, shields,
-# upgrades, weapons, the galaxy, audio buses/playlist and key rebinding.
-# Prints PASS/FAIL per check and a SUMMARY line; exits 1 when anything failed.
+# Logic suite: 128 checks - 123 over difficulty healing and defeat rules,
+# shields, upgrades, weapons, the galaxy, audio buses/playlist and key
+# rebinding, plus 5 that assert every res:// path in code and scenes exists
+# (tests/check_paths.gd). Prints PASS/FAIL per check and a SUMMARY line;
+# exits 1 when anything failed.
 godot --headless --path . res://tests/run_tests.tscn
 
 # Battle bot: three 60 s campaign fights (CADET pulse+cannon, SUPERNOVA
@@ -462,8 +448,9 @@ middle of a battle loses that battle but not the run or the energy collected.
 
 ## Asset audit
 
-Every PNG under `assests/`, where it is used, and why anything is unused.
-Paths are relative to `assests/`.
+Every PNG under `assets/`, where it is used, and why anything is unused.
+Paths are relative to `assets/` (the sprite pack rows start at
+`sprites/spacepixels-0.2.0/...`).
 
 | PNG | Used by |
 | --- | --- |
@@ -521,7 +508,8 @@ Unused, deliberately:
 | `spacepixels-0.2.0/.../pixel_ship3_yellow.png` | same alternate art |
 
 `spacepixels-0.1.0` was deleted: every PNG in it was byte-identical to its
-`0.2.0` copy. No file under `res://assests/` is referenced by a missing path.
+`0.2.0` copy. No file under `res://assets/` is referenced by a missing path,
+and `tests/check_paths.gd` keeps it that way.
 
 ## Exporting
 
@@ -545,7 +533,7 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 
 ## Credits
 
-- **SpacePixels** sprite packs: `assests/spacepixels-0.2.0` (ships, lasers,
+- **SpacePixels** sprite packs: `assets/sprites/spacepixels-0.2.0` (ships, lasers,
   asteroids, thrusters, warpgates, bars, planets) and
   `spacepixels_ships_stroked` (the stroked hulls).
 - **Kenney** (<https://kenney.nl>) space backgrounds (`assets/backgrounds/background-*.png`).

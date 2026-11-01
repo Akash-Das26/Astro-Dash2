@@ -46,6 +46,11 @@ tests exercise the real singletons and the real classes.
   and saved volumes applying on load.
 - **Controls:** `pause` cannot be rebound, a binding reaches the InputMap and
   survives a reload, and reset clears it.
+- **Paths (`check_paths.gd`):** every `res://` string in the scripts, scenes and
+  `project.godot` resolves to a real file, the tables that build paths at runtime
+  (`AudioManager.SOUND_MAP`, the music and font folders, the sprite tables) are
+  resolved through their owners instead of by text, no file mentions the old
+  `res://assests/` path, and every script has its `.gd.uid`.
 
 ## The save file
 
