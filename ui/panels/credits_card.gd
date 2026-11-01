@@ -103,8 +103,8 @@ func _build() -> void:
 			String(group.get("title", "")), GROUP_SIZE, Color(1.0, 0.85, 0.45), width
 		)
 		for entry: Dictionary in group.get("entries", []):
-			# An entry with "display" writes its own line: the background tiles have
-			# no known author, so they must not read "unknown — unknown".
+			# An entry with "display" writes its own line instead of the standard
+			# "title — author (license)" one.
 			var line_text: String = String(entry.get("display", ""))
 			if line_text.is_empty():
 				line_text = "%s — %s (%s)" % [
@@ -115,6 +115,10 @@ func _build() -> void:
 			var detail: String = _detail_for(entry)
 			if not detail.is_empty():
 				_add_line(detail, DETAIL_SIZE, Color(0.55, 0.64, 0.8), width)
+			# A license note the entry insists on (the CC BY-SA share-alike).
+			var note: String = String(entry.get("note", ""))
+			if not note.is_empty():
+				_add_line(note, DETAIL_SIZE, Color(0.78, 0.72, 0.95), width)
 		var spacer := Control.new()
 		spacer.custom_minimum_size = Vector2(width, SECTION_GAP)
 		_roll.add_child(spacer)

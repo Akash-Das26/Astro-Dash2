@@ -11,9 +11,8 @@ grep -rn "TODO\|FIXME" --include=*.gd --include=*.tscn --include=*.md . | grep -
 
 | Where | What |
 | --- | --- |
-| Backgrounds (black/blue/purple/red tiles, `assets/backgrounds/`) | **Author and license unknown, I must check where these were downloaded.** No readme, license or credits file ships with the four tiles (`background-black/blue/purple/red.png`, ~5 KB each), and their names match no pack in the repo. The credits card shows "Backgrounds: source to be confirmed". |
 | `assets/fonts/` | **Verify** the two Google Fonts pages used as sources: <https://fonts.google.com/specimen/Pixelify+Sans> and <https://fonts.google.com/specimen/Press+Start+2P>. Both fonts ship with their `OFL.txt` next to the file. |
-| `assets/audio/music/Prepare for War.mp3` | **CC BY-SA 3.0 (share-alike).** Decide before publishing whether to keep it; to disable, add `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE` or delete the file. Nothing in the code depends on it. |
+| `assets/audio/music/Prepare for War.mp3` | **Decided: keep, unmodified.** CC BY-SA 3.0 (share-alike) applies to this track, which ships as a separate, unedited audio file; credit as "Trevor Lentz". To switch it off without deleting it, add `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE`. |
 
 ## Known limits, not TODOs
 

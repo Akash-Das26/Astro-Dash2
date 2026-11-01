@@ -172,9 +172,9 @@ events with no file are reported in a single startup warning.
 
 ## What is not in this build yet
 
-- **The CC BY-SA track is a publishing decision.** *Prepare for War* by Trevor
-  Lentz is share-alike: keep it and the derivative work is bound by CC BY-SA
-  3.0, or drop the track before publishing. It is listed in `docs/todo.md`.
+- **The CC BY-SA track stays.** *Prepare for War* by Trevor Lentz is included
+  unmodified as a separate audio file and keeps its own CC-BY-SA 3.0 license;
+  the rest of the game is not derivative of it. See Credits.
 - **No how-to-play card in game.** The rules are in this README (the `C` card
   lists the live bindings, not the rules).
 - **Headless only for tests.** Audio output, touch and the Android build were
@@ -601,9 +601,8 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   Feel free to add a comment with a link." — no credit required; credit given.
   <https://hexadecimalwtf.itch.io/space-pixels>
 - **Backgrounds** (`assets/backgrounds/background-*.png`, the black, blue,
-  purple and red tiles): **author and license unknown**; the pack shipped no
-  readme, license or credits file. I must check where these were downloaded —
-  see `docs/todo.md`. No credit is invented here.
+  purple and red tiles) also come from **Space Pixels** by **Hex**, under the
+  same free-use terms above: <https://hexadecimalwtf.itch.io/space-pixels>.
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
@@ -621,9 +620,10 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it is kept out of
   the normal shuffle.
 
-  **CC BY-SA 3.0 (share-alike).** *Prepare for War* by Trevor Lentz is kept:
-  decide before publishing whether to keep it; to disable, add
-  `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE` or delete the file.
+  **CC BY-SA 3.0 (share-alike).** *Prepare for War* by Trevor Lentz is kept.
+  This track keeps its own CC-BY-SA 3.0 license and is included unmodified as a
+  separate audio file. It can still be switched off without deleting it by
+  adding `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE`.
 - **Sound effects**, from the two packs under `assets/audio/sfx/`:
   - *512 Sound Effects (8-bit style)* (The Essential Retro Video Game Sound
     Effects Collection) — SubspaceAudio (Juhani Junkala), CC0, credit given
@@ -647,14 +647,14 @@ publishing; nothing was invented.
 | Asset | Author | License | Attribution | Source |
 | --- | --- | --- | --- | --- |
 | Space Pixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | Hex | Free-use terms (author's statement, not a standard license) | not required (credit given) | <https://hexadecimalwtf.itch.io/space-pixels> |
-| Backgrounds (black/blue/purple/red tiles, `assets/backgrounds/`) | **unknown** | unknown | — | TODO — I must check where these were downloaded |
+| Space Pixels background tiles (black/blue/purple/red, `assets/backgrounds/`) | Hex | Free-use terms (author's statement, not a standard license) | not required (credit given) | <https://hexadecimalwtf.itch.io/space-pixels> |
 | Pixelify Sans font | Stefie Justprince | SIL OFL 1.1 | required (OFL kept at `assets/fonts/pixelify-sans/OFL.txt`) | <https://fonts.google.com/specimen/Pixelify+Sans> |
 | Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (OFL kept at `assets/fonts/Press_Start_2P/OFL.txt`) | <https://fonts.google.com/specimen/Press+Start+2P> |
 | Music — Space Boss Battle Theme (`Orbital Colossus.mp3`) | Matthew Pablo | CC BY 3.0 | required | <https://opengameart.org/content/space-boss-battle-theme> |
 | Music — Space Dimensions (8bit/Retro Version) | Matthew Pablo | CC BY 3.0 | required | <https://opengameart.org/content/space-dimensions-8bitretro-version> |
 | Music — 8-bit Perilous Dungeon | HydroGene | CC0 | optional | <https://opengameart.org/content/8-bit-perilous-dungeon> |
 | Music — 8bit thingy | extenz | CC BY 3.0 | required | <https://opengameart.org/content/8bit-thingy> |
-| Music — Prepare for War | Trevor Lentz | CC BY-SA 3.0 | required — **share-alike: decide whether to keep before publishing** | <https://opengameart.org/content/prepare-for-war> |
+| Music — Prepare for War | Trevor Lentz | CC BY-SA 3.0 | required — kept unmodified; **share-alike applies to this track** | <https://opengameart.org/content/prepare-for-war> |
 | SFX — 512 Sound Effects (8-bit style) | SubspaceAudio (Juhani Junkala) | CC0 | not required (credit given) | <https://opengameart.org/content/512-sound-effects-8-bit-style> |
 | SFX — Ove's Essential Game Audio Pack Collection | OveMelaa | CC BY 3.0 | required | <https://opengameart.org/content/oves-essential-game-audio-pack-collection-160-files-updated> |
 

@@ -8,6 +8,8 @@ extends RefCounted
 
 const CODE_LINE: String = "Code: MIT, © 2026 Akash Das"
 const ENGINE_LINE: String = "Made with Godot Engine"
+## Shown under the Prepare for War entry, on the card and in the README.
+const SHARE_ALIKE_NOTE: String = "This track keeps its own CC-BY-SA 3.0 license and is included unmodified as a separate audio file."
 
 const LICENSE_URLS: Dictionary = {
 	&"cc_by_3": "https://creativecommons.org/licenses/by/3.0/",
@@ -60,6 +62,7 @@ const MUSIC: Dictionary = {
 		"license": "CC BY-SA 3.0",
 		"license_key": &"cc_by_sa_3",
 		"url": "https://opengameart.org/content/prepare-for-war",
+		"note": SHARE_ALIKE_NOTE,
 	},
 }
 
@@ -95,8 +98,8 @@ const FONTS: Array[Dictionary] = [
 	},
 ]
 
-## Art packs. The sprite pack is the author's own free-use statement, not a
-## standard license; the background tiles are still looking for their source.
+## Art. Every sprite and every background tile comes from Space Pixels, which is
+## the author's own free-use statement rather than a standard license.
 const ART: Array[Dictionary] = [
 	{
 		"title": "Space Pixels",
@@ -105,12 +108,10 @@ const ART: Array[Dictionary] = [
 		"url": "https://hexadecimalwtf.itch.io/space-pixels",
 	},
 	{
-		"title": "Backgrounds (black/blue/purple/red tiles)",
-		"author": "unknown",
-		"license": "unknown",
-		"url": "",
-		# The card shows this line instead of "title — author (license)".
-		"display": "Backgrounds: source to be confirmed",
+		"title": "Space Pixels (background tiles)",
+		"author": "Hex",
+		"license": "Free to use (author's terms)",
+		"url": "https://hexadecimalwtf.itch.io/space-pixels",
 	},
 ]
 

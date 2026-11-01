@@ -22,11 +22,14 @@ Every file in this folder has a credit above; nothing is uncredited.
 
 ## Notes
 
-- **`Preparing for War.mp3` is share-alike (CC BY-SA 3.0).** Keep it and the
-  published game is bound by CC BY-SA 3.0; the author asks for credit as
-  "Trevor Lentz". To ship without it, add `"Preparing for War"` to
-  `Tuning.MUSIC_EXCLUDE` (see `assets/audio/README.md`) or delete the file.
-  Nothing in the code depends on the track.
+- **`Preparing for War.mp3` is share-alike (CC BY-SA 3.0) and stays in the
+  playlist.** This track keeps its own CC-BY-SA 3.0 license and is included
+  unmodified as a separate audio file; the rest of the game is not a derivative
+  of it. The author asks for credit as "Trevor Lentz", which the credits card
+  and the README both give. Nothing edits or re-encodes the file: no script
+  writes to this folder. To switch it off without deleting it, add
+  `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE` (see
+  `assets/audio/README.md`).
 - `8bit.mp3` and `8bit.wav` are the same track in two formats. The playlist
   plays a base name once and prefers ogg over mp3 over wav, so `8bit.wav` is
   skipped while `8bit.mp3` is present. Both are credited.
