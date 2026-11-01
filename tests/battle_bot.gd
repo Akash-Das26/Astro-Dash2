@@ -25,6 +25,9 @@ const PAUSE_AT: float = 10.0
 const BALANCE_TIME_SCALE: float = 4.0
 ## Every weapon is owned here so both hardpoints can hold any pair.
 const ALL_WEAPONS: Array[StringName] = [&"pulse", &"cannon", &"scatter", &"rail", &"missile"]
+## A boss row runs this long, so even a losing loadout has time to bring the
+## station down before the row ends.
+const BOSS_SECONDS: float = 90.0
 
 var _rows: Array[Dictionary] = []
 var _battle: Node = null
@@ -46,6 +49,12 @@ var _last_hp_tracked: int = 0
 ## Set when a station appears in the run, so a boss row can prove it was flown
 ## against the boss and not only against its escort.
 var _boss_seen: bool = false
+## The station's HP every 10 s of a boss row, as "t=10s 120/140" strings.
+var _boss_hp_log: PackedStringArray = []
+## The station's largest HP, kept after it dies and the battle drops the node.
+var _boss_max_seen: int = 0
+## HP the ship lost while the station was in each third of its health bar.
+var _phase_damage: Dictionary = {}
 ## `-- --probe` runs a single 12 s row with a frame-by-frame log, for working
 ## out why a battle is not simulating.
 var _probe: bool = false
@@ -84,8 +93,16 @@ func _ready() -> void:
 	# no forced victory or kill, and prints the hull left plus who hurt the ship.
 	var balance_mode: StringName = _requested_mode()
 	var band_token: String = _requested_band()
-	if balance_mode != &"":
-		var target: StringName = _pick_body(band_token)
+	if balance_mode != &"" and band_token == "boss":
+		# A station row starts its own fight: the escort waves are stopped and
+		# the station flies in on the first frame, so the whole 90 s measures it.
+		_rows = [{
+			"mode": balance_mode, "primary": &"pulse", "secondary": &"cannon",
+			"seconds": BOSS_SECONDS, "balance": true, "boss_mode": true,
+			"body": &"", "band_token": "boss",
+			"label": "BOSS %s" % String(balance_mode).to_upper(),
+		}]
+	elif balance_mode != &"":
 		_rows = [{
 			"mode": balance_mode, "primary": &"pulse", "secondary": &"cannon",
 			"seconds": 60.0, "balance": true,
@@ -96,7 +113,7 @@ func _ready() -> void:
 			# clear the escorts from the first second: the point is to measure the
 			# boss, and a fresh hull is what makes that comparable across runs.
 			"clear_at": 0.0 if band_token == "citadel" or band_token == "gate" else 40.0,
-			"body": target, "band_token": band_token,
+			"body": &"", "band_token": band_token,
 			"label": "BALANCE %s band %s" % [String(balance_mode).to_upper(), band_token],
 		}]
 	for row: Dictionary in _rows:
@@ -125,6 +142,14 @@ func _run_row(row: Dictionary) -> void:
 	SaveData.shield_mode = Tuning.SHIELD_MODE_AUTO
 
 	var target: StringName = StringName(row.get("body", &""))
+	if target == &"" and bool(row.get("balance", false)):
+		# After begin_campaign, never before: the id has to come from this row's
+		# galaxy, or a "citadel" id can belong to a plain planet in the new one.
+		var token: String = String(row.get("band_token", ""))
+		target = _pick_body("citadel" if token == "boss" else token)
+		if target == &"":
+			_problems.append("%s: no body in band %s" % [mode, token])
+			return
 	if target == &"":
 		var open: Array[StringName] = Campaign.attackable()
 		if open.is_empty():
@@ -149,6 +174,8 @@ func _run_row(row: Dictionary) -> void:
 		return
 	_last_hp_tracked = _ship.hp
 	_damage_by_kind.clear()
+	if bool(row.get("boss_mode", false)):
+		_start_boss_fight()
 	print(
 		"BOT hull %d/%d  shield %d/%d  primary %s  secondary %s"
 		% [
@@ -161,6 +188,9 @@ func _run_row(row: Dictionary) -> void:
 	_fps_samples.clear()
 	_pause_tested = false
 	_boss_seen = false
+	_boss_hp_log.clear()
+	_phase_damage.clear()
+	_boss_max_seen = 0
 	_wraps = 0
 	_out_of_bounds = 0
 	_min_x = INF
@@ -211,6 +241,7 @@ func _drive(row: Dictionary) -> void:
 		_steer(elapsed)
 		if elapsed >= next_sample:
 			next_sample += 10.0
+			_boss_hp_log.append(_boss_hp_line(elapsed))
 			_samples.append(int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)))
 			_fps_samples.append(Engine.get_frames_per_second())
 			print(
@@ -354,6 +385,73 @@ func _clear_wave(keep_boss: bool = false) -> void:
 		boss.take_damage(99999)
 
 
+## Stops the escort waves and calls the station in immediately, through the
+## battle's own spawn path: this is the only way to guarantee 90 s against the
+## station, since it normally arrives after the director's last wave.
+func _start_boss_fight() -> void:
+	var director: WaveDirector = _battle.director
+	if director != null:
+		director.stop()
+	for child: Node in _battle.enemies.get_children():
+		child.queue_free()
+	_battle.call("_spawn_boss")
+	var boss: Node = _battle.get("_boss") as Node
+	if boss == null:
+		_problems.append("boss row: the station did not spawn")
+		return
+	var board: Battle = _battle.get("battle") as Battle
+	print(
+		"BOT boss spawn station_hp=%d battle=%s mode_hp=%d color=%s"
+		% [
+			int(boss.get("max_hp")), board.title if board != null else "-",
+			board.boss_hp if board != null else -1,
+			String(board.boss_color) if board != null else "-",
+		]
+	)
+
+
+## "t=10s 120/140", or "t=10s gone" once the station has died.
+func _boss_hp_line(elapsed: float) -> String:
+	var boss: Node = _battle.get("_boss") as Node if _battle != null else null
+	if boss == null or not is_instance_valid(boss):
+		return "t=%ds gone" % int(elapsed)
+	return "t=%ds %d/%d" % [int(elapsed), int(boss.get("hp")), int(boss.get("max_hp"))]
+
+
+## The station has one attack (a five-dot fan), so the phases here are the
+## thirds of its health bar: which stage of the fight actually hurt the ship.
+func _boss_phase(hp_fraction: float) -> String:
+	if hp_fraction > 0.66:
+		return "100-66%"
+	if hp_fraction > 0.33:
+		return "66-33%"
+	return "33-0%"
+
+
+## Everything a boss row exists to answer: did the station die, how long did the
+## hull hold, and which third of the fight did the damage.
+func _report_boss() -> void:
+	var boss: Node = _battle.get("_boss") as Node if _battle != null else null
+	var boss_alive: bool = boss != null and is_instance_valid(boss)
+	var boss_hp: int = int(boss.get("hp")) if boss_alive else 0
+	var boss_max: int = int(boss.get("max_hp")) if boss_alive else _boss_max_seen
+	var outcome: String = "STATION LEFT"
+	if not _ship.alive:
+		outcome = "SHIP DOWN"
+	elif _battle.victory:
+		outcome = "STATION DOWN"
+	print(
+		"BOT boss outcome=%s station=%d/%d hull=%d/%d boss_damage=%d damage: %s"
+		% [
+			outcome, boss_hp, boss_max, _ship.hp, _ship.max_hp,
+			int(_damage_by_kind.get(&"boss", 0)), _damage_report(),
+		]
+	)
+	print("BOT boss hp %s" % ", ".join(_boss_hp_log))
+	for phase: String in ["100-66%", "66-33%", "33-0%"]:
+		print("BOT boss phase %s damage=%d" % [phase, int(_phase_damage.get(phase, 0))])
+
+
 func _kill_ship() -> void:
 	for attempt: int in 8:
 		if not _ship.alive:
@@ -399,10 +497,12 @@ func _probe_enemy(enemy: EnemyBase) -> void:
 ## The ship records the source of the last hit as metadata, so the report can
 ## name the attacker without any gameplay code knowing about it.
 func _track_boss() -> void:
-	if _boss_seen or _battle == null or not is_instance_valid(_battle):
+	if _battle == null or not is_instance_valid(_battle):
 		return
 	var boss: Node = _battle.get("_boss") as Node
-	_boss_seen = boss != null and is_instance_valid(boss)
+	if boss != null and is_instance_valid(boss):
+		_boss_seen = true
+		_boss_max_seen = maxi(_boss_max_seen, int(boss.get("max_hp")))
 
 
 func _track_damage() -> void:
@@ -412,14 +512,19 @@ func _track_damage() -> void:
 		var source: StringName = StringName(_ship.get_meta("last_damage_source", &"unknown"))
 		var lost: int = _last_hp_tracked - _ship.hp
 		_damage_by_kind[source] = int(_damage_by_kind.get(source, 0)) + lost
-	_last_hp_tracked = _ship.hp
+		var boss: Node = _battle.get("_boss") as Node if _battle != null else null
+		if boss != null and is_instance_valid(boss):
+			var max_hp: int = maxi(int(boss.get("max_hp")), 1)
+			var phase: String = _boss_phase(float(int(boss.get("hp"))) / float(max_hp))
+			_phase_damage[phase] = int(_phase_damage.get(phase, 0)) + lost
+		_last_hp_tracked = _ship.hp
 
 
 ## The band token on the command line: "1".."4" (GALAXY_BANDS index + 1), or
 ## "citadel" / "gate". Empty means "the first attackable body".
 func _requested_band() -> String:
 	for arg: String in OS.get_cmdline_user_args():
-		if arg == "citadel" or arg == "gate":
+		if arg == "citadel" or arg == "gate" or arg == "boss":
 			return arg
 		if arg.length() == 1 and arg.is_valid_int():
 			return arg
@@ -430,11 +535,11 @@ func _requested_band() -> String:
 ## really measures that band's mix. Returns an empty id when the seed has none.
 func _pick_body(token: String) -> StringName:
 	var map: Galaxy = Campaign.galaxy()
-	if token == "citadel" or token == "gate":
+	if token == "citadel" or token == "gate" or token == "boss":
 		for body_id: StringName in map.order:
 			if token == "gate" and map.is_gate(body_id):
 				return body_id
-			if token == "citadel" and map.has_boss(body_id):
+			if (token == "citadel" or token == "boss") and map.has_boss(body_id):
 				return body_id
 		return &""
 	if token.is_empty():
@@ -497,6 +602,8 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 				100.0 * float(_ship.hp) / float(maxi(_ship.max_hp, 1)), _damage_report(),
 			]
 		)
+		if bool(row.get("boss_mode", false)):
+			_report_boss()
 		if String(row.get("band_token")) in ["citadel", "gate"]:
 			print("BOT bossed seen=%s boss_damage=%d" % [
 				str(_boss_seen), int(_damage_by_kind.get(&"boss", 0)),

@@ -78,3 +78,47 @@ Summed over all 66 rows, worst first. `contact` is hull-on-hull damage,
 - Every row wrapped at least twice and no row reported the ship outside the
   arena; node count never grew by more than 200 over a run except where a fight
   was still spawning (`+63` worst).
+
+## Boss fights (stage 18)
+
+`-- <difficulty> boss` starts a citadel battle, stops the escort waves and calls
+the station in on the first frame, then flies 90 s of game time at 4x with pulse
+laser + heavy cannon and no upgrades, three runs per mode. **Hull** is the ship's
+HP when the row ended, **station** is the station's HP then, and **phases** split
+the hull lost by thirds of the station's own health bar.
+
+| Difficulty | Run | Hull left | Station left | Boss damage | Phase that hurt most |
+| --- | --- | --- | --- | --- | --- |
+| cadet | 1 | 0/100 | 58/184 | 50 | 66-33% (44) |
+| cadet | 2 | 12/100 | 0/162 | 40 | 100-66% (56) |
+| cadet | 3 | 58/100 | 0/155 | 30 | 100-66% (32) |
+| vector | 1 | 0/100 | 122/248 | 30 | 100-66% (94) |
+| vector | 2 | 1/100 | 0/275 | 84 | 100-66% (60) |
+| vector | 3 | 13/100 | 0/158 | 72 | 100-66% (51) |
+| supernova | 1 | 0/100 | 111/231 | 64 | 100-66% (78) |
+| supernova | 2 | 0/100 | 69/198 | 82 | 100-66% (74) |
+| supernova | 3 | 0/100 | 45/321 | 82 | 100-66% (74) |
+| event_horizon | 1 | 0/100 | 62/278 | 79 | 100-66% (72) |
+| event_horizon | 2 | 0/100 | 234/291 | 58 | 100-66% (100) |
+| event_horizon | 3 | 0/100 | 54/264 | 100 | 100-66% (51) |
+| singularity | 1 | 0/100 | 140/284 | 74 | 100-66% (86) |
+| singularity | 2 | 0/100 | 464/560 | 74 | 100-66% (100) |
+| singularity | 3 | 0/100 | 201/333 | 100 | 66-33% (60) |
+
+**What the rows say**
+
+- **4 of 15 killed the station** (both CADET runs that survived, two VECTOR
+  runs); in the other 11 the ship died with the station still up, so the mode
+  multiplier on station HP (184 CADET, 248 VECTOR, 198-321 SUPERNOVA,
+  264-291 EVENT HORIZON, 284-560 SINGULARITY) is what turns this into a wall.
+- **The station is the dominant threat.** In 13 of 15 rows the `boss` line is
+  the largest source of hull lost; only the two CADET rows that killed it lost
+  more to asteroids.
+- **Damage is front-loaded.** 13 of 15 rows took their worst beating while the
+  station was still above 66% HP, which is the window where the bot is closing
+  in with the shield up and eating the first volleys; the last third rarely
+  lands a hit because the ship is already dead or the station is nearly gone.
+- Station HP never regenerates: the flat sections in the HP logs are the rows
+  where the ship had already died and nothing was shooting any more.
+
+No tuning value was changed; this is a measurement only.
