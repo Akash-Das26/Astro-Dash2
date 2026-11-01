@@ -17,14 +17,18 @@ const CARD_ROOT: Dictionary = {
 	&"shield": PAGE + "/Body/Grid/ShieldCard",
 	&"fire": PAGE + "/Body/Grid/FireCard",
 }
-const SKIN_ICON_SIZE: Vector2 = Vector2(56.0, 40.0)
-## The preview box (must match the 210x150 control in the scene) and the column
-## the hull and flame are centred on.
-const PREVIEW_SIZE: Vector2 = Vector2(210.0, 150.0)
+## The row of ten thumbnails is the last thing on the page; 34 px of height keeps
+## the wearing line underneath inside the panel at 960x600.
+const SKIN_ICON_SIZE: Vector2 = Vector2(52.0, 34.0)
+## The preview box (must match the 210x124 control in the scene) and the column
+## the hull and flame are centred on. The height is what the hull, the tail gap
+## and a full flame need; the page below it still has to fit 568 px, so the box
+## may not grow.
+const PREVIEW_SIZE: Vector2 = Vector2(210.0, 124.0)
 const PREVIEW_CENTER_X: float = 105.0
 ## The multiplier applied to the skin's own battle scale, so every skin is
 ## drawn at the same size whatever the source texture is.
-const PREVIEW_HULL_ZOOM: float = 2.0
+const PREVIEW_HULL_ZOOM: float = 1.7
 ## Battle mounts the flame at 1.1 against the hull's scale (thruster.tscn).
 ## Keeping that ratio is what makes the preview match the real ship: the whole
 ## ship is scaled here, never the flame on its own.
@@ -336,7 +340,7 @@ func _refresh_skins() -> void:
 ## the same way the ship is built in battle: the flame starts at the tail and
 ## burns away from the nose. The block is sized below the box so the skin name
 ## underneath stays clear at every skin size.
-func _place_preview_pair(hull_height: float, alpha: float) -> void:
+func _place_preview_pair(hull_height: float, alpha: float, zoom: float) -> void:
 	var amount: float = lerpf(
 		Tuning.THRUSTER_IDLE_SCALE, Tuning.THRUSTER_FULL_SCALE, PREVIEW_THRUST
 	)
@@ -345,6 +349,17 @@ func _place_preview_pair(hull_height: float, alpha: float) -> void:
 	# and only as long as the tallest frame's stack of rows.
 	var flame_length: float = Tuning.THRUSTER_BAR_ROWS.back() * flame_scale * amount
 	var block: float = hull_height + Tuning.THRUSTER_TAIL_GAP + flame_length
+	# The tallest skin could still exceed the box, so the WHOLE pair shrinks to
+	# fit: the hull and the flame keep their battle ratio and the name label
+	# below the box can never be reached by the flame.
+	var room: float = PREVIEW_SIZE.y - PREVIEW_MARGIN * 2.0
+	if block > room and block > 0.0:
+		var shrink: float = room / block
+		hull_height *= shrink
+		flame_scale *= shrink
+		flame_length *= shrink
+		block = hull_height + Tuning.THRUSTER_TAIL_GAP + flame_length
+		_preview_ship.scale = Vector2.ONE * zoom * shrink
 	var top: float = maxf(PREVIEW_MARGIN, (PREVIEW_SIZE.y - block) * 0.5)
 	var tail: float = top + hull_height + Tuning.THRUSTER_TAIL_GAP
 	_preview_ship.position = Vector2(PREVIEW_CENTER_X, top + hull_height * 0.5)
@@ -373,7 +388,7 @@ func _refresh_preview() -> void:
 	var height: float = 0.0
 	if texture != null:
 		height = float(texture.get_height()) * zoom
-	_place_preview_pair(height, alpha)
+	_place_preview_pair(height, alpha, zoom)
 	_preview_name.text = Skins.title(id)
 	_preview_name.add_theme_color_override(
 		"font_color", UITheme.COLOR_TEXT if unlocked else UITheme.COLOR_MUTED

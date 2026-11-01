@@ -64,6 +64,12 @@ func _ready() -> void:
 	if not mode.is_empty():
 		await get_tree().process_frame
 		_apply_mode(node, mode, option)
+		# Container layout needs two passes to settle, then one more idle frame so
+		# a card that was just opened has sorted its children. Capturing earlier
+		# shows clipping that is capture timing, not a layout defect.
+		await get_tree().process_frame
+		await get_tree().process_frame
+		await get_tree().process_frame
 	for _frame: int in maxi(frames, 1):
 		await get_tree().process_frame
 	# Wait for the frame to actually be drawn before reading the framebuffer.

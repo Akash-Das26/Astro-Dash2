@@ -44,13 +44,13 @@ func _ready() -> void:
 ## from the hull instead of jumping. Re-applied per frame so a frame drawn from
 ## a different top row would still land correctly.
 ##
-## A Sprite2D scales around its texture centre, so the offset has to follow the
-## current scale: at a fixed half-height a bright 1.3x flame would shift its top
-## edge a few pixels UP, into the hull it is supposed to sit behind. `_apply()`
-## therefore re-syncs after it sets the scale.
+## A Sprite2D applies `offset` in the texture's own (unscaled) pixels and then
+## scales the result around the node origin. Pinning the top edge therefore needs
+## the half-height WITHOUT the scale: with `half * scale` the top edge lands at
+## (half*scale - half) * scale below the anchor, which grows with the flame and
+## pushed it onto the hull above and the label below.
 func _sync_offset() -> void:
-	var half: float = Tuning.THRUSTER_ART_SIZE * 0.5
-	offset = Vector2(0.0, half * absf(scale.y))
+	offset = Vector2(0.0, Tuning.THRUSTER_ART_SIZE * 0.5)
 
 
 ## Per-fighter flame size. Kept separate from `scale` so the thrust lerp can
@@ -88,6 +88,5 @@ func _apply() -> void:
 		return
 	var amount: float = lerpf(Tuning.THRUSTER_IDLE_SCALE, Tuning.THRUSTER_FULL_SCALE, _thrust)
 	scale = _base_scale * amount
-	_sync_offset()
 	modulate.a = 0.55 + 0.45 * _thrust
 	speed_scale = 0.7 + 0.7 * _thrust

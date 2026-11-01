@@ -98,11 +98,11 @@ vertical_scroll_mode = 3
 [node name="Page" type="VBoxContainer" parent="Panel/Margin/Box/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Body" type="HBoxContainer" parent="Panel/Margin/Box/Scroll/Page"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="Stats" type="VBoxContainer" parent="Panel/Margin/Box/Scroll/Page/Body"]
 custom_minimum_size = Vector2(210, 0)
@@ -125,7 +125,7 @@ SHIELDS   0/3
 FIRE       1x"
 
 [node name="Preview" type="Control" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
-custom_minimum_size = Vector2(210, 150)
+custom_minimum_size = Vector2(210, 124)
 layout_mode = 2
 mouse_filter = 2
 
@@ -382,7 +382,7 @@ autowrap_mode = 2
 
 [node name="Skins" type="VBoxContainer" parent="Panel/Margin/Box/Scroll/Page"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="Title" type="Label" parent="Panel/Margin/Box/Scroll/Page/Skins"]
 layout_mode = 2

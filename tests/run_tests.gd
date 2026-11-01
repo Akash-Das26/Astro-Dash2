@@ -20,6 +20,7 @@ const SHIP_SCENE: PackedScene = preload("res://entities/player/ship.tscn")
 const FIGHTER_SCENE: PackedScene = preload("res://entities/enemies/enemy_base.tscn")
 const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
 const MAP_SCENE: PackedScene = preload("res://ui/map/galaxy_map.tscn")
+const UPGRADE_SCENE: PackedScene = preload("res://ui/panels/upgrade_panel.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_test_thrusters()
 	_test_overlays()
 	_test_banner_cards()
+	await _test_upgrade_layout()
 	_test_galaxy()
 	_test_audio()
 	_test_controls()
@@ -248,6 +250,91 @@ func _test_banner_cards() -> void:
 	_reset_state()
 
 
+## The Hull & Ship page must hold the stats, the preview with its flame, the
+## name and status lines, EQUIP, the ten thumbnails and the wearing line inside
+## the panel at 960x600 -- and the flame may never reach the name label.
+func _test_upgrade_layout() -> void:
+	var panel := UPGRADE_SCENE.instantiate() as Control
+	add_child(panel)
+	panel.call("open")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var inner := panel.get_node_or_null("Panel/Margin") as Control
+	var scroll := panel.get_node_or_null("Panel/Margin/Box/Scroll") as ScrollContainer
+	var page := panel.get_node_or_null("Panel/Margin/Box/Scroll/Page") as Control
+	if inner == null or scroll == null or page == null:
+		check("upgrade panel nodes resolve", false)
+		panel.queue_free()
+		return
+	var needed: Vector2 = page.get_combined_minimum_size()
+	print(
+		"LAYOUT panel=%s inner=%s scroll=%s page_min=%s"
+		% [panel.get_global_rect(), inner.get_global_rect(), scroll.get_global_rect(), needed]
+	)
+	check(
+		"the hull page fits its scroll box",
+		needed.y <= scroll.size.y + 0.5,
+		"page needs %.0f, scroll is %.0f" % [needed.y, scroll.size.y]
+	)
+	check(
+		"the hull page fits across",
+		needed.x <= scroll.size.x + 0.5,
+		"page needs %.0f, scroll is %.0f" % [needed.x, scroll.size.x]
+	)
+	for child: Node in page.get_children():
+		var control := child as Control
+		if control == null or not control.visible:
+			continue
+		check(
+			"page child %s sits inside the panel" % control.name,
+			inner.get_global_rect().encloses(control.get_global_rect()),
+			"%s vs %s" % [control.get_global_rect(), inner.get_global_rect()]
+		)
+	var flame := panel.get_node_or_null(
+		"Panel/Margin/Box/Scroll/Page/Body/Stats/Preview/Thruster"
+	) as Thruster
+	var preview := panel.get_node_or_null(
+		"Panel/Margin/Box/Scroll/Page/Body/Stats/Preview"
+	) as Control
+	var name_label := panel.get_node_or_null(
+		"Panel/Margin/Box/Scroll/Page/Body/Stats/PreviewName"
+	) as Label
+	check(
+		"preview flame and name resolve",
+		flame != null and preview != null and name_label != null
+	)
+	if flame == null or preview == null or name_label == null:
+		panel.queue_free()
+		return
+	for skin: Dictionary in Skins.all():
+		var id: StringName = skin["id"]
+		panel.call("_on_skin_pressed", id)
+		await get_tree().process_frame
+		var flame_rect := _flame_rect(flame)
+		check(
+			"flame clears the name label for %s" % String(id),
+			not flame_rect.intersects(name_label.get_global_rect()),
+			"flame %s name %s" % [flame_rect, name_label.get_global_rect()]
+		)
+		check(
+			"flame stays inside the preview for %s" % String(id),
+			preview.get_global_rect().encloses(flame_rect),
+			"flame %s box %s" % [flame_rect, preview.get_global_rect()]
+		)
+	panel.queue_free()
+	await get_tree().process_frame
+
+
+## The visible flame: its top edge is pinned to the node origin and it is
+## centred across the hull (see Thruster). Only the BAR_ROWS of the 32x32 texture
+## are opaque, so the height is the longest frame's row count, not the file size.
+func _flame_rect(flame: Thruster) -> Rect2:
+	var size := Vector2(
+		Tuning.THRUSTER_ART_SIZE, float(Tuning.THRUSTER_BAR_ROWS.back())
+	) * flame.scale
+	return Rect2(flame.global_position - Vector2(size.x * 0.5, 0.0), size)
+
+
 ## Overlay smoke test: the C card, the F4 layout audit and the difficulty picker
 ## are opened on top of a live battle and of the map, then closed again. A card
 ## that only works on its own screen is what this catches.
@@ -338,9 +425,11 @@ func _test_thrusters() -> void:
 			flame_width <= hull_width * FLAME_MAX_HULL_RATIO,
 			"flame %.1f hull %.1f" % [flame_width, hull_width]
 		)
+		# Offset is in unscaled texture pixels, so the top edge is at the anchor
+		# exactly when it is half the art with no scale factor folded in.
 		check(
 			"enemy flame %s keeps its top edge on the anchor" % String(kind),
-			absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5 * flame.scale.y) < 0.01,
+			absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5) < 0.01,
 			"offset %.2f" % flame.offset.y
 		)
 
@@ -365,7 +454,7 @@ func _test_thrusters() -> void:
 			)
 			check(
 				"player flame top edge sits on the anchor",
-				absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5 * flame.scale.y) < 0.01,
+				absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5) < 0.01,
 				"offset %.2f" % flame.offset.y
 			)
 		ship.queue_free()
