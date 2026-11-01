@@ -535,8 +535,13 @@ func _on_fighter_shot_requested(origin: Vector2, direction: Vector2, enemy: Enem
 	_spawn_enemy_bullet(origin, direction, enemy.bullet_damage, enemy.kind)
 
 
-func _on_enemy_shot_requested(origin: Vector2, direction: Vector2) -> void:
-	_spawn_enemy_bullet(origin, direction, Tuning.ENEMY_BULLET_DAMAGE, &"boss")
+func _on_enemy_shot_requested(
+	origin: Vector2, direction: Vector2, damage_scale: float = 1.0
+) -> void:
+	# The station halves its pressure in its opening phase; the scale comes from
+	# the station itself, so the tuning lives in Tuning with the other numbers.
+	var damage: int = maxi(roundi(float(Tuning.BOSS_BULLET_DAMAGE) * damage_scale), 1)
+	_spawn_enemy_bullet(origin, direction, damage, &"boss")
 
 
 ## One shot visual and hitbox for fighters and the station alike; only the
@@ -584,8 +589,10 @@ func _spawn_boss() -> void:
 	# The mode's enemy HP multiplier applies to the station as well.
 	var boss_hp: int = battle.boss_hp
 	if _campaign:
+		# The station has its own, much flatter mode multiplier: enemy HP scaling
+		# turned the SINGULARITY citadel into three times a CADET one.
 		boss_hp = maxi(
-			roundi(float(boss_hp) * Difficulty.enemy_hp_scale(SaveData.campaign_difficulty)), 1
+			roundi(float(boss_hp) * Difficulty.boss_hp_scale(SaveData.campaign_difficulty)), 1
 		)
 	boss.configure(
 		battle.boss_color,

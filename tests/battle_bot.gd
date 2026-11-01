@@ -53,6 +53,9 @@ var _boss_seen: bool = false
 var _boss_hp_log: PackedStringArray = []
 ## The station's largest HP, kept after it dies and the battle drops the node.
 var _boss_max_seen: int = 0
+## Seconds into the row when the ship died, or -1 while it is still flying.
+var _ship_death_at: float = -1.0
+var _run_seconds: float = 0.0
 ## HP the ship lost while the station was in each third of its health bar.
 var _phase_damage: Dictionary = {}
 ## `-- --probe` runs a single 12 s row with a frame-by-frame log, for working
@@ -191,6 +194,8 @@ func _run_row(row: Dictionary) -> void:
 	_boss_hp_log.clear()
 	_phase_damage.clear()
 	_boss_max_seen = 0
+	_ship_death_at = -1.0
+	_run_seconds = float(row["seconds"])
 	_wraps = 0
 	_out_of_bounds = 0
 	_min_x = INF
@@ -238,6 +243,8 @@ func _drive(row: Dictionary) -> void:
 		_track_bounds()
 		_track_damage()
 		_track_boss()
+		if _ship_death_at < 0.0 and not _ship.alive:
+			_ship_death_at = elapsed
 		_steer(elapsed)
 		if elapsed >= next_sample:
 			next_sample += 10.0
@@ -440,10 +447,11 @@ func _report_boss() -> void:
 		outcome = "SHIP DOWN"
 	elif _battle.victory:
 		outcome = "STATION DOWN"
+	var survived: float = _ship_death_at if _ship_death_at >= 0.0 else _run_seconds
 	print(
-		"BOT boss outcome=%s station=%d/%d hull=%d/%d boss_damage=%d damage: %s"
+		"BOT boss outcome=%s station=%d/%d hull=%d/%d survived=%.0fs boss_damage=%d damage: %s"
 		% [
-			outcome, boss_hp, boss_max, _ship.hp, _ship.max_hp,
+			outcome, boss_hp, boss_max, _ship.hp, _ship.max_hp, survived,
 			int(_damage_by_kind.get(&"boss", 0)), _damage_report(),
 		]
 	)

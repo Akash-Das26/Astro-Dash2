@@ -52,7 +52,7 @@ const DIFFICULTIES: Dictionary = {
 		"defeat_hp": 1.0,
 		"enemy_hp": 0.8, "enemy_damage": 0.8, "enemies": 0.9,
 		"energy": 1.0, "score": 1.0, "shield_drop": 1.4, "elite_scale": 1.0,
-		"shield_base_capacity": 1,
+		"shield_base_capacity": 1, "boss_hp": 0.95,
 	},
 	DIFFICULTY_VECTOR: {
 		"title": "VECTOR", "level": 2, "color": Color(0.6, 0.85, 1.0),
@@ -61,7 +61,7 @@ const DIFFICULTIES: Dictionary = {
 		"on_defeat": "keep", "defeat_hp": 0.5,
 		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemies": 1.0,
 		"energy": 1.0, "score": 1.0, "shield_drop": 1.0, "elite_scale": 1.0,
-		"shield_base_capacity": 1,
+		"shield_base_capacity": 1, "boss_hp": 1.0,
 	},
 	DIFFICULTY_SUPERNOVA: {
 		"title": "SUPERNOVA", "level": 3, "color": Color(1.0, 0.8, 0.4),
@@ -70,7 +70,7 @@ const DIFFICULTIES: Dictionary = {
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.25, "enemy_damage": 1.2, "enemies": 1.1,
 		"energy": 1.1, "score": 1.25, "shield_drop": 0.7, "elite_scale": 1.3,
-		"shield_base_capacity": 0,
+		"shield_base_capacity": 0, "boss_hp": 1.08,
 	},
 	DIFFICULTY_EVENT_HORIZON: {
 		"title": "EVENT HORIZON", "level": 4, "color": Color(1.0, 0.55, 0.35),
@@ -79,7 +79,7 @@ const DIFFICULTIES: Dictionary = {
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemies": 1.25,
 		"energy": 1.25, "score": 1.5, "shield_drop": 0.5, "elite_scale": 1.6,
-		"shield_base_capacity": 0,
+		"shield_base_capacity": 0, "boss_hp": 1.15,
 	},
 	DIFFICULTY_SINGULARITY: {
 		"title": "SINGULARITY", "level": 5, "color": Color(1.0, 0.35, 0.45),
@@ -88,7 +88,7 @@ const DIFFICULTIES: Dictionary = {
 		"on_defeat": "wipe", "defeat_hp": 0.0,
 		"enemy_hp": 1.8, "enemy_damage": 1.7, "enemies": 1.4,
 		"energy": 1.5, "score": 2.0, "shield_drop": 0.4, "elite_scale": 2.0,
-		"shield_base_capacity": 0,
+		"shield_base_capacity": 0, "boss_hp": 1.22,
 	},
 }
 ## What a SINGULARITY defeat resets, listed on its card.
@@ -808,18 +808,30 @@ const WEAPON_BURST_COLOR: Color = Color(1.0, 0.7, 0.35)
 const WEAPON_BURST_PARTICLES: int = 10
 
 # --- Citadel boss -----------------------------------------------------------
-const BOSS_HP: int = 140
-const BOSS_HP_PER_DISTANCE: int = 9
+## Station HP is deliberately almost flat across the galaxy: the mode multiplier
+## below is what makes a citadel harder, and it stays inside a 1.5x band so the
+## hardest station is never far above a CADET one at the same distance.
+const BOSS_HP: int = 190
+const BOSS_HP_PER_DISTANCE: int = 4
 const BOSS_POINTS: int = 400
 const BOSS_RADIUS: float = 54.0
 ## The 130x180 station art is drawn at this scale.
 const BOSS_SCALE: float = 0.46
 const BOSS_FIRE_INTERVAL: float = 2.1
+## Warning window before every fan: the ring fills and the aim line shows, so the
+## volley can be dodged. Damage and cadence below only differ in phase one.
+const BOSS_TELEGRAPH: float = 0.5
+## Above this share of its max HP the station is in its opening phase.
+const BOSS_EARLY_PHASE_FRACTION: float = 0.66
+## Opening phase: about a quarter less damage per bullet and a quarter slower.
+const BOSS_EARLY_DAMAGE_SCALE: float = 0.75
+const BOSS_EARLY_INTERVAL_SCALE: float = 1.25
 const BOSS_BULLETS_PER_VOLLEY: int = 5
 ## Angle between two bullets of the same fan, in radians.
 const BOSS_SPREAD: float = 0.16
-const BOSS_BULLET_DAMAGE: int = 10
-const BOSS_CONTACT_DAMAGE: int = 25
+## Same as ENEMY_BULLET_DAMAGE, kept separate because the station scales it.
+const BOSS_BULLET_DAMAGE: int = 12
+const BOSS_CONTACT_DAMAGE: int = 22
 const BOSS_HOVER_AMPLITUDE: float = 70.0
 const BOSS_HOVER_RISE: float = 26.0
 const BOSS_HOVER_SPEED: float = 0.55

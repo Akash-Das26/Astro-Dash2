@@ -21,6 +21,7 @@ const FIGHTER_SCENE: PackedScene = preload("res://entities/enemies/enemy_base.ts
 const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
 const MAP_SCENE: PackedScene = preload("res://ui/map/galaxy_map.tscn")
 const UPGRADE_SCENE: PackedScene = preload("res://ui/panels/upgrade_panel.tscn")
+const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -40,6 +41,7 @@ func _ready() -> void:
 	_test_weapons()
 	_test_elite_fighters()
 	_test_thrusters()
+	_test_boss_telegraph()
 	_test_overlays()
 	_test_banner_cards()
 	await _test_upgrade_layout()
@@ -322,6 +324,59 @@ func _test_upgrade_layout() -> void:
 			"flame %s box %s" % [flame_rect, preview.get_global_rect()]
 		)
 	panel.queue_free()
+	await get_tree().process_frame
+
+
+## The station has to warn before its fan, and its opening phase has to be the
+## softer one: both are read from the station itself, exactly as the battle does.
+func _test_boss_telegraph() -> void:
+	var ship := SHIP_SCENE.instantiate() as Ship
+	add_child(ship)
+	ship.position = Vector2(480.0, 470.0)
+	ship.process_mode = Node.PROCESS_MODE_DISABLED
+	var boss := BOSS_SCENE.instantiate() as BossStation
+	boss.configure(&"red", 300, Vector2(480.0, 220.0), ship)
+	add_child(boss)
+	boss.process_mode = Node.PROCESS_MODE_DISABLED
+	var scales: Array[float] = []
+	boss.shot_requested.connect(
+		func(_origin: Vector2, _direction: Vector2, scale: float) -> void:
+			scales.append(scale)
+	)
+	boss.call("_tick_fire", 1.0)
+	check("the station holds its fire while its cooldown runs", scales.is_empty())
+	boss.call("_tick_fire", 0.5)
+	check("the station telegraphs before its volley", boss.is_telegraphing())
+	boss.call("_tick_fire", Tuning.BOSS_TELEGRAPH * 0.5)
+	check("no shot lands halfway through the telegraph", scales.is_empty(), "%d shots" % scales.size())
+	check("the telegraph lasts its full window", boss.is_telegraphing())
+	boss.call("_tick_fire", Tuning.BOSS_TELEGRAPH * 0.6)
+	check(
+		"the volley fires when the telegraph ends",
+		scales.size() == Tuning.BOSS_BULLETS_PER_VOLLEY,
+		"%d shots" % scales.size()
+	)
+	check("the telegraph is over once the volley leaves", not boss.is_telegraphing())
+	check(
+		"the opening phase fires a softened volley",
+		scales.size() > 0 and is_equal_approx(scales[0], Tuning.BOSS_EARLY_DAMAGE_SCALE),
+		str(scales)
+	)
+	check(
+		"the opening phase waits longer between fans",
+		is_equal_approx(
+			float(boss.get("_fire_cooldown")),
+			Tuning.BOSS_FIRE_INTERVAL * Tuning.BOSS_EARLY_INTERVAL_SCALE
+		)
+	)
+	boss.take_damage(int(float(boss.max_hp) * 0.5))
+	check(
+		"a hurt station fires at full strength",
+		is_equal_approx(boss.damage_scale(), 1.0),
+		"%.2f" % boss.damage_scale()
+	)
+	boss.queue_free()
+	ship.queue_free()
 	await get_tree().process_frame
 
 

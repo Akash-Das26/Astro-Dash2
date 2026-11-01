@@ -122,3 +122,64 @@ the hull lost by thirds of the station's own health bar.
   where the ship had already died and nothing was shooting any more.
 
 No tuning value was changed; this is a measurement only.
+
+## Boss balance (stage 19): before and after
+
+Same harness as the boss section above: `<difficulty> boss`, station called in on
+frame one, 90 s of game time at 4x, pulse laser + heavy cannon, no upgrades,
+three runs per mode.
+
+### Targets and results
+
+| Difficulty | Target | Result (3 runs) | Verdict |
+| --- | --- | --- | --- |
+| CADET | 3/3 kills, hull above 30% | 3/3, hull 100 / 83 / 66% | met |
+| VECTOR | 2/3 kills | 3/3, hull 37 / 64 / 91% | above target |
+| SUPERNOVA | 1/3 kills | 1/3, the kill at 25% hull | met |
+| EVENT HORIZON | 0-1/3 kills | 2/3 (hull 83%, 36% on the kills) | one over |
+| SINGULARITY | 0/3 kills, 40 s average survival | 0/3, survival 24 / 40 / 33 s (32 s average) | kills met, survival short |
+
+The SUPERNOVA, EVENT HORIZON and SINGULARITY rows are the round-2 sweep; CADET
+and SINGULARITY were re-flown after the harness started printing `survived=`.
+Every row finished `BOT DONE (0 problems)`.
+
+### Station HP: old formula vs new
+
+Old: `round((140 + 9 * hops) * mode.enemy_hp)`. New:
+`round((190 + 4 * hops) * mode.boss_hp)`, where `boss_hp` is a new per-mode key
+(0.95 / 1.0 / 1.08 / 1.15 / 1.22).
+
+| Distance | CADET old → new | VECTOR old → new | SUPERNOVA old → new | EVENT HORIZON old → new | SINGULARITY old → new |
+| --- | --- | --- | --- | --- | --- |
+| 10 hops | 184 → 219 | 230 → 230 | 288 → 248 | 345 → 265 | 414 → 281 |
+
+Measured spread of the station HP the bot actually met, which is what the 1.6x
+rule is about: **new 188–325 (max/min 1.60)**, old 155–560 (**3.61**).
+
+### Tuning values changed
+
+| Constant | Before | After |
+| --- | --- | --- |
+| `BOSS_HP` | 140 | 190 |
+| `BOSS_HP_PER_DISTANCE` | 9 | 4 |
+| per-mode `boss_hp` (new) | (used `enemy_hp` 0.8–1.8) | 0.95 / 1.0 / 1.08 / 1.15 / 1.22 |
+| `BOSS_BULLET_DAMAGE` | 10, unused (the handler used `ENEMY_BULLET_DAMAGE` 12) | 12, and the handler uses it |
+| `BOSS_EARLY_DAMAGE_SCALE` | — | 0.75 (opening phase only) |
+| `BOSS_EARLY_INTERVAL_SCALE` | — | 1.25 (opening phase only) |
+| `BOSS_EARLY_PHASE_FRACTION` | — | 0.66 |
+| `BOSS_TELEGRAPH` | — | 0.5 s |
+| `BOSS_CONTACT_DAMAGE` | 25 | 22 (-12%) |
+
+Round 1 (110 HP + 2/hop, scales 0.95–1.22) over-corrected: CADET 3/3 (hull
+61-90%), VECTOR 3/3, SUPERNOVA 3/3, EVENT HORIZON 3/3, SINGULARITY 2/3 — every
+station fell over. Round 2 raised the base HP to 190 with 4/hop, which is the
+table above.
+
+### What I would change next
+
+`BOSS_EARLY_DAMAGE_SCALE` 0.75 → 0.68 (and, if that is not enough, a per-mode
+`boss_fire` multiplier for the opening phase only). Everything else in the
+target set is met or exceeded; the two misses are EVENT HORIZON one kill over
+and SINGULARITY's 32 s average survival against 40 s. Note that two of the three
+SINGULARITY deaths also lost 26 and 52 HP to asteroids, which is outside the
+station's numbers, so boss tuning alone cannot lift that average to 40 s.

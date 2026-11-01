@@ -54,6 +54,13 @@ static func enemy_hp_scale(id: StringName = &"") -> float:
 	return float(row(mode)["enemy_hp"])
 
 
+## The station's own HP multiplier: much narrower than `enemy_hp_scale` so the
+## hardest citadel stays close to a CADET one.
+static func boss_hp_scale(id: StringName = &"") -> float:
+	var mode: StringName = active() if id == &"" else normalise(id)
+	return float(row(mode).get("boss_hp", 1.0))
+
+
 static func enemy_damage_scale(id: StringName = &"") -> float:
 	var mode: StringName = active() if id == &"" else normalise(id)
 	return float(row(mode)["enemy_damage"])

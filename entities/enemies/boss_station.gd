@@ -10,7 +10,8 @@ extends Area2D
 signal hp_changed(hp: int, max_hp: int)
 signal damaged(at: Vector2)
 signal died(points: int)
-signal shot_requested(origin: Vector2, direction: Vector2)
+## `damage_scale` is the station's own phase multiplier, applied by the battle.
+signal shot_requested(origin: Vector2, direction: Vector2, damage_scale: float)
 
 const STATION_ART: Dictionary = {
 	&"blue": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_station_blue.png"),
@@ -32,6 +33,9 @@ var _station_color: StringName = &"red"
 var _anchor: Vector2 = Vector2.ZERO
 var _age: float = 0.0
 var _fire_cooldown: float = 0.0
+## Seconds left in the warning window before the fan fires; 0 when idle.
+var _charge_left: float = 0.0
+var _charging: bool = false
 var _active: bool = true
 var _flash_tween: Tween
 
@@ -78,27 +82,77 @@ func _process(delta: float) -> void:
 	)
 	rotation = sin(_age * 0.5) * 0.06
 	_tick_fire(delta)
+	# Brighten while charging, so the warning reads even without the ring.
+	if _charging:
+		_sprite.modulate = Color(1.0, 0.84, 0.7, _sprite.modulate.a)
+	else:
+		_sprite.modulate = Color(1.0, 1.0, 1.0, _sprite.modulate.a)
 	queue_redraw()
 
 
 func _tick_fire(delta: float) -> void:
 	if target == null or not is_instance_valid(target) or not target.alive:
 		return
+	if _charging:
+		_charge_left -= delta
+		if _charge_left <= 0.0:
+			_charging = false
+			_charge_left = 0.0
+			_fire_volley()
+			queue_redraw()
+		return
 	_fire_cooldown -= delta
 	if _fire_cooldown > 0.0:
 		return
-	_fire_cooldown = Tuning.BOSS_FIRE_INTERVAL
+	_begin_telegraph()
+
+
+## True while the fan is being warned: the charge ring fills and the aim line
+## shows, so there is a window to move out of the arc.
+func is_telegraphing() -> bool:
+	return _charging
+
+
+## The station's damage multiplier right now: softer above
+## Tuning.BOSS_EARLY_PHASE_FRACTION, full strength once it is hurt.
+func damage_scale() -> float:
+	if _in_early_phase():
+		return Tuning.BOSS_EARLY_DAMAGE_SCALE
+	return 1.0
+
+
+func _in_early_phase() -> bool:
+	return float(hp) > float(max_hp) * Tuning.BOSS_EARLY_PHASE_FRACTION
+
+
+func _begin_telegraph() -> void:
 	var to_target: Vector2 = target.global_position - global_position
 	if to_target.length() < body_radius + 30.0:
 		# The ship is hugging the hull: hold the volley until it backs off, so a
 		# point-blank fan cannot delete the whole hull in one frame.
+		_fire_cooldown = 0.25
+		return
+	_charging = true
+	_charge_left = Tuning.BOSS_TELEGRAPH
+	queue_redraw()
+
+
+func _fire_volley() -> void:
+	var to_target: Vector2 = target.global_position - global_position
+	if to_target.length() < body_radius + 30.0:
+		_fire_cooldown = 0.25
 		return
 	var aim: Vector2 = to_target.normalized()
+	var scale: float = damage_scale()
 	var count: int = Tuning.BOSS_BULLETS_PER_VOLLEY
 	var middle: float = (float(count) - 1.0) * 0.5
 	for index: int in count:
 		var shot: Vector2 = aim.rotated((float(index) - middle) * Tuning.BOSS_SPREAD)
-		shot_requested.emit(global_position + shot * (body_radius + 10.0), shot)
+		shot_requested.emit(global_position + shot * (body_radius + 10.0), shot, scale)
+	# The opening phase also waits longer between fans.
+	_fire_cooldown = Tuning.BOSS_FIRE_INTERVAL * (
+		Tuning.BOSS_EARLY_INTERVAL_SCALE if _in_early_phase() else 1.0
+	)
 
 
 # --- Damage -----------------------------------------------------------------
@@ -147,5 +201,27 @@ func _draw() -> void:
 		48,
 		Color(effect_color.r, effect_color.g, effect_color.b, 0.2 + 0.25 * pulse),
 		2.0,
+		true
+	)
+	if not _charging or target == null or not is_instance_valid(target):
+		return
+	# The warning: a thin aim line at the ship and a ring that fills over
+	# Tuning.BOSS_TELEGRAPH seconds, so the volley can be read and dodged.
+	var progress: float = 1.0 - clampf(_charge_left / Tuning.BOSS_TELEGRAPH, 0.0, 1.0)
+	var to_ship: Vector2 = target.global_position - global_position
+	draw_line(
+		Vector2.ZERO,
+		to_ship,
+		Color(1.0, 0.85, 0.55, 0.16 + 0.3 * progress),
+		1.5
+	)
+	draw_arc(
+		Vector2.ZERO,
+		body_radius + 12.0,
+		-PI * 0.5,
+		-PI * 0.5 + TAU * progress,
+		40,
+		Color(1.0, 0.92, 0.68, 0.5 + 0.4 * progress),
+		3.0,
 		true
 	)
