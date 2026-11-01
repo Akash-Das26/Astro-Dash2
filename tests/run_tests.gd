@@ -47,6 +47,7 @@ func _ready() -> void:
 	await _test_upgrade_layout()
 	_test_galaxy()
 	_test_audio()
+	_test_credits()
 	_test_controls()
 	_test_paths()
 	_restore_save()
@@ -948,6 +949,54 @@ func _test_galaxy() -> void:
 			"citadels away from the gate do not open it",
 			not a.attackable(far_only).has(a.gate_id)
 		)
+
+
+## Credits: every shipped music file has an entry, every attributing license
+## names its author, NOW PLAYING shows "title — author", and the exclude list is
+## the same predicate the playlist uses.
+func _test_credits() -> void:
+	var files: PackedStringArray = PackedStringArray()
+	var dir := DirAccess.open("res://assets/audio/music/")
+	if dir != null:
+		dir.list_dir_begin()
+		var entry: String = dir.get_next()
+		while entry != "":
+			if not dir.current_is_dir() and not entry.ends_with(".import"):
+				if ["ogg", "mp3", "wav"].has(entry.get_extension().to_lower()):
+					files.append(entry)
+			entry = dir.get_next()
+		dir.list_dir_end()
+	check("the music folder lists its tracks", files.size() >= 4, "%d files" % files.size())
+	var missing: PackedStringArray = Credits.uncredited_music(files)
+	check("every music file has a credits entry", missing.is_empty(), ", ".join(missing))
+	for track_name: String in Credits.MUSIC_ORDER:
+		var credit: Dictionary = Credits.music_entry(track_name)
+		check("credits entry for %s" % track_name, Credits.has_credit(credit))
+	check(
+		"NOW PLAYING shows title and author",
+		Credits.music_label("Orbital Colossus") == "Space Boss Battle Theme — Matthew Pablo",
+		Credits.music_label("Orbital Colossus")
+	)
+	for group: Dictionary in Credits.groups():
+		for credit: Dictionary in group.get("entries", []):
+			if not Credits.needs_attribution(credit):
+				continue
+			check(
+				"CC-BY credit names author and license: %s" % String(credit.get("title", "")),
+				not String(credit.get("author", "")).is_empty() \
+					and not String(credit.get("license", "")).is_empty()
+			)
+	# A real rebuild: with the default (empty) exclude list every banked track has
+	# to come back, which is the state the menu and the tests run against.
+	var bases: Dictionary = {}
+	for file_name: String in files:
+		bases[file_name.get_basename()] = true
+	AudioManager.call("_build_playlist")
+	check(
+		"the default playlist keeps every track",
+		AudioManager.track_count() == bases.size(),
+		"%d tracks for %d files" % [AudioManager.track_count(), bases.size()]
+	)
 
 
 # --- 4.7 Audio --------------------------------------------------------------

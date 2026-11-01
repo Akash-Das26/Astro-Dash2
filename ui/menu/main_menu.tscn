@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://ui/panels/settings_panel.tscn" id="4_settings"]
 [ext_resource type="PackedScene" path="res://ui/panels/controls_card.tscn" id="5_controls"]
 [ext_resource type="PackedScene" path="res://ui/panels/difficulty_picker.tscn" id="6_difficulty"]
+[ext_resource type="PackedScene" path="res://ui/panels/credits_card.tscn" id="7_credits"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_danger"]
 bg_color = Color(0.45, 0.12, 0.14, 1)
@@ -95,10 +96,10 @@ text = "THE GALAXY WON'T TAKE ITSELF"
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 64.0
-offset_top = 236.0
+offset_top = 200.0
 offset_right = 388.0
-offset_bottom = 500.0
-theme_override_constants/separation = 12
+offset_bottom = 524.0
+theme_override_constants/separation = 10
 
 [node name="NewGame" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(0, 52)
@@ -119,6 +120,13 @@ custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "SETTINGS"
+alignment = 0
+
+[node name="Credits" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "CREDITS"
 alignment = 0
 
 [node name="Quit" type="Button" parent="Buttons"]
@@ -296,6 +304,9 @@ theme_override_font_sizes/font_size = 17
 text = "CANCEL"
 
 [node name="ControlsCard" parent="." instance=ExtResource("5_controls")]
+layout_mode = 1
+
+[node name="CreditsCard" parent="." instance=ExtResource("7_credits")]
 layout_mode = 1
 
 [node name="DifficultyPicker" parent="." instance=ExtResource("6_difficulty")]

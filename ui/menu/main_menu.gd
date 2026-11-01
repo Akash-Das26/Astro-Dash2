@@ -22,6 +22,8 @@ const GALAXY_SCENE: String = "res://ui/map/galaxy_map.tscn"
 @onready var _confirm_start: Button = $ConfirmCard/Panel/Margin/Box/Buttons/StartButton
 @onready var _confirm_cancel: Button = $ConfirmCard/Panel/Margin/Box/Buttons/CancelButton
 @onready var _difficulty_picker: DifficultyPicker = $DifficultyPicker
+@onready var _credits_button: Button = $Buttons/Credits
+@onready var _credits_card: CreditsCard = $CreditsCard
 
 
 func _ready() -> void:
@@ -40,6 +42,8 @@ func _ready() -> void:
 	_confirm_cancel.pressed.connect(_close_confirm)
 	_difficulty_picker.chosen.connect(_on_difficulty_chosen)
 	_difficulty_picker.closed.connect(_on_difficulty_closed)
+	_credits_button.pressed.connect(_open_credits)
+	_credits_card.closed.connect(_on_credits_closed)
 	_settings_panel.controls_requested.connect(_open_controls)
 	_controls_card.closed.connect(_on_controls_closed)
 	_continue_button.disabled = not SaveData.campaign_active
@@ -134,6 +138,15 @@ func _on_controls_closed() -> void:
 	_settings_close.grab_focus()
 
 
+func _open_credits() -> void:
+	AudioManager.play_sfx("ui_click")
+	_credits_card.open()
+
+
+func _on_credits_closed() -> void:
+	_credits_button.grab_focus()
+
+
 func _quit() -> void:
 	get_tree().quit()
 
@@ -143,6 +156,9 @@ func _quit() -> void:
 ## out of the game.
 func _handle_back() -> void:
 	GameState.back_handler = _handle_back
+	if _credits_card.visible:
+		_credits_card.close()
+		return
 	if _difficulty_picker.picker_open():
 		_difficulty_picker.close()
 		return

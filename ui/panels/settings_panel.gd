@@ -108,7 +108,10 @@ func _on_scheme_pressed() -> void:
 ## is the file name AudioManager reports, without its extension.
 func _refresh_music() -> void:
 	var track: String = AudioManager.current_track_name()
-	_now_playing.text = "NOW PLAYING: %s" % (track if not track.is_empty() else "NONE")
+	# "Title — Author" when the track has a credit, the file name otherwise.
+	var credit: String = Credits.music_label(track)
+	var shown: String = credit if not credit.is_empty() else track
+	_now_playing.text = "NOW PLAYING: %s" % (shown if not shown.is_empty() else "NONE")
 	_now_playing.add_theme_color_override(
 		"font_color", UITheme.COLOR_TEXT if not track.is_empty() else UITheme.COLOR_MUTED
 	)

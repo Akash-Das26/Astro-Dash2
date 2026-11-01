@@ -161,6 +161,8 @@ const MUSIC_CONTEXTS: Dictionary = {
 const MUSIC_SILENT_DB: float = -40.0
 const MUSIC_PAUSE_GAIN: float = 0.45
 const MUSIC_PAUSE_FADE: float = 2.0
+## Credits roll speed in pixels per second (the card pauses on any key).
+const CREDITS_SCROLL_SPEED: float = 26.0
 
 # --- Controls ---------------------------------------------------------------
 ## Two ways to fly. FREE AIM is the twin-stick scheme (mouse or right stick
