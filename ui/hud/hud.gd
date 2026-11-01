@@ -83,7 +83,9 @@ func _ready() -> void:
 	_resume_button.pressed.connect(resume_requested.emit)
 	$Root/PausePanel/Box/RestartButton.pressed.connect(restart_requested.emit)
 	_menu_button.pressed.connect(_show_menu_confirm)
-	_controls_button.pressed.connect(_controls_card.open)
+	_controls_button.pressed.connect(_open_controls)
+	# The C overlay is global; the banner still has to yield to it.
+	UIOverlay.card_opened.connect(hide_banner)
 	_controls_card.closed.connect(_on_controls_closed)
 	_pause_confirm_yes.pressed.connect(menu_requested.emit)
 	_pause_confirm_no.pressed.connect(_hide_menu_confirm)
@@ -271,6 +273,17 @@ func show_banner(text: String) -> void:
 	_banner_timer.start(BANNER_SECONDS)
 
 
+## Cards own the screen. The banner is cancelled here, not paused, so a wave
+## call can never reappear on top of a pause, victory, defeat or controls card --
+## not while it is open and not when it closes.
+func hide_banner() -> void:
+	_banner_timer.stop()
+	if _banner_tween != null and _banner_tween.is_valid():
+		_banner_tween.kill()
+	_banner_tween = null
+	_banner_label.visible = false
+
+
 func _on_banner_timeout() -> void:
 	if _banner_tween != null and _banner_tween.is_valid():
 		_banner_tween.kill()
@@ -282,6 +295,7 @@ func _on_banner_timeout() -> void:
 ## Victory card: planet, waves, kills, the score this battle and the campaign
 ## total, plus the no-damage bonus line when it was earned.
 func show_victory(data: Dictionary) -> void:
+	hide_banner()
 	_end_is_victory = true
 	_end_title.text = "SECTOR SECURED!"
 	_end_title.add_theme_color_override("font_color", Color(0.55, 1.0, 0.7))
@@ -325,6 +339,7 @@ func show_victory(data: Dictionary) -> void:
 ## Game-over card: the run's final score against the record, the worlds taken
 ## and the deepest band reached.
 func show_game_over(data: Dictionary) -> void:
+	hide_banner()
 	_end_is_victory = false
 	_end_title.text = "GAME OVER"
 	_end_title.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
@@ -386,7 +401,13 @@ func hide_end() -> void:
 	_pause_button.visible = true
 
 
+func _open_controls() -> void:
+	hide_banner()
+	_controls_card.open()
+
+
 func show_paused() -> void:
+	hide_banner()
 	_hide_menu_confirm()
 	_pause_panel.visible = true
 	_resume_button.grab_focus()

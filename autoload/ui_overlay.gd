@@ -7,6 +7,10 @@ extends CanvasLayer
 ## the card is never hidden behind a screen's own panels. Android Back and B
 ## close it from any screen.
 
+## Fired whenever the overlay takes the screen, so screens can stand their own
+## transient banners down instead of drawing them on top of the card.
+signal card_opened
+
 const CARD_SCENE: PackedScene = preload("res://ui/panels/controls_card.tscn")
 
 var _card: ControlsCard
@@ -63,6 +67,7 @@ func _input(event: InputEvent) -> void:
 func open_card() -> void:
 	if _card.visible:
 		return
+	card_opened.emit()
 	_paused_by_us = GameState.state == GameState.State.PLAYING
 	_previous_back = GameState.back_handler
 	GameState.back_handler = _handle_back

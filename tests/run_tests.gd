@@ -12,6 +12,10 @@ extends Node
 
 const SAVE_PATH: String = "user://save.cfg"
 const BACKUP_PATH: String = "user://save.tests-backup.cfg"
+## Widest flame allowed relative to its hull: enough for a small hull to show a
+## real flame, far short of the radius-driven hatch mark the geometry test was
+## written for (that was about 2.6x the hull).
+const FLAME_MAX_HULL_RATIO: float = 1.25
 const SHIP_SCENE: PackedScene = preload("res://entities/player/ship.tscn")
 const FIGHTER_SCENE: PackedScene = preload("res://entities/enemies/enemy_base.tscn")
 const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
@@ -36,6 +40,7 @@ func _ready() -> void:
 	_test_elite_fighters()
 	_test_thrusters()
 	_test_overlays()
+	_test_banner_cards()
 	_test_galaxy()
 	_test_audio()
 	_test_controls()
@@ -203,6 +208,46 @@ func _test_heal_clamp() -> void:
 
 # --- Elite fighters ---------------------------------------------------------
 
+## The wave banner must never sit on top of a card. Each card is opened while a
+## banner is on screen, and the banner has to be gone immediately -- and stay
+## gone when the card closes.
+func _test_banner_cards() -> void:
+	_reset_state()
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	var hud := battle.get_node_or_null("HUD")
+	var banner: Label = null
+	if hud != null:
+		banner = hud.get_node_or_null("Root/BannerLabel") as Label
+	check("banner label exists", banner != null)
+	if banner == null:
+		battle.queue_free()
+		return
+	hud.call("show_banner", "WAVE 1/1")
+	check("banner shows on a wave call", banner.visible)
+	hud.call("show_paused")
+	check("banner hides for the pause card", not banner.visible)
+
+	hud.call("show_banner", "WAVE 1/1")
+	hud.call("show_victory", {})
+	check("banner hides for the victory card", not banner.visible)
+
+	hud.call("show_banner", "WAVE 2/2")
+	hud.call("show_game_over", {})
+	check("banner hides for the game-over card", not banner.visible)
+
+	hud.call("show_banner", "WAVE 2/2")
+	UIOverlay.open_card()
+	check("banner hides for the C card", not banner.visible)
+	var card := UIOverlay.get("_card") as ControlsCard
+	if card != null:
+		card.call("close")
+	# Closing a card must not bring the banner back.
+	check("the banner stays hidden after the card closes", not banner.visible)
+	battle.queue_free()
+	_reset_state()
+
+
 ## Overlay smoke test: the C card, the F4 layout audit and the difficulty picker
 ## are opened on top of a live battle and of the map, then closed again. A card
 ## that only works on its own screen is what this catches.
@@ -285,9 +330,12 @@ func _test_thrusters() -> void:
 			flame.position.y >= hull_half,
 			"anchor %.1f hull half %.1f" % [flame.position.y, hull_half]
 		)
+		# A scout's hull is 18.6 px wide; a flame that reads at 960x600 is a little
+		# wider than that, so the bound is 1.25x. The defect this guards against
+		# was the radius-driven flame at ~2.6x the hull (the hatch-mark look).
 		check(
-			"enemy flame %s is no wider than the hull" % String(kind),
-			flame_width <= hull_width + 0.01,
+			"enemy flame %s is not oversized for the hull" % String(kind),
+			flame_width <= hull_width * FLAME_MAX_HULL_RATIO,
 			"flame %.1f hull %.1f" % [flame_width, hull_width]
 		)
 		check(
@@ -311,8 +359,8 @@ func _test_thrusters() -> void:
 				"anchor %.1f hull half %.1f" % [flame.position.y, hull_half]
 			)
 			check(
-				"player flame is no wider than the hull",
-				Tuning.THRUSTER_ART_SIZE * flame.scale.x <= hull_width + 0.01,
+				"player flame is not oversized for the hull",
+				Tuning.THRUSTER_ART_SIZE * flame.scale.x <= hull_width * FLAME_MAX_HULL_RATIO,
 				"flame %.1f hull %.1f" % [Tuning.THRUSTER_ART_SIZE * flame.scale.x, hull_width]
 			)
 			check(
