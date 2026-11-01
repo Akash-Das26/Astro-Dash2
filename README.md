@@ -104,9 +104,13 @@ stay in the git-ignored `test_output/`).
 - **Carried hull.** HP carries from one campaign battle to the next and is saved
   with every conquest; the shield refills to its full capacity at the start of
   every battle. Upgrade levels apply on top.
-- **Citadel boss.** A citadel's last wave is followed by its station: 140 HP plus
-  9 per hop, hovering and firing a fan of five red dots. Its name and a red
-  health bar sit under the top readout. Beating it pays a large energy bonus.
+- **Citadel boss.** A citadel's last wave is followed by its station: 190 HP plus
+  4 per hop, scaled by the mode's own narrow `boss_hp` multiplier (0.95 CADET to
+  1.22 SINGULARITY, so the hardest station is about 1.6x a CADET one). It hovers and
+  fires a fan of five red dots, but **telegraphs every fan** with a charge ring
+  and an aim line for 0.5 s first, and its opening phase (above 66% HP) hits 25%
+  softer and 25% slower. Its name and a red health bar sit under the top readout.
+  Beating it pays a large energy bonus and a shield drop.
 - **Victory card:** planet name, waves completed, enemies destroyed, score
   earned, campaign total, and a **PERFECT VICTORY** line (+500 score, +25 energy)
   when the hull never dropped below the HP it entered with. **CONTINUE** returns
@@ -166,9 +170,9 @@ events with no file are reported in a single startup warning.
 
 ## What is not in this build yet
 
-- **The code license is undecided.** See [License](#license); a TODO line is
-  waiting for the choice. The bundled art, music and sound keep their own
-  licenses and are attributed in [Credits](#credits).
+- **The CC BY-SA track is a publishing decision.** *Prepare for War* by Trevor
+  Lentz is share-alike: keep it and the derivative work is bound by CC BY-SA
+  3.0, or drop the track before publishing. It is listed in `docs/todo.md`.
 - **No how-to-play card in game.** The rules are in this README (the `C` card
   lists the live bindings, not the rules).
 - **Headless only for tests.** Audio output, touch and the Android build were
@@ -399,7 +403,7 @@ depends on the exact values.
 | Distance bands | `GALAXY_BANDS`: per band `max_distance`, `label`, `enemies`, `waves`, `mix`, `density`, `hp_scale`, `interval_scale`, `background` |
 | Body traits | `GALAXY_TRAITS`: per trait `title`, `energy_scale`, `density_scale`, `enemies_delta`, `hp_scale`, `mix_bonus` |
 | Conquest payouts | `GALAXY_CONQUEST_ENERGY`, `GALAXY_CITADEL_ENERGY`, `GALAXY_GATE_ENERGY` |
-| Citadel boss | `BOSS_HP`, `BOSS_HP_PER_DISTANCE`, `BOSS_POINTS`, `BOSS_RADIUS`, `BOSS_SCALE`, `BOSS_FIRE_INTERVAL`, `BOSS_BULLETS_PER_VOLLEY`, `BOSS_SPREAD`, `BOSS_BULLET_DAMAGE`, `BOSS_CONTACT_DAMAGE`, `BOSS_HOVER_*` |
+| Citadel boss | `BOSS_HP` (190), `BOSS_HP_PER_DISTANCE` (4), `BOSS_POINTS`, `BOSS_RADIUS`, `BOSS_SCALE`, `BOSS_FIRE_INTERVAL`, `BOSS_TELEGRAPH` (0.5 s), `BOSS_EARLY_PHASE_FRACTION` (0.66), `BOSS_EARLY_DAMAGE_SCALE` (0.75), `BOSS_EARLY_INTERVAL_SCALE` (1.25), `BOSS_BULLETS_PER_VOLLEY`, `BOSS_SPREAD`, `BOSS_BULLET_DAMAGE`, `BOSS_CONTACT_DAMAGE`, `BOSS_HOVER_*`; per mode `boss_hp` (0.95 / 1.0 / 1.08 / 1.15 / 1.22) |
 
 ### Elite fighters
 
@@ -614,14 +618,31 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   starfield, icon) is drawn in code or in `icon.svg` and was written for this
   project.
 
+### Third-party assets
+
+`TODO` means the value is not known here and has to be filled in before
+publishing; nothing was invented.
+
+| Asset | Author | License | Attribution | Source |
+| --- | --- | --- | --- | --- |
+| SpacePixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | SpacePixels | TODO | required | TODO |
+| Space backgrounds (`assets/backgrounds/background-*.png`) | Kenney | CC0 | not required | <https://kenney.nl> |
+| Pixelify Sans font | Pixelify Sans authors | SIL OFL 1.1 | required (keep the license with the font) | TODO |
+| Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (keep the license with the font) | TODO |
+| Music — Orbital Colossus (Space Boss Battle Theme) | Matthew Pablo | CC BY 3.0 | required | TODO |
+| Music — Space Dimensions (8bit/Retro Version) | Matthew Pablo | CC BY 3.0 | required | TODO |
+| Music — 8-bit Perilous Dungeon | HydroGene | CC0 | optional | TODO |
+| Music — 8bit thingy | extenz | CC BY 3.0 | required | TODO |
+| Music — Prepare for War | Trevor Lentz | CC BY-SA 3.0 | required — **share-alike: decide whether to keep before publishing** | TODO |
+| SFX — The Essential Retro Video Game Sound Effects Collection | Juhani Junkala | TODO | required | TODO |
+| SFX — Essential Game Audio | Ove Melaa | TODO | required | TODO |
+
 ## License
 
-> **TODO: the license for the code is not chosen yet.** MIT is the suggestion
-> (`Copyright (c) 2026 <your name>` plus the standard MIT permission text), but
-> nothing is committed: no `LICENSE` file exists and this line stands until you
-> decide. The bundled art, fonts, music and sound effects are **not** covered by
-> whatever you pick for the code; they keep the licenses listed under
-> [Credits](#credits) and in `assets/audio/music/CREDITS.md`.
+**Code: MIT** — Copyright (c) 2026 Akash Das, see [LICENSE](LICENSE).
+Art, music and sound effects are **NOT** covered by this license; each keeps its
+original license (see [Credits](#credits) and
+`assets/audio/music/CREDITS.md`).
 
 ## Continuous integration
 
