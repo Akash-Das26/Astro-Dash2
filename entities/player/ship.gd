@@ -554,11 +554,14 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if area is EnemyBullet:
 		var bullet := area as EnemyBullet
 		var amount: int = bullet.damage
+		# Metadata, not a member: only the debug damage report reads it.
+		set_meta("last_damage_source", bullet.source_kind)
 		bullet.destroy()
 		take_damage(amount)
 	elif area is Asteroid:
 		var rock := area as Asteroid
 		rock.bump()
+		set_meta("last_damage_source", &"asteroid")
 		take_damage(Tuning.ASTEROID_CONTACT_DAMAGE)
 	elif area.has_method("on_player_contact"):
 		# Fighters and stations report their own contact damage; anything else
@@ -567,5 +570,7 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		var reported: Variant = area.get("contact_damage")
 		if reported is int:
 			contact = int(reported)
+		var shooter: Variant = area.get("kind")
+		set_meta("last_damage_source", StringName(shooter) if shooter is StringName else &"contact")
 		area.call("on_player_contact")
 		take_damage(contact)

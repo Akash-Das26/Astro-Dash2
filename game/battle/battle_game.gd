@@ -532,19 +532,22 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 
 
 func _on_fighter_shot_requested(origin: Vector2, direction: Vector2, enemy: EnemyBase) -> void:
-	_spawn_enemy_bullet(origin, direction, enemy.bullet_damage)
+	_spawn_enemy_bullet(origin, direction, enemy.bullet_damage, enemy.kind)
 
 
 func _on_enemy_shot_requested(origin: Vector2, direction: Vector2) -> void:
-	_spawn_enemy_bullet(origin, direction, Tuning.ENEMY_BULLET_DAMAGE)
+	_spawn_enemy_bullet(origin, direction, Tuning.ENEMY_BULLET_DAMAGE, &"boss")
 
 
 ## One shot visual and hitbox for fighters and the station alike; only the
 ## damage differs, and enemy bullets are always the red/orange art.
-func _spawn_enemy_bullet(origin: Vector2, direction: Vector2, damage: int) -> void:
+func _spawn_enemy_bullet(
+	origin: Vector2, direction: Vector2, damage: int, source_kind: StringName = &""
+) -> void:
 	var bullet := ENEMY_BULLET_SCENE.instantiate() as EnemyBullet
 	bullet.position = origin
 	bullet.direction = direction
+	bullet.source_kind = source_kind
 	if "damage" in bullet:
 		bullet.set("damage", damage)
 	bullet.high_contrast = SaveData.high_contrast_bullets

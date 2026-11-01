@@ -14,6 +14,9 @@ extends Area2D
 @export var life_time: float = Tuning.ENEMY_BULLET_LIFE
 @export var high_contrast: bool = true
 @export var hot_backdrop: bool = false
+## Which fighter fired this. Only used for the damage report and for the bot's
+## balance run; nothing in the game reads it.
+@export var source_kind: StringName = &""
 
 var direction: Vector2 = Vector2.DOWN
 

@@ -37,6 +37,9 @@ var _wraps: int = 0
 var _last_x: float = 0.0
 var _pause_tested: bool = false
 var _problems: PackedStringArray = []
+## HP lost per damage source, for the balance report (no tuning reads this).
+var _damage_by_kind: Dictionary = {}
+var _last_hp_tracked: int = 0
 ## `-- --probe` runs a single 12 s row with a frame-by-frame log, for working
 ## out why a battle is not simulating.
 var _probe: bool = false
@@ -71,6 +74,15 @@ func _ready() -> void:
 		var first: Dictionary = _rows[0].duplicate()
 		first["seconds"] = 12.0
 		_rows = [first]
+	# Balance run: `-- <difficulty>` flies exactly one 60 s row of that mode, with
+	# no forced victory or kill, and prints the hull left plus who hurt the ship.
+	var balance_mode: StringName = _requested_mode()
+	if balance_mode != &"":
+		_rows = [{
+			"mode": balance_mode, "primary": &"pulse", "secondary": &"cannon",
+			"seconds": 60.0, "victory": false, "balance": true,
+			"label": "BALANCE %s" % String(balance_mode).to_upper(),
+		}]
 	for row: Dictionary in _rows:
 		await _run_row(row)
 	Input.action_release(&"shoot")
@@ -114,6 +126,8 @@ func _run_row(row: Dictionary) -> void:
 	if _ship == null:
 		_problems.append("%s: no ship in the battle scene" % mode)
 		return
+	_last_hp_tracked = _ship.hp
+	_damage_by_kind.clear()
 	print(
 		"BOT hull %d/%d  shield %d/%d  primary %s  secondary %s"
 		% [
@@ -167,6 +181,7 @@ func _drive(row: Dictionary) -> void:
 				Input.action_release(&"shoot")
 				Input.action_release(&"shoot_alt")
 		_track_bounds()
+		_track_damage()
 		_steer(elapsed)
 		if elapsed >= next_sample:
 			next_sample += 10.0
@@ -342,6 +357,39 @@ func _probe_enemy(enemy: EnemyBase) -> void:
 	)
 
 
+## The ship records the source of the last hit as metadata, so the report can
+## name the attacker without any gameplay code knowing about it.
+func _track_damage() -> void:
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	if _ship.hp < _last_hp_tracked:
+		var source: StringName = StringName(_ship.get_meta("last_damage_source", &"unknown"))
+		var lost: int = _last_hp_tracked - _ship.hp
+		_damage_by_kind[source] = int(_damage_by_kind.get(source, 0)) + lost
+	_last_hp_tracked = _ship.hp
+
+
+## The difficulty named on the command line, or an empty name for the full run.
+func _requested_mode() -> StringName:
+	for arg: String in OS.get_cmdline_user_args():
+		var candidate: StringName = StringName(arg)
+		if Tuning.DIFFICULTY_ORDER.has(candidate):
+			return candidate
+	return &""
+
+
+## "scout=12 heavy=8" worst first, so the biggest threat reads first.
+func _damage_report() -> String:
+	var kinds: Array = _damage_by_kind.keys()
+	kinds.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return int(_damage_by_kind[a]) > int(_damage_by_kind[b])
+	)
+	var parts: PackedStringArray = []
+	for kind: Variant in kinds:
+		parts.append("%s=%d" % [String(kind), int(_damage_by_kind[kind])])
+	return "none" if parts.is_empty() else ", ".join(parts)
+
+
 func _finish_row(row: Dictionary, mode: StringName) -> void:
 	await get_tree().process_frame
 	var growth: int = 0
@@ -359,6 +407,15 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 			_out_of_bounds, str(_samples), growth, lowest_fps,
 		]
 	)
+	if bool(row.get("balance", false)):
+		print(
+			"BOT balance %s: result=%s hull=%d/%d (%.0f%%) damage: %s"
+			% [
+				String(mode), "WIN" if _battle.victory else ("LOSS" if not _ship.alive else "TIMEOUT"),
+				_ship.hp, _ship.max_hp,
+				100.0 * float(_ship.hp) / float(maxi(_ship.max_hp, 1)), _damage_report(),
+			]
+		)
 	if _out_of_bounds > 0:
 		_problems.append("%s: ship left the arena %d times" % [mode, _out_of_bounds])
 	if _wraps == 0:
