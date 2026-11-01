@@ -43,6 +43,9 @@ var _problems: PackedStringArray = []
 ## HP lost per damage source, for the balance report (no tuning reads this).
 var _damage_by_kind: Dictionary = {}
 var _last_hp_tracked: int = 0
+## Set when a station appears in the run, so a boss row can prove it was flown
+## against the boss and not only against its escort.
+var _boss_seen: bool = false
 ## `-- --probe` runs a single 12 s row with a frame-by-frame log, for working
 ## out why a battle is not simulating.
 var _probe: bool = false
@@ -89,9 +92,10 @@ func _ready() -> void:
 			# A citadel has to reach its station to be worth measuring, so the
 			# waves are cleared at 40 s and the boss fight fills the rest.
 			"victory": band_token == "citadel" or band_token == "gate",
-			# Clear the station's waves early so the boss itself is measured, not
-			# just its escort.
-			"clear_at": 8.0 if band_token == "citadel" else 40.0,
+			# A station only flies in after its last escort wave, so those rows
+			# clear the escorts from the first second: the point is to measure the
+			# boss, and a fresh hull is what makes that comparable across runs.
+			"clear_at": 0.0 if band_token == "citadel" or band_token == "gate" else 40.0,
 			"body": target, "band_token": band_token,
 			"label": "BALANCE %s band %s" % [String(balance_mode).to_upper(), band_token],
 		}]
@@ -156,6 +160,7 @@ func _run_row(row: Dictionary) -> void:
 	_samples.clear()
 	_fps_samples.clear()
 	_pause_tested = false
+	_boss_seen = false
 	_wraps = 0
 	_out_of_bounds = 0
 	_min_x = INF
@@ -173,6 +178,9 @@ func _drive(row: Dictionary) -> void:
 	var elapsed: float = 0.0
 	var next_sample: float = 10.0
 	var killed_ship: bool = false
+	# One clear only: the check below runs every frame, and a repeat clear would
+	# kill the station on the frame it spawns, leaving the boss unmeasured.
+	var cleared: bool = false
 	var next_probe: float = 0.0
 	var firing: bool = false
 	var fire_after: float = float(row.get("fire_after", FIRE_AFTER))
@@ -199,6 +207,7 @@ func _drive(row: Dictionary) -> void:
 				Input.action_release(&"shoot_alt")
 		_track_bounds()
 		_track_damage()
+		_track_boss()
 		_steer(elapsed)
 		if elapsed >= next_sample:
 			next_sample += 10.0
@@ -218,7 +227,17 @@ func _drive(row: Dictionary) -> void:
 			_pause_tested = true
 			await _exercise_pause()
 		if bool(row.get("victory", false)) and elapsed >= float(row.get("clear_at", 40.0)):
-			_clear_wave()
+			# A citadel or gate row exists to be shot at by the station, so it
+			# keeps clearing escorts until the station is on the field and never
+			# touches the station itself.
+			var token: String = String(row.get("band_token", ""))
+			var station_row: bool = token == "citadel" or token == "gate"
+			if station_row:
+				if not _boss_seen:
+					_clear_wave(true)
+			elif not cleared:
+				cleared = true
+				_clear_wave(false)
 		if bool(row.get("defeat", false)) and elapsed >= kill_at and not killed_ship:
 			killed_ship = true
 			await _kill_ship()
@@ -321,12 +340,15 @@ func _exercise_pause() -> void:
 
 
 ## Kills every fighter on the field, so the waves clear quickly and the victory
-## card is reached inside the run.
-func _clear_wave() -> void:
+## card is reached inside the run. With `keep_boss` the station is left alive:
+## killing it here would make every boss row measure the escort, not the boss.
+func _clear_wave(keep_boss: bool = false) -> void:
 	for container: Node in [_battle.enemies]:
 		for child: Node in container.get_children():
 			if child.has_method("take_damage"):
 				child.take_damage(99999)
+	if keep_boss:
+		return
 	var boss: Node = _battle.get("_boss") as Node
 	if boss != null and is_instance_valid(boss) and boss.has_method("take_damage"):
 		boss.take_damage(99999)
@@ -376,6 +398,13 @@ func _probe_enemy(enemy: EnemyBase) -> void:
 
 ## The ship records the source of the last hit as metadata, so the report can
 ## name the attacker without any gameplay code knowing about it.
+func _track_boss() -> void:
+	if _boss_seen or _battle == null or not is_instance_valid(_battle):
+		return
+	var boss: Node = _battle.get("_boss") as Node
+	_boss_seen = boss != null and is_instance_valid(boss)
+
+
 func _track_damage() -> void:
 	if _ship == null or not is_instance_valid(_ship):
 		return
@@ -468,9 +497,15 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 				100.0 * float(_ship.hp) / float(maxi(_ship.max_hp, 1)), _damage_report(),
 			]
 		)
+		if String(row.get("band_token")) in ["citadel", "gate"]:
+			print("BOT bossed seen=%s boss_damage=%d" % [
+				str(_boss_seen), int(_damage_by_kind.get(&"boss", 0)),
+			])
 	if _out_of_bounds > 0:
 		_problems.append("%s: ship left the arena %d times" % [mode, _out_of_bounds])
-	if _wraps == 0:
+	# Station rows hold station near the middle of the arena to shoot the boss,
+	# so only the band rows are expected to cross an edge.
+	if _wraps == 0 and String(row.get("band_token", "")) not in ["citadel", "gate"]:
 		_problems.append("%s: the ship never wrapped" % mode)
 	if growth > 200:
 		_problems.append("%s: node count grew by %d" % [mode, growth])
