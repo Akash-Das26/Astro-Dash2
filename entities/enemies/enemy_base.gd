@@ -79,6 +79,11 @@ const MAX_FIRE_RANGE: float = 640.0
 @export var hit_flash_time: float = 0.12
 @export var effect_color: Color = Color(0.45, 0.8, 1.0)
 
+## Opaque bounds per texture, cached: `get_image()` decompresses, and fighters
+## spawn by the dozen. The alternate fighter art ships inside a mostly empty
+## 128px square, so the drawn pixels -- not the file size -- decide the hull.
+static var _used_cache: Dictionary = {}
+
 @onready var _sprite: Sprite2D = $Sprite
 @onready var _flash: Sprite2D = $FlashSprite
 @onready var _body: CollisionShape2D = $CollisionShape2D
@@ -159,14 +164,23 @@ func _apply_kind() -> void:
 	var art: Dictionary = SPRITES.get(kind, SPRITES[&"scout"])
 	var texture: Texture2D = art["texture"]
 	var art_scale: float = float(art["scale"])
+	var used: Rect2 = _used_rect(texture)
+	# A row may ask for a drawn height instead of a scale, so art with a lot of
+	# transparent margin still comes out the size the arena expects.
+	if row.has("target_height"):
+		art_scale = float(row["target_height"]) / maxf(used.size.y, 1.0)
 	_sprite.texture = texture
 	_flash.texture = texture
 	_sprite.scale = Vector2.ONE * art_scale
 	_flash.scale = Vector2.ONE * art_scale
+	# Centre the opaque pixels on the node origin: padded art otherwise draws
+	# off-centre, away from its collider and from its exhaust anchor.
+	_sprite.offset = used.position + used.size * 0.5 - texture.get_size() * 0.5
+	_flash.offset = _sprite.offset
 	_sprite.modulate = Color.WHITE
-	# Anchor the exhaust at this art's rear edge, not at a fixed pixel count.
-	var hull_half: float = _sprite.get_rect().size.y * 0.5 * _sprite.scale.y
-	var hull_width: float = _sprite.get_rect().size.x * _sprite.scale.x
+	# Anchor the exhaust at the art's real rear edge, not at the file's edge.
+	var hull_half: float = used.size.y * 0.5 * art_scale
+	var hull_width: float = used.size.x * art_scale
 	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
 	# Sized from the hull (see ENEMY_THRUSTER_WIDTH_RATIO): the body radius would
 	# blow the 32 px art up past the hull on a heavy and shrink it to a sliver on
@@ -180,6 +194,32 @@ func _apply_kind() -> void:
 		Tuning.ENEMY_THRUSTER_MAX_SCALE
 	)
 	_thruster.set_base_scale(Vector2.ONE * flame * thruster_scale)
+
+
+## Size of the pixels actually drawn, in arena units. The thruster anchor, the
+## frame check and the tests all use this instead of the texture size.
+func drawn_size() -> Vector2:
+	if _sprite.texture == null:
+		return Vector2.ZERO
+	return _used_rect(_sprite.texture).size * _sprite.scale
+
+
+## Opaque bounds of a texture, in its own pixels. Falls back to the full rect
+## when the image cannot be read (an exported build may not decode it).
+func _used_rect(texture: Texture2D) -> Rect2:
+	var key: String = texture.resource_path
+	if not key.is_empty() and _used_cache.has(key):
+		return _used_cache[key]
+	var full := Rect2(Vector2.ZERO, texture.get_size())
+	var rect: Rect2 = full
+	var image: Image = texture.get_image()
+	if image != null:
+		var used: Rect2 = image.get_used_rect()
+		if used.size.x >= 1.0 and used.size.y >= 1.0:
+			rect = used
+	if not key.is_empty():
+		_used_cache[key] = rect
+	return rect
 
 
 func _apply_body() -> void:

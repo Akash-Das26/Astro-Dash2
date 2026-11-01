@@ -274,9 +274,11 @@ func _test_thrusters() -> void:
 		holder.add_child(enemy)
 		var flame := enemy.get_node("Thruster") as Thruster
 		flame.set_thrust(1.0)
-		var sprite := enemy.get_node("Sprite") as Sprite2D
-		var hull_half: float = sprite.get_rect().size.y * 0.5 * sprite.scale.y
-		var hull_width: float = sprite.get_rect().size.x * sprite.scale.x
+		# The drawn hull, not the file: the alternate art has a wide transparent
+		# margin, and the flame is anchored to the pixels that are there.
+		var hull: Vector2 = enemy.drawn_size()
+		var hull_half: float = hull.y * 0.5
+		var hull_width: float = hull.x
 		var flame_width: float = Tuning.THRUSTER_ART_SIZE * flame.scale.x
 		check(
 			"enemy flame %s is behind the hull" % String(kind),

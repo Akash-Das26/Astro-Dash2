@@ -275,27 +275,31 @@ const ENEMY_TYPES: Dictionary = {
 		"hp": 9, "speed": 265.0, "points": 55, "radius": 12.0,
 		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
 		"aim_error": 0.0, "contact_damage": 26, "thruster_scale": 1.0,
+		"target_height": 28.0,
 		"effect_color": Color(1.0, 0.4, 0.4),
 	},
 	&"elite_green": {
 		"hp": 11, "speed": 115.0, "points": 70, "radius": 13.0,
 		"orbit_radius": 330.0, "fire_interval": 2.6, "bullet_speed": 400.0,
 		"aim_error": 0.02, "bullet_damage": 20, "contact_damage": 18,
-		"thruster_scale": 1.0, "effect_color": Color(0.45, 1.0, 0.6),
+		"thruster_scale": 1.0, "target_height": 30.0,
+		"effect_color": Color(0.45, 1.0, 0.6),
 	},
 	&"elite_yellow": {
 		"hp": 15, "speed": 100.0, "points": 90, "radius": 16.0,
 		"orbit_radius": 250.0, "fire_interval": 2.8, "bullet_speed": 240.0,
 		"aim_error": 0.15, "bullet_damage": 14, "contact_damage": 22,
 		"aura_radius": 190.0, "aura_multiplier": 0.5,
-		"thruster_scale": 1.15, "effect_color": Color(1.0, 0.9, 0.4),
+		"thruster_scale": 1.15, "target_height": 34.0,
+		"effect_color": Color(1.0, 0.9, 0.4),
 	},
 	# One hit point, spawned in clusters by the wave director.
 	&"drone": {
 		"hp": 1, "speed": 245.0, "points": 12, "radius": 8.0,
 		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
 		"aim_error": 0.0, "contact_damage": 14, "swarm": true,
-		"thruster_scale": 0.8, "effect_color": Color(0.5, 0.9, 1.0),
+		"thruster_scale": 0.8, "target_height": 18.0,
+		"effect_color": Color(0.5, 0.9, 1.0),
 	},
 }
 ## The elite family, in display order. They join the mix from ELITE_FROM_BAND
