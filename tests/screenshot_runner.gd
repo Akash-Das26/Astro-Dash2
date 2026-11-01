@@ -202,3 +202,8 @@ func _pose_thrusters(node: Node, option: String) -> void:
 		var flame := hull.get_node_or_null("Thruster") as Thruster
 		if flame != null:
 			flame.set_thrust(1.0)
+			# The node is frozen, so the animation will not advance: pin it to the
+			# longest frame or the still shows a two-row sliver instead of a flame.
+			var frames := flame.sprite_frames
+			if frames != null and frames.has_animation(&"burn"):
+				flame.frame = frames.get_frame_count(&"burn") - 1
