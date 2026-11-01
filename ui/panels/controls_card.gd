@@ -13,6 +13,9 @@ signal closed
 const CELL_HEIGHT: float = 36.0
 const NAME_WIDTH: float = 180.0
 const RESET_WIDTH: float = 40.0
+## The vertical scrollbar sits inside the scroll region, so the rows need this
+## much padding on the right or the last cell (the R button) is clipped by it.
+const SCROLLBAR_GUTTER: float = 16.0
 ## How far a stick or trigger has to move before it counts as a binding.
 const AXIS_CAPTURE_THRESHOLD: float = 0.6
 
@@ -34,11 +37,27 @@ var _read_only: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_add_scroll_gutter()
 	_close_button.pressed.connect(close)
 	_remap_button.pressed.connect(_on_remap_pressed)
 	_reset_all.pressed.connect(_on_reset_all)
 	_build_rows()
 	_refresh()
+
+
+## Reparents the row list under a margin so the rows are as wide as the visible
+## scroll region, not as wide as the region plus its scrollbar.
+func _add_scroll_gutter() -> void:
+	var scroll: ScrollContainer = _rows.get_parent() as ScrollContainer
+	if scroll == null:
+		return
+	var margin := MarginContainer.new()
+	margin.name = "RowsGutter"
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_right", int(SCROLLBAR_GUTTER))
+	scroll.remove_child(_rows)
+	scroll.add_child(margin)
+	margin.add_child(_rows)
 
 
 func open() -> void:
