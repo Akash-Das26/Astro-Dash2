@@ -35,6 +35,9 @@ const KEY_CAMPAIGN_SHIELDS: String = "shields"
 const KEY_CAMPAIGN_CONQUERED: String = "conquered"
 const KEY_CAMPAIGN_BEST_SCORE: String = "best_score"
 const KEY_CAMPAIGN_BEST_PLANETS: String = "best_planets"
+## Planets ever conquered, across every campaign. Skin unlocks read it, because a
+## single galaxy cannot reach the top milestones on a small map.
+const KEY_LIFETIME_PLANETS: String = "lifetime_planets"
 const KEY_WEAPONS_OWNED: String = "owned"
 const KEY_WEAPON_PRIMARY: String = "primary"
 const KEY_WEAPON_SECONDARY: String = "secondary"
@@ -63,6 +66,9 @@ var campaign_shields: int = 0
 ## Best campaign ever finished, for the summaries and the menu.
 var campaign_best_score: int = 0
 var campaign_best_planets: int = 0
+## Lifetime conquests, kept across campaigns and across a SINGULARITY wipe
+## (skin unlocks are cosmetic and deliberately survive the wipe).
+var lifetime_planets: int = 0
 ## Weapons are meta-progression: bought once with energy, kept across campaigns.
 ## The pulse laser is always owned, so an old save with no weapon keys works.
 var weapons_owned: Array[StringName] = [Weapons.DEFAULT_ID]
@@ -217,6 +223,7 @@ func wipe_meta_progress() -> void:
 func record_campaign_progress(body_id: StringName, score: int, hp: int, shields: int) -> void:
 	if not campaign_conquered.has(body_id):
 		campaign_conquered.append(body_id)
+		lifetime_planets += 1
 	campaign_score = maxi(score, 0)
 	campaign_hp = maxi(hp, 0)
 	campaign_shields = clampi(shields, 0, Tuning.MAX_SHIELD_CHARGES)
@@ -243,6 +250,76 @@ func is_body_conquered(body_id: StringName) -> bool:
 	return campaign_conquered.has(body_id)
 
 
+## ConfigFile hands back whatever is in the file, so a hand-edited, truncated or
+## corrupted save can hold any type. These coerce instead of letting a typed
+## assignment raise a runtime error on a file the player can still start with.
+func _as_int(value: Variant, fallback: int) -> int:
+	match typeof(value):
+		TYPE_INT:
+			return value
+		TYPE_FLOAT:
+			return int(value)
+		TYPE_BOOL:
+			return 1 if value else 0
+		TYPE_STRING, TYPE_STRING_NAME:
+			var text: String = String(value)
+			return int(text) if text.is_valid_int() else fallback
+	return fallback
+
+
+func _as_float(value: Variant, fallback: float) -> float:
+	match typeof(value):
+		TYPE_FLOAT, TYPE_INT:
+			return clampf(float(value), 0.0, 1.0)
+		TYPE_BOOL:
+			return 1.0 if value else 0.0
+		TYPE_STRING, TYPE_STRING_NAME:
+			var text: String = String(value)
+			return clampf(text.to_float(), 0.0, 1.0) if text.is_valid_float() else fallback
+	return fallback
+
+
+func _as_bool(value: Variant, fallback: bool) -> bool:
+	match typeof(value):
+		TYPE_BOOL:
+			return value
+		TYPE_INT, TYPE_FLOAT:
+			return float(value) != 0.0
+		TYPE_STRING, TYPE_STRING_NAME:
+			var text: String = String(value).to_lower()
+			if text == "true":
+				return true
+			if text == "false":
+				return false
+	return fallback
+
+
+func _as_string(value: Variant) -> String:
+	match typeof(value):
+		TYPE_STRING, TYPE_STRING_NAME:
+			return String(value)
+		TYPE_INT:
+			return str(value)
+	return ""
+
+
+func _as_string_array(value: Variant) -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if value is PackedStringArray:
+		return value
+	if value is Array:
+		for item: Variant in value:
+			var text: String = _as_string(item)
+			if not text.is_empty():
+				out.append(text)
+		return out
+	# A single string is read as one entry rather than dropped.
+	var single: String = _as_string(value)
+	if not single.is_empty():
+		out.append(single)
+	return out
+
+
 func _reset_upgrade_levels() -> void:
 	upgrade_levels.clear()
 	for kind: StringName in Tuning.UPGRADE_ORDER:
@@ -254,55 +331,66 @@ func load_data() -> void:
 	if config.load(SAVE_PATH) != OK:
 		return
 	high_scores.clear()
-	var legacy_high: int = maxi(int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0)), 0)
+	var legacy_high: int = maxi(_as_int(config.get_value(SECTION_PROGRESS, KEY_HIGH_SCORE, 0), 0), 0)
 	if legacy_high > 0:
 		high_scores[Tuning.DIFFICULTY_CADET] = legacy_high
 	for mode: StringName in Tuning.DIFFICULTY_ORDER:
-		var stored: int = int(config.get_value(SECTION_SCORES, String(mode), 0))
+		var stored: int = _as_int(config.get_value(SECTION_SCORES, String(mode), 0), 0)
 		if stored > 0 or high_scores.has(mode):
 			high_scores[mode] = maxi(stored, high_score_for(mode))
-	energy = maxi(int(config.get_value(SECTION_PROGRESS, KEY_ENERGY, 0)), 0)
-	skin_id = StringName(String(config.get_value(SECTION_PROGRESS, KEY_SKIN, "red")))
+	energy = maxi(_as_int(config.get_value(SECTION_PROGRESS, KEY_ENERGY, 0), 0), 0)
+	skin_id = StringName(_as_string(config.get_value(SECTION_PROGRESS, KEY_SKIN, "red")))
+	# The save may name a hull that no longer exists (renamed, or a hand edit).
+	if not Skins.has(skin_id):
+		skin_id = Skins.DEFAULT_ID
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		upgrade_levels[kind] = clampi(
-			int(config.get_value(SECTION_UPGRADES, String(kind) + "_level", 0)),
+			_as_int(config.get_value(SECTION_UPGRADES, String(kind) + "_level", 0), 0),
 			0,
 			Tuning.UPGRADE_MAX_LEVEL
 		)
-	master_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MASTER_VOLUME, 0.8)), 0.0, 1.0)
-	music_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, 0.8)), 0.0, 1.0)
-	music_order = StringName(String(config.get_value(SECTION_AUDIO, KEY_MUSIC_ORDER, "shuffle")))
-	control_scheme = StringName(
-		String(config.get_value(SECTION_GAMEPLAY, KEY_CONTROL_SCHEME, String(Tuning.CONTROL_SCHEME_DEFAULT)))
-	)
+	master_volume = _as_float(config.get_value(SECTION_AUDIO, KEY_MASTER_VOLUME, 0.8), 0.8)
+	music_volume = _as_float(config.get_value(SECTION_AUDIO, KEY_MUSIC_VOLUME, 0.8), 0.8)
+	music_order = StringName(_as_string(config.get_value(SECTION_AUDIO, KEY_MUSIC_ORDER, "shuffle")))
+	control_scheme = StringName(_as_string(config.get_value(
+		SECTION_GAMEPLAY, KEY_CONTROL_SCHEME, String(Tuning.CONTROL_SCHEME_DEFAULT)
+	)))
 	if control_scheme != Tuning.CONTROL_SCHEME_CLASSIC:
 		control_scheme = Tuning.CONTROL_SCHEME_FREE
-	shield_mode = StringName(
-		String(config.get_value(SECTION_GAMEPLAY, KEY_SHIELD_MODE, String(Tuning.SHIELD_MODE_DEFAULT)))
-	)
+	shield_mode = StringName(_as_string(config.get_value(
+		SECTION_GAMEPLAY, KEY_SHIELD_MODE, String(Tuning.SHIELD_MODE_DEFAULT)
+	)))
 	if shield_mode != Tuning.SHIELD_MODE_MANUAL:
 		shield_mode = Tuning.SHIELD_MODE_AUTO
-	sfx_volume = clampf(float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8)), 0.0, 1.0)
-	muted = bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false))
-	reduce_motion = bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false))
-	auto_fire = bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true))
-	high_contrast_bullets = bool(config.get_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, true))
-	campaign_active = bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false))
-	campaign_seed = int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, 0))
-	campaign_difficulty = Difficulty.normalise(StringName(String(config.get_value(
+	sfx_volume = _as_float(config.get_value(SECTION_AUDIO, KEY_SFX_VOLUME, 0.8), 0.8)
+	muted = _as_bool(config.get_value(SECTION_AUDIO, KEY_MUTED, false), false)
+	reduce_motion = _as_bool(config.get_value(SECTION_GAMEPLAY, KEY_REDUCE_MOTION, false), false)
+	auto_fire = _as_bool(config.get_value(SECTION_GAMEPLAY, KEY_AUTO_FIRE, true), true)
+	high_contrast_bullets = _as_bool(
+		config.get_value(SECTION_GAMEPLAY, KEY_HIGH_CONTRAST, true), true
+	)
+	campaign_active = _as_bool(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_ACTIVE, false), false)
+	campaign_seed = _as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SEED, 0), 0)
+	campaign_difficulty = Difficulty.normalise(StringName(_as_string(config.get_value(
 		SECTION_CAMPAIGN, KEY_CAMPAIGN_DIFFICULTY, String(Tuning.DIFFICULTY_DEFAULT)
 	))))
-	campaign_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0)), 0)
-	campaign_hp = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, 0)), 0)
+	campaign_score = maxi(_as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SCORE, 0), 0), 0)
+	campaign_hp = maxi(_as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_HP, 0), 0), 0)
 	campaign_shields = clampi(
-		int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, 0)),
+		_as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, 0), 0),
 		0,
 		Tuning.MAX_SHIELD_CHARGES
 	)
-	campaign_best_score = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, 0)), 0)
-	campaign_best_planets = maxi(int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, 0)), 0)
+	campaign_best_score = maxi(_as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, 0), 0), 0)
+	campaign_best_planets = maxi(_as_int(config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, 0), 0), 0)
+	lifetime_planets = maxi(
+		_as_int(config.get_value(SECTION_CAMPAIGN, KEY_LIFETIME_PLANETS, 0), 0),
+		campaign_best_planets
+	)
 	campaign_conquered.clear()
-	var conquered: PackedStringArray = config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, PackedStringArray())
+	var conquered: PackedStringArray = _as_string_array(
+		config.get_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_CONQUERED, PackedStringArray())
+	)
 	for sector: String in conquered:
 		campaign_conquered.append(StringName(sector))
 	# A stored campaign without a seed cannot be rebuilt, so treat it as finished
@@ -310,21 +398,21 @@ func load_data() -> void:
 	if campaign_active and campaign_seed == 0:
 		campaign_active = false
 	weapons_owned.clear()
-	var owned_weapons: PackedStringArray = config.get_value(
+	var owned_weapons: PackedStringArray = _as_string_array(config.get_value(
 		SECTION_WEAPONS, KEY_WEAPONS_OWNED, PackedStringArray([String(Weapons.DEFAULT_ID)])
-	)
+	))
 	for weapon: String in owned_weapons:
 		var id := StringName(weapon)
 		if Weapons.exists(id) and not weapons_owned.has(id):
 			weapons_owned.append(id)
 	if not weapons_owned.has(Weapons.DEFAULT_ID):
 		weapons_owned.append(Weapons.DEFAULT_ID)
-	var stored_primary := StringName(
-		String(config.get_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(Weapons.DEFAULT_ID)))
-	)
+	var stored_primary := StringName(_as_string(
+		config.get_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(Weapons.DEFAULT_ID))
+	))
 	weapon_primary = stored_primary if weapons_owned.has(stored_primary) else Weapons.DEFAULT_ID
 	var stored_secondary := StringName(
-		String(config.get_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, ""))
+		_as_string(config.get_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, ""))
 	)
 	if stored_secondary == weapon_primary or not weapons_owned.has(stored_secondary):
 		weapon_secondary = &""
@@ -333,10 +421,10 @@ func load_data() -> void:
 	keyboard_bindings.clear()
 	gamepad_bindings.clear()
 	for action: StringName in Tuning.CONTROL_ACTIONS:
-		var key_text: String = String(
+		var key_text: String = _as_string(
 			config.get_value(SECTION_CONTROLS, String(action) + "_key", "")
 		)
-		var pad_text: String = String(
+		var pad_text: String = _as_string(
 			config.get_value(SECTION_CONTROLS, String(action) + "_pad", "")
 		)
 		if not key_text.is_empty():
@@ -372,6 +460,7 @@ func save_data() -> void:
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_SHIELDS, campaign_shields)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_SCORE, campaign_best_score)
 	config.set_value(SECTION_CAMPAIGN, KEY_CAMPAIGN_BEST_PLANETS, campaign_best_planets)
+	config.set_value(SECTION_CAMPAIGN, KEY_LIFETIME_PLANETS, lifetime_planets)
 	var conquered := PackedStringArray()
 	for sector: StringName in campaign_conquered:
 		conquered.append(String(sector))

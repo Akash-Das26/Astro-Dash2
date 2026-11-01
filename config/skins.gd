@@ -85,10 +85,14 @@ static func scale_of(id: StringName) -> float:
 	return float(entry(id).get("scale", 0.4))
 
 
-## Planets conquered, counting the free hulls from the best run and the current
-## run, so a milestone reached mid-run shows up immediately in the picker.
+## Planets conquered: the best run, the current run and the lifetime total. The
+## lifetime count matters because a galaxy holds about 43-53 planets, so the top
+## milestones (40 and 45) cannot be reached inside one campaign on a small map.
 static func planets() -> int:
-	return maxi(SaveData.campaign_best_planets, SaveData.campaign_conquered.size())
+	return maxi(
+		maxi(SaveData.campaign_best_planets, SaveData.campaign_conquered.size()),
+		SaveData.lifetime_planets
+	)
 
 
 static func is_unlocked(id: StringName) -> bool:

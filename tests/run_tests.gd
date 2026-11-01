@@ -39,6 +39,8 @@ func _ready() -> void:
 	_test_shields()
 	_test_upgrades()
 	_test_persistence()
+	_test_save_robustness()
+	_test_skin_reachability()
 	_test_weapons()
 	_test_elite_fighters()
 	_test_thrusters()
@@ -109,6 +111,7 @@ func _reset_state() -> void:
 	SaveData.campaign_shields = 0
 	SaveData.campaign_best_score = 0
 	SaveData.campaign_best_planets = 0
+	SaveData.lifetime_planets = 0
 	SaveData.energy = 0
 	for kind: StringName in Tuning.UPGRADE_ORDER:
 		SaveData.upgrade_levels[kind] = 0
@@ -1075,6 +1078,90 @@ func _test_credits() -> void:
 	check("the credits card closes", not card.visible)
 	card.queue_free()
 	await get_tree().process_frame
+
+
+## A missing, empty, truncated, mistyped or old save must never stop the game:
+## every value is coerced and the defaults come back.
+func _test_save_robustness() -> void:
+	var cases: Array[Dictionary] = [
+		{"name": "missing file", "text": "", "delete": true},
+		{"name": "empty file", "text": ""},
+		{"name": "truncated file", "text": "[progress]\nenergy = 42\n[campaign\nseed = 1"},
+		{"name": "wrong value types", "text": "[progress]\nenergy = \"lots\"\nskin = 3\n[audio]\nmusic_volume = \"loud\"\nmuted = \"yes\"\n[campaign]\nactive = \"sure\"\nconquered = 7\nseed = [1, 2]\n[weapons]\nowned = 5\n[controls]\nmove_left_key = 12\n"},
+		{"name": "unknown keys", "text": "[mystery]\nfoo = 1\nbar = \"baz\"\n"},
+		{"name": "oldest schema", "text": "[progress]\nhigh_score = 100\nenergy = 7\n"},
+	]
+	for case: Dictionary in cases:
+		if bool(case.get("delete", false)):
+			if FileAccess.file_exists(SAVE_PATH):
+				DirAccess.remove_absolute(SAVE_PATH)
+		else:
+			var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+			check("save fixture is writable: %s" % case["name"], file != null)
+			if file != null:
+				file.store_string(String(case["text"]))
+				file.close()
+		SaveData.load_data()
+		check(
+			"a %s loads" % case["name"], true,
+			"reached the end of load_data"
+		)
+		check("... energy is a sane int", SaveData.energy >= 0, str(SaveData.energy))
+		check(
+			"... volumes stay in range",
+			SaveData.music_volume >= 0.0 and SaveData.music_volume <= 1.0 \
+				and SaveData.master_volume >= 0.0 and SaveData.master_volume <= 1.0
+		)
+		check(
+			"... the difficulty is a known mode",
+			Tuning.DIFFICULTY_ORDER.has(SaveData.campaign_difficulty),
+			str(SaveData.campaign_difficulty)
+		)
+		check("... the conquests are a list", SaveData.campaign_conquered is Array)
+		check("... the skin is a known hull", Skins.has(SaveData.skin_id), str(SaveData.skin_id))
+	# The game still saves and loads after the worst of them.
+	SaveData.energy = 31
+	SaveData.save_data()
+	SaveData.energy = 0
+	SaveData.load_data()
+	check_eq("a save written after a broken file round-trips", SaveData.energy, 31)
+
+
+## Every hull milestone has to be reachable: a galaxy holds 50-60 bodies, so only
+## about 43-53 planets, which is less than the top milestone. The lifetime count
+## is what makes the last hulls reachable at all.
+func _test_skin_reachability() -> void:
+	var top: int = 0
+	for skin: Dictionary in Skins.all():
+		top = maxi(top, int(skin.get("unlock", 0)))
+	check(
+		"the top hull milestone exceeds one small galaxy",
+		top > Tuning.GALAXY_BODY_COUNT_MIN - 7,
+		"top %d vs %d planets" % [top, Tuning.GALAXY_BODY_COUNT_MIN - 7]
+	)
+	var locked: int = 0
+	for skin: Dictionary in Skins.all():
+		SaveData.lifetime_planets = int(skin.get("unlock", 0))
+		if not Skins.is_unlocked(skin["id"]):
+			locked += 1
+	check("every hull unlocks at its own milestone", locked == 0, "%d locked" % locked)
+	# Conquests across campaigns feed the lifetime count.
+	SaveData.lifetime_planets = 0
+	SaveData.begin_campaign(20261102, Tuning.DIFFICULTY_CADET)
+	for index: int in 45:
+		SaveData.record_campaign_progress(StringName("body_%d" % index), 100, 100, 0)
+	check_eq("conquests raise the lifetime count", SaveData.lifetime_planets, 45)
+	check("the last hull unlocks from lifetime conquests", Skins.is_unlocked(&"stroke_yellow"))
+	var kept: int = SaveData.lifetime_planets
+	SaveData.save_data()
+	SaveData.lifetime_planets = 0
+	SaveData.load_data()
+	check_eq("the lifetime count survives a reload", SaveData.lifetime_planets, kept)
+	# SINGULARITY wipes upgrades and energy, never the cosmetic hulls.
+	SaveData.wipe_meta_progress()
+	check("SINGULARITY keeps the lifetime count", SaveData.lifetime_planets >= kept)
+	check("SINGULARITY keeps the unlocked hulls", Skins.is_unlocked(&"stroke_yellow"))
+	SaveData.finish_campaign()
 
 
 # --- 4.7 Audio --------------------------------------------------------------
