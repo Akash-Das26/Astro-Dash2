@@ -600,7 +600,10 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   do use these assets for your project I would be happy to see them in use!
   Feel free to add a comment with a link." — no credit required; credit given.
   <https://hexadecimalwtf.itch.io/space-pixels>
-- **Kenney** (<https://kenney.nl>) space backgrounds (`assets/backgrounds/background-*.png`).
+- **Backgrounds** (`assets/backgrounds/background-*.png`, the black, blue,
+  purple and red tiles): **author and license unknown**; the pack shipped no
+  readme, license or credits file. I must check where these were downloaded —
+  see `docs/todo.md`. No credit is invented here.
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
   falls back to Godot's default font, silently, when either is missing.
