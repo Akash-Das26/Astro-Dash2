@@ -46,6 +46,15 @@ tests exercise the real singletons and the real classes.
   and saved volumes applying on load.
 - **Controls:** `pause` cannot be rebound, a binding reaches the InputMap and
   survives a reload, and reset clears it.
+- **Elite fighters:** every kind has a Tuning row and art, a live instance report
+  its HP/points/contact damage, dies with its points, the shield carrier halves
+  nearby damage, drones are a swarm kind, elites only mix in from band 2 and the
+  mode's `elite_scale` rises with difficulty.
+- **Thrusters (`_test_thrusters`):** for every fighter and the player ship, at full
+  thrust the flame sits behind its own hull, is no wider than that hull, and keeps
+  its top edge on the anchor.
+- **Overlays (`_test_overlays`):** the C card, the debug F4 audit and the
+  difficulty picker open and close on top of a live battle and of the map.
 - **Paths (`check_paths.gd`):** every `res://` string in the scripts, scenes and
   `project.godot` resolves to a real file, the tables that build paths at runtime
   (`AudioManager.SOUND_MAP`, the music and font folders, the sprite tables) are

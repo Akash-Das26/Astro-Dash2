@@ -166,10 +166,20 @@ func _apply_kind() -> void:
 	_sprite.modulate = Color.WHITE
 	# Anchor the exhaust at this art's rear edge, not at a fixed pixel count.
 	var hull_half: float = _sprite.get_rect().size.y * 0.5 * _sprite.scale.y
+	var hull_width: float = _sprite.get_rect().size.x * _sprite.scale.x
 	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
-	_thruster.set_base_scale(
-		Vector2.ONE * clampf(body_radius / 11.0, 0.8, 1.8) * thruster_scale
+	# Sized from the hull (see ENEMY_THRUSTER_WIDTH_RATIO): the body radius would
+	# blow the 32 px art up past the hull on a heavy and shrink it to a sliver on
+	# a drone.
+	# Divided by THRUSTER_FULL_SCALE because the ratio is what the flame measures
+	# at FULL thrust, where `_apply()` has already grown it by that factor.
+	var flame: float = clampf(
+		hull_width * Tuning.ENEMY_THRUSTER_WIDTH_RATIO
+			/ Tuning.THRUSTER_ART_SIZE / Tuning.THRUSTER_FULL_SCALE,
+		Tuning.ENEMY_THRUSTER_MIN_SCALE,
+		Tuning.ENEMY_THRUSTER_MAX_SCALE
 	)
+	_thruster.set_base_scale(Vector2.ONE * flame * thruster_scale)
 
 
 func _apply_body() -> void:

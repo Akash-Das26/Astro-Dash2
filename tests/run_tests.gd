@@ -14,6 +14,8 @@ const SAVE_PATH: String = "user://save.cfg"
 const BACKUP_PATH: String = "user://save.tests-backup.cfg"
 const SHIP_SCENE: PackedScene = preload("res://entities/player/ship.tscn")
 const FIGHTER_SCENE: PackedScene = preload("res://entities/enemies/enemy_base.tscn")
+const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
+const MAP_SCENE: PackedScene = preload("res://ui/map/galaxy_map.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -32,6 +34,8 @@ func _ready() -> void:
 	_test_persistence()
 	_test_weapons()
 	_test_elite_fighters()
+	_test_thrusters()
+	_test_overlays()
 	_test_galaxy()
 	_test_audio()
 	_test_controls()
@@ -198,6 +202,125 @@ func _test_heal_clamp() -> void:
 
 
 # --- Elite fighters ---------------------------------------------------------
+
+## Overlay smoke test: the C card, the F4 layout audit and the difficulty picker
+## are opened on top of a live battle and of the map, then closed again. A card
+## that only works on its own screen is what this catches.
+func _test_overlays() -> void:
+	_reset_state()
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	var card := UIOverlay.get("_card") as ControlsCard
+	check("overlay card exists", card != null)
+	if card == null:
+		battle.queue_free()
+		return
+	UIOverlay.open_card()
+	check("C card opens over a battle", card.visible)
+	card.call("close")
+	check("C card closes over a battle", not card.visible)
+
+	UIOverlay.call("_toggle_layout_debug")
+	var audit := UIOverlay.get("_layout_overlay") as Control
+	check("F4 audit turns on", audit != null and audit.visible)
+	UIOverlay.call("_toggle_layout_debug")
+	check("F4 audit turns off", audit != null and not audit.visible)
+
+	# The picker's root is a CanvasLayer, so it is a Node (not a Control) and is
+	# asked for its own state instead of `visible`.
+	var picker := battle.get_node_or_null("DifficultyPicker")
+	check("the battle carries a difficulty picker", picker != null)
+	if picker != null:
+		picker.call("open")
+		check("picker opens over a battle", bool(picker.call("picker_open")))
+		picker.call("close")
+		check("picker closes over a battle", not bool(picker.call("picker_open")))
+
+	# The same three overlays on the map: the map owns a picker of its own.
+	var map := MAP_SCENE.instantiate()
+	add_child(map)
+	UIOverlay.open_card()
+	check("C card opens over the map", card.visible)
+	card.call("close")
+	check("C card closes over the map", not card.visible)
+	UIOverlay.call("_toggle_layout_debug")
+	check("F4 audit turns on over the map", audit != null and audit.visible)
+	UIOverlay.call("_toggle_layout_debug")
+	var map_picker := map.get_node_or_null("DifficultyPicker")
+	check("the map carries a difficulty picker", map_picker != null)
+	if map_picker != null:
+		map_picker.call("open")
+		check("picker opens over the map", bool(map_picker.call("picker_open")))
+		map_picker.call("close")
+		check("picker closes over the map", not bool(map_picker.call("picker_open")))
+	map.queue_free()
+	battle.queue_free()
+	_reset_state()
+
+
+## Exhaust geometry, measured on live nodes. Every enemy flame must sit behind
+## its own hull, be no wider than that hull and keep its top edge on the anchor
+## at full thrust; the player ship is the reference and must pass the same
+## checks after the thruster offset follows the flame scale.
+func _test_thrusters() -> void:
+	var holder := Node2D.new()
+	holder.name = "ThrusterHolder"
+	add_child(holder)
+	var kinds: Array[StringName] = [&"scout", &"gunner", &"heavy"]
+	kinds.append_array(Tuning.ELITE_KINDS)
+	for kind: StringName in kinds:
+		var enemy := FIGHTER_SCENE.instantiate() as EnemyBase
+		enemy.configure(kind, Vector2(300.0, 300.0), null)
+		holder.add_child(enemy)
+		var flame := enemy.get_node("Thruster") as Thruster
+		flame.set_thrust(1.0)
+		var sprite := enemy.get_node("Sprite") as Sprite2D
+		var hull_half: float = sprite.get_rect().size.y * 0.5 * sprite.scale.y
+		var hull_width: float = sprite.get_rect().size.x * sprite.scale.x
+		var flame_width: float = Tuning.THRUSTER_ART_SIZE * flame.scale.x
+		check(
+			"enemy flame %s is behind the hull" % String(kind),
+			flame.position.y >= hull_half,
+			"anchor %.1f hull half %.1f" % [flame.position.y, hull_half]
+		)
+		check(
+			"enemy flame %s is no wider than the hull" % String(kind),
+			flame_width <= hull_width + 0.01,
+			"flame %.1f hull %.1f" % [flame_width, hull_width]
+		)
+		check(
+			"enemy flame %s keeps its top edge on the anchor" % String(kind),
+			absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5 * flame.scale.y) < 0.01,
+			"offset %.2f" % flame.offset.y
+		)
+
+	var ship := SHIP_SCENE.instantiate() as Ship
+	if ship != null:
+		add_child(ship)
+		var flame := ship.get_node_or_null("Thruster") as Thruster
+		var sprite := ship.get_node_or_null("Sprite") as Sprite2D
+		if flame != null and sprite != null:
+			flame.set_thrust(1.0)
+			var hull_half: float = sprite.get_rect().size.y * 0.5 * sprite.scale.y
+			var hull_width: float = sprite.get_rect().size.x * sprite.scale.x
+			check(
+				"player flame is behind the hull",
+				flame.position.y >= hull_half,
+				"anchor %.1f hull half %.1f" % [flame.position.y, hull_half]
+			)
+			check(
+				"player flame is no wider than the hull",
+				Tuning.THRUSTER_ART_SIZE * flame.scale.x <= hull_width + 0.01,
+				"flame %.1f hull %.1f" % [Tuning.THRUSTER_ART_SIZE * flame.scale.x, hull_width]
+			)
+			check(
+				"player flame top edge sits on the anchor",
+				absf(flame.offset.y - Tuning.THRUSTER_ART_SIZE * 0.5 * flame.scale.y) < 0.01,
+				"offset %.2f" % flame.offset.y
+			)
+		ship.queue_free()
+	holder.queue_free()
+
 
 ## The elite family is data plus one real node: every kind has a Tuning row and
 ## art, then a live instance is killed to prove the stat, the death signal and

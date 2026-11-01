@@ -313,6 +313,14 @@ const DRONE_CLUSTER_SPREAD: float = 54.0
 ## Fallbacks for a kind whose row leaves these out.
 const ENEMY_DEFAULT_BULLET_DAMAGE: int = ENEMY_BULLET_DAMAGE
 const ENEMY_DEFAULT_THRUSTER_SCALE: float = 1.0
+## An enemy flame is sized from its HULL, never from the body radius: radius
+## scaled the 32 px art up to 1.8x on a heavy, which drew a flame wider than a
+## scout and read as a hatch mark beside the ship. At FULL thrust the flame is
+## this fraction of the hull's width, which sizes every kind from the same rule;
+## the clamps keep a drone's exhaust visible without hiding under the hull.
+const ENEMY_THRUSTER_WIDTH_RATIO: float = 0.7
+const ENEMY_THRUSTER_MIN_SCALE: float = 0.3
+const ENEMY_THRUSTER_MAX_SCALE: float = 0.9
 const ENEMY_CONTACT_DAMAGE: int = 20
 const ENEMY_BULLET_DAMAGE: int = 12
 const ENEMY_BULLET_SPEED: float = 260.0
