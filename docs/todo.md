@@ -11,7 +11,6 @@ grep -rn "TODO\|FIXME" --include=*.gd --include=*.tscn --include=*.md . | grep -
 
 | Where | What |
 | --- | --- |
-| Sprite packs (README credits, in-game CREDITS, `config/credits.gd` ART) | **Author, license and source URL for the SpacePixels packs and for the backgrounds pack are still unknown.** They are marked TODO and shown as TODO on the credits card; they are not guessed. |
 | `assets/fonts/` | **Verify** the two Google Fonts pages used as sources: <https://fonts.google.com/specimen/Pixelify+Sans> and <https://fonts.google.com/specimen/Press+Start+2P>. Both fonts ship with their `OFL.txt` next to the file. |
 | `assets/audio/music/Prepare for War.mp3` | **CC BY-SA 3.0 (share-alike).** Decide before publishing whether to keep it; to disable, add `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE` or delete the file. Nothing in the code depends on it. |
 
@@ -28,3 +27,9 @@ grep -rn "TODO\|FIXME" --include=*.gd --include=*.tscn --include=*.md . | grep -
   40 s target and EVENT HORIZON gets two station kills where the target allows
   one. The next knob is `BOSS_EARLY_DAMAGE_SCALE` (0.75 → 0.68); see the last
   section of `docs/balance_report.md`.
+
+## After publishing
+
+- **Comment on the Space Pixels itch.io page**
+  (<https://hexadecimalwtf.itch.io/space-pixels>) with a link to the game: the
+  author asked to see the projects the art ends up in.

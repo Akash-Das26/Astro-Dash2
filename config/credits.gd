@@ -95,13 +95,14 @@ const FONTS: Array[Dictionary] = [
 	},
 ]
 
-## The two sprite packs are still waiting for their owner's data.
+## Art packs. The sprite pack is the author's own free-use statement, not a
+## standard license; the background tiles are still looking for their source.
 const ART: Array[Dictionary] = [
 	{
-		"title": "SpacePixels sprite packs",
-		"author": "TODO",
-		"license": "TODO",
-		"url": "TODO",
+		"title": "Space Pixels",
+		"author": "Hex",
+		"license": "Free to use (author's terms)",
+		"url": "https://hexadecimalwtf.itch.io/space-pixels",
 	},
 	{
 		"title": "Space backgrounds pack",

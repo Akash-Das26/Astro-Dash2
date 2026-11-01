@@ -593,10 +593,13 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 
 ## Credits
 
-- **SpacePixels** sprite packs: `assets/sprites/spacepixels-0.2.0` (ships, lasers,
-  asteroids, thrusters, warpgates, bars, planets) and
-  `spacepixels_ships_stroked` (the stroked hulls). TODO: author, license and
-  source URL for both packs.
+- **Space Pixels** by **Hex** (hexadecimalwtf): `assets/sprites/spacepixels-0.2.0`
+  (ships, lasers, asteroids, thrusters, warpgates, bars, planets) and
+  `spacepixels_ships_stroked` (the stroked hulls). The author's own terms:
+  "Feel free to use this in any project you want. No credit is necessary. If you
+  do use these assets for your project I would be happy to see them in use!
+  Feel free to add a comment with a link." — no credit required; credit given.
+  <https://hexadecimalwtf.itch.io/space-pixels>
 - **Kenney** (<https://kenney.nl>) space backgrounds (`assets/backgrounds/background-*.png`).
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
@@ -640,7 +643,7 @@ publishing; nothing was invented.
 
 | Asset | Author | License | Attribution | Source |
 | --- | --- | --- | --- | --- |
-| SpacePixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | **TODO — asked in docs/todo.md** | TODO | TODO | TODO |
+| Space Pixels sprite packs (`assets/sprites/spacepixels-0.2.0`, `spacepixels_ships_stroked`) | Hex | Free-use terms (author's statement, not a standard license) | not required (credit given) | <https://hexadecimalwtf.itch.io/space-pixels> |
 | Space backgrounds (`assets/backgrounds/background-*.png`) | **TODO — asked in docs/todo.md** | TODO | TODO | TODO |
 | Pixelify Sans font | Stefie Justprince | SIL OFL 1.1 | required (OFL kept at `assets/fonts/pixelify-sans/OFL.txt`) | <https://fonts.google.com/specimen/Pixelify+Sans> |
 | Press Start 2P font | CodeMan38 | SIL OFL 1.1 | required (OFL kept at `assets/fonts/Press_Start_2P/OFL.txt`) | <https://fonts.google.com/specimen/Press+Start+2P> |
