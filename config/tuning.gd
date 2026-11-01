@@ -275,14 +275,14 @@ const ENEMY_TYPES: Dictionary = {
 		"hp": 9, "speed": 265.0, "points": 55, "radius": 12.0,
 		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
 		"aim_error": 0.0, "contact_damage": 26, "thruster_scale": 1.0,
-		"target_height": 28.0,
+		"target_height": 28.0, "size_scale": ELITE_SIZE_SCALE,
 		"effect_color": Color(1.0, 0.4, 0.4),
 	},
 	&"elite_green": {
 		"hp": 11, "speed": 115.0, "points": 70, "radius": 13.0,
 		"orbit_radius": 330.0, "fire_interval": 2.6, "bullet_speed": 400.0,
 		"aim_error": 0.02, "bullet_damage": 20, "contact_damage": 18,
-		"thruster_scale": 1.0, "target_height": 30.0,
+		"thruster_scale": 1.0, "target_height": 30.0, "size_scale": ELITE_SIZE_SCALE,
 		"effect_color": Color(0.45, 1.0, 0.6),
 	},
 	&"elite_yellow": {
@@ -290,7 +290,7 @@ const ENEMY_TYPES: Dictionary = {
 		"orbit_radius": 250.0, "fire_interval": 2.8, "bullet_speed": 240.0,
 		"aim_error": 0.15, "bullet_damage": 14, "contact_damage": 22,
 		"aura_radius": 190.0, "aura_multiplier": 0.5,
-		"thruster_scale": 1.15, "target_height": 34.0,
+		"thruster_scale": 1.15, "target_height": 34.0, "size_scale": ELITE_SIZE_SCALE,
 		"effect_color": Color(1.0, 0.9, 0.4),
 	},
 	# One hit point, spawned in clusters by the wave director.
@@ -298,7 +298,7 @@ const ENEMY_TYPES: Dictionary = {
 		"hp": 1, "speed": 245.0, "points": 12, "radius": 8.0,
 		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
 		"aim_error": 0.0, "contact_damage": 14, "swarm": true,
-		"thruster_scale": 0.8, "target_height": 18.0,
+		"thruster_scale": 0.8, "target_height": 18.0, "size_scale": DRONE_SIZE_SCALE,
 		"effect_color": Color(0.5, 0.9, 1.0),
 	},
 }
@@ -322,9 +322,38 @@ const ENEMY_DEFAULT_THRUSTER_SCALE: float = 1.0
 ## scout and read as a hatch mark beside the ship. At FULL thrust the flame is
 ## this fraction of the hull's width, which sizes every kind from the same rule;
 ## the clamps keep a drone's exhaust visible without hiding under the hull.
-const ENEMY_THRUSTER_WIDTH_RATIO: float = 0.7
-const ENEMY_THRUSTER_MIN_SCALE: float = 0.3
+## 0.85 at full thrust: a scout's hull is only ~19 px wide, and at the old 0.7
+## its flame was a 13 px smudge. The minimum keeps the smallest kinds legible.
+const ENEMY_THRUSTER_WIDTH_RATIO: float = 0.85
+const ENEMY_THRUSTER_MIN_SCALE: float = 0.5
 const ENEMY_THRUSTER_MAX_SCALE: float = 0.9
+
+# --- Elite visibility --------------------------------------------------------
+## The alternate fighter art is black with thin coloured stripes, which almost
+## vanishes on every backdrop. Each kind gets a rim copy of its own texture in
+## its own colour, drawn behind the hull and pulsing gently: no shader, no extra
+## art, and nothing about collision or drops changes.
+const ELITE_GLOW: Dictionary = {
+	&"elite_red": Color(1.0, 0.35, 0.3),
+	&"elite_green": Color(0.4, 1.0, 0.55),
+	&"elite_yellow": Color(1.0, 0.9, 0.35),
+	&"drone": Color(0.45, 0.85, 1.0),
+}
+const ELITE_GLOW_SCALE: float = 1.32
+const ELITE_GLOW_ALPHA: float = 0.85
+const ELITE_GLOW_ALPHA_MIN: float = 0.6
+## The elite art is almost pure black; multiplying the sprite keeps its coloured
+## stripes readable on the dark bands without touching the art.
+const ELITE_SPRITE_BRIGHTNESS: float = 1.3
+const ELITE_GLOW_PULSE_SECONDS: float = 1.6
+## The elite art is drawn this much larger than before, and the drone a little
+## less; the row's hit radius and the thruster gap follow the same factor.
+const ELITE_SIZE_SCALE: float = 1.4
+const DRONE_SIZE_SCALE: float = 1.25
+## The shield carrier's aura, drawn as a faint ring so its protection is visible.
+const AURA_RING_COLOR: Color = Color(1.0, 0.9, 0.45)
+const AURA_RING_ALPHA: float = 0.3
+const AURA_RING_WIDTH: float = 1.5
 const ENEMY_CONTACT_DAMAGE: int = 20
 const ENEMY_BULLET_DAMAGE: int = 12
 const ENEMY_BULLET_SPEED: float = 260.0

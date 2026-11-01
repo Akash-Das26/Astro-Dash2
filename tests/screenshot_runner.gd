@@ -105,6 +105,10 @@ func _apply_mode(node: Node, mode: String, option: String) -> void:
 			_show_bullets(node, option)
 		"thruster":
 			_pose_thrusters(node, option)
+		"elite":
+			_pose_elites(node, option)
+		"upgrade":
+			_pose_upgrade(node, option)
 
 
 ## The first body the player may attack, which is what a tap on the map picks.
@@ -141,17 +145,91 @@ func _sample_defeat() -> Dictionary:
 	}
 
 
-## Four frozen bullets of the real art, on whichever backdrop the shot asks for,
-## so the contrast of the enemy shots can be judged on every band.
-func _show_bullets(node: Node, background: String) -> void:
+## Swaps the arena backdrop, so the same subject can be judged on all four
+## distance bands.
+func _set_background(node: Node, background: String) -> void:
+	if background.is_empty():
+		return
 	var world := node.get_node_or_null("World")
 	if world == null:
 		return
-	if not background.is_empty():
-		var backdrop := world.get_node_or_null("Backdrop") as TextureRect
-		var path := "res://assets/backgrounds/background-%s.png" % background
-		if backdrop != null and ResourceLoader.exists(path):
-			backdrop.texture = load(path) as Texture2D
+	var backdrop := world.get_node_or_null("Backdrop") as TextureRect
+	var path := "res://assets/backgrounds/background-%s.png" % background
+	if backdrop != null and ResourceLoader.exists(path):
+		backdrop.texture = load(path) as Texture2D
+
+
+## Three copies of one elite kind on a chosen backdrop: the shot that answers
+## "can this silhouette be read here?".
+func _pose_elites(node: Node, option: String) -> void:
+	var parts := option.split(";")
+	var kind: StringName = StringName(parts[0]) if parts.size() > 0 and not parts[0].is_empty() else &"elite_red"
+	_set_background(node, parts[1] if parts.size() > 1 else "")
+	var world := node.get_node_or_null("World")
+	if world == null:
+		return
+	var holder := Node2D.new()
+	holder.name = "ElitePoses"
+	world.add_child(holder)
+	for index: int in 3:
+		var enemy := FIGHTER_SCENE.instantiate() as EnemyBase
+		enemy.configure(kind, Vector2(240.0 + float(index) * 240.0, 320.0), null)
+		holder.add_child(enemy)
+		var warp := enemy.get_node_or_null("Warp") as CanvasItem
+		if warp != null:
+			warp.visible = false
+		var sprite := enemy.get_node_or_null("Sprite") as CanvasItem
+		if sprite != null:
+			sprite.visible = true
+		var flash := enemy.get_node_or_null("FlashSprite") as CanvasItem
+		if flash != null:
+			flash.visible = true
+			flash.modulate.a = 0.0
+		enemy.process_mode = Node.PROCESS_MODE_DISABLED
+		enemy.rotation = 0.0
+		_pin_flame(enemy)
+
+
+## The upgrade panel with a real tab, a real skin and a focused card.
+## option = "hull:equipped" / "weapons:locked" etc.
+func _pose_upgrade(node: Node, option: String) -> void:
+	if node.has_method("open"):
+		node.call("open")
+	var parts := option.split(":")
+	var tab: String = parts[0] if parts.size() > 0 else "hull"
+	var skin: String = parts[1] if parts.size() > 1 else ""
+	var tab_path: String = "Panel/Margin/Box/Tabs/WeaponTab" if tab == "weapons" \
+		else "Panel/Margin/Box/Tabs/HullTab"
+	var tab_button := node.get_node_or_null(tab_path) as Button
+	if tab_button != null:
+		tab_button.pressed.emit()
+	if not skin.is_empty():
+		var skin_button := node.get_node_or_null(
+			"Panel/Margin/Box/Scroll/Page/Skins/Row/Skin_%s" % skin
+		) as Button
+		if skin_button != null:
+			skin_button.pressed.emit()
+	if tab == "weapons":
+		var row := node.get_node_or_null("Panel/Margin/Box/Scroll/Page/Body/Weapons/Row")
+		if row != null and row.get_child_count() > 0:
+			var first := row.get_child(0) as Button
+			if first != null:
+				first.grab_focus()
+		return
+	var card := node.get_node_or_null(
+		"Panel/Margin/Box/Scroll/Page/Body/Grid/HullCard"
+	) as Button
+	if card != null:
+		card.grab_focus()
+
+
+## Four frozen bullets of the real art, on whichever backdrop the shot asks for,
+## so the contrast of the enemy shots can be judged on every band.
+func _show_bullets(node: Node, background: String) -> void:
+	_set_background(node, background)
+	var world := node.get_node_or_null("World")
+	if world == null:
+		return
 	var holder := world.get_node_or_null("EnemyBullets")
 	if holder == null:
 		return
@@ -199,11 +277,16 @@ func _pose_thrusters(node: Node, option: String) -> void:
 			hull = enemy
 		hull.process_mode = Node.PROCESS_MODE_DISABLED
 		hull.rotation = HEADINGS[index]
-		var flame := hull.get_node_or_null("Thruster") as Thruster
-		if flame != null:
-			flame.set_thrust(1.0)
-			# The node is frozen, so the animation will not advance: pin it to the
-			# longest frame or the still shows a two-row sliver instead of a flame.
-			var frames := flame.sprite_frames
-			if frames != null and frames.has_animation(&"burn"):
-				flame.frame = frames.get_frame_count(&"burn") - 1
+		_pin_flame(hull)
+
+
+## Full thrust, pinned to the longest frame: a frozen node will not animate, so
+## a still would otherwise show the two-row first frame instead of a flame.
+func _pin_flame(hull: Node) -> void:
+	var flame := hull.get_node_or_null("Thruster") as Thruster
+	if flame == null:
+		return
+	flame.set_thrust(1.0)
+	var frames := flame.sprite_frames
+	if frames != null and frames.has_animation(&"burn"):
+		flame.frame = frames.get_frame_count(&"burn") - 1

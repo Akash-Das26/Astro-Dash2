@@ -104,6 +104,8 @@ var _fire_cooldown: float = 0.0
 var _orbit_sign: float = 1.0
 var _active: bool = true
 var _flash_tween: Tween
+var _glow: Sprite2D
+var _glow_tween: Tween
 
 
 func _ready() -> void:
@@ -157,6 +159,8 @@ func _apply_kind() -> void:
 	thruster_scale = float(row.get("thruster_scale", Tuning.ENEMY_DEFAULT_THRUSTER_SCALE))
 	swarm = bool(row.get("swarm", false))
 	effect_color = row["effect_color"]
+	# The aura ring is static, so one redraw is all it needs.
+	queue_redraw()
 	max_hp = maxi(roundi(float(max_hp) * _hp_scale), 1)
 	hp = max_hp
 	if fire_interval > 0.0:
@@ -169,6 +173,12 @@ func _apply_kind() -> void:
 	# transparent margin still comes out the size the arena expects.
 	if row.has("target_height"):
 		art_scale = float(row["target_height"]) / maxf(used.size.y, 1.0)
+	# The elite family is drawn larger, and its hit radius grows with the art so
+	# the silhouette and the collider stay in step.
+	var size_scale: float = float(row.get("size_scale", 1.0))
+	art_scale *= size_scale
+	body_radius *= size_scale
+	_apply_body()
 	_sprite.texture = texture
 	_flash.texture = texture
 	_sprite.scale = Vector2.ONE * art_scale
@@ -177,11 +187,16 @@ func _apply_kind() -> void:
 	# off-centre, away from its collider and from its exhaust anchor.
 	_sprite.offset = used.position + used.size * 0.5 - texture.get_size() * 0.5
 	_flash.offset = _sprite.offset
-	_sprite.modulate = Color.WHITE
+	# Elite art is near-black; a brightness multiply keeps its stripes legible
+	# on every band. Every other fighter stays exactly as it was.
+	var brightness: float = Tuning.ELITE_SPRITE_BRIGHTNESS \
+		if Tuning.ELITE_GLOW.has(kind) else 1.0
+	_sprite.modulate = Color(brightness, brightness, brightness)
+	_build_glow(texture, used, art_scale)
 	# Anchor the exhaust at the art's real rear edge, not at the file's edge.
 	var hull_half: float = used.size.y * 0.5 * art_scale
 	var hull_width: float = used.size.x * art_scale
-	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
+	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP * size_scale)
 	# Sized from the hull (see ENEMY_THRUSTER_WIDTH_RATIO): the body radius would
 	# blow the 32 px art up past the hull on a heavy and shrink it to a sliver on
 	# a drone.
@@ -194,6 +209,37 @@ func _apply_kind() -> void:
 		Tuning.ENEMY_THRUSTER_MAX_SCALE
 	)
 	_thruster.set_base_scale(Vector2.ONE * flame * thruster_scale)
+
+
+## Rim copy behind the hull, in the kind's own colour, pulsing gently. Only the
+## elite family has a colour in Tuning, so every other fighter is unchanged.
+func _build_glow(texture: Texture2D, used: Rect2, art_scale: float) -> void:
+	if not Tuning.ELITE_GLOW.has(kind):
+		if _glow != null:
+			_glow.queue_free()
+			_glow = null
+		return
+	var tint: Color = Tuning.ELITE_GLOW[kind]
+	if _glow == null:
+		_glow = Sprite2D.new()
+		_glow.name = "RimGlow"
+		# Behind the hull, and never in front of a sibling fighter.
+		_glow.z_index = -2
+		_glow.show_behind_parent = true
+		add_child(_glow)
+	_glow.texture = texture
+	_glow.offset = used.position + used.size * 0.5 - texture.get_size() * 0.5
+	_glow.scale = Vector2.ONE * art_scale * Tuning.ELITE_GLOW_SCALE
+	_glow.modulate = Color(tint.r, tint.g, tint.b, Tuning.ELITE_GLOW_ALPHA)
+	if _glow_tween != null and _glow_tween.is_valid():
+		_glow_tween.kill()
+	_glow_tween = create_tween().set_loops()
+	_glow_tween.tween_property(
+		_glow, "modulate:a", Tuning.ELITE_GLOW_ALPHA_MIN, Tuning.ELITE_GLOW_PULSE_SECONDS
+	)
+	_glow_tween.tween_property(
+		_glow, "modulate:a", Tuning.ELITE_GLOW_ALPHA, Tuning.ELITE_GLOW_PULSE_SECONDS
+	)
 
 
 ## Size of the pixels actually drawn, in arena units. The thruster anchor, the
@@ -412,6 +458,16 @@ func _flash_hit() -> void:
 
 ## F3 overlay: the body circle and the exhaust anchor in the fighter's frame.
 func _draw() -> void:
+	# A shield carrier shows its protection: a faint ring at the aura radius.
+	if aura_radius > 0.0:
+		draw_arc(
+			Vector2.ZERO, aura_radius, 0.0, TAU, 40,
+			Color(
+				Tuning.AURA_RING_COLOR.r, Tuning.AURA_RING_COLOR.g,
+				Tuning.AURA_RING_COLOR.b, Tuning.AURA_RING_ALPHA
+			),
+			Tuning.AURA_RING_WIDTH, true
+		)
 	if not Tuning.thruster_debug:
 		return
 	var tint: Color = Tuning.THRUSTER_DEBUG_COLOR
