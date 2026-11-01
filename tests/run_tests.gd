@@ -1018,6 +1018,9 @@ func _test_credits() -> void:
 	card.open()
 	await get_tree().process_frame
 	await get_tree().process_frame
+	# Freeze the roll: the card scrolls itself in _process, which would move every
+	# row again between the measurement and the assert.
+	card.set_process(false)
 	check("the credits card opens", card.visible)
 	var panel := card.get_node("Panel") as Control
 	check(
@@ -1033,6 +1036,40 @@ func _test_credits() -> void:
 		"the credits roll lists every group and entry",
 		roll.get_child_count() >= expected,
 		"%d lines for %d entries" % [roll.get_child_count(), expected]
+	)
+	# Scrolling: every row must sit inside the clip once the roll is parked on it,
+	# and no two rows may overlap whatever the scroll position.
+	var clip := card.get_node("Panel/Margin/Box/Roll") as Control
+	var rows: Array[Control] = []
+	for child: Node in roll.get_children():
+		var control := child as Control
+		if control != null and control.size.y > 0.0:
+			rows.append(control)
+	check("the credits roll has rows to scroll", rows.size() >= expected, "%d rows" % rows.size())
+	var span: float = maxf(roll.size.y - clip.size.y, 0.0)
+	var outside: int = 0
+	var first: String = ""
+	for row: Control in rows:
+		# Park the roll on the row: 0 is the top, -span the end of the list.
+		roll.position = Vector2(0.0, clampf(-row.position.y, -span, 0.0))
+		# A moved container only publishes its new transforms on the next frame.
+		await get_tree().process_frame
+		var clip_rect: Rect2 = clip.get_global_rect().grow(0.5)
+		if not clip_rect.encloses(row.get_global_rect()):
+			outside += 1
+			if first.is_empty():
+				first = "%s vs %s" % [row.get_global_rect(), clip_rect]
+	check("every credits row fits the clip when scrolled to", outside == 0, "%d outside: %s" % [outside, first])
+	var overlaps: int = 0
+	for index: int in rows.size() - 1:
+		if rows[index].get_global_rect().intersects(rows[index + 1].get_global_rect()):
+			overlaps += 1
+	check("credits rows do not overlap", overlaps == 0, "%d overlaps" % overlaps)
+	roll.position = Vector2.ZERO
+	check(
+		"the credits card stays inside 960x600",
+		Rect2(Vector2.ZERO, Tuning.VIEW_SIZE).encloses(card.get_global_rect()),
+		str(card.get_global_rect())
 	)
 	card.close()
 	check("the credits card closes", not card.visible)

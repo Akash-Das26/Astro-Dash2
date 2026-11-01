@@ -70,6 +70,11 @@ func _ready() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		await get_tree().process_frame
+		if mode == "credits":
+			# Scroll first, then freeze the roll, so the still shows the position
+			# the option asked for and not wherever the auto-roll had got to.
+			_set_credits_scroll(node, option)
+			node.set_process(false)
 	for _frame: int in maxi(frames, 1):
 		await get_tree().process_frame
 	# Wait for the frame to actually be drawn before reading the framebuffer.
@@ -115,6 +120,9 @@ func _apply_mode(node: Node, mode: String, option: String) -> void:
 			_pose_elites(node, option)
 		"upgrade":
 			_pose_upgrade(node, option)
+		"credits":
+			if node.has_method("open"):
+				node.call("open")
 
 
 ## The first body the player may attack, which is what a tap on the map picks.
@@ -227,6 +235,24 @@ func _pose_upgrade(node: Node, option: String) -> void:
 	) as Button
 	if card != null:
 		card.grab_focus()
+
+
+## Where to park the credits roll: start, middle or end. The card scrolls itself
+## through its own _process, so the still sets the roll's position directly.
+func _set_credits_scroll(node: Node, option: String) -> void:
+	var roll := node.get_node_or_null("Panel/Margin/Box/Roll/RollBox") as Control
+	var clip := node.get_node_or_null("Panel/Margin/Box/Roll") as Control
+	if roll == null or clip == null:
+		push_warning("screenshot runner: the credits card has no roll")
+		return
+	var progress: float = 0.0
+	match option:
+		"middle":
+			progress = 0.5
+		"end":
+			progress = 1.0
+	var span: float = maxf(roll.size.y - clip.size.y, 0.0)
+	roll.position = Vector2(0.0, -span * progress)
 
 
 ## Four frozen bullets of the real art, on whichever backdrop the shot asks for,
