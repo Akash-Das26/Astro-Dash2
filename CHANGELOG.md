@@ -5,6 +5,14 @@ Newest first. One line per build stage; the version number is what
 
 ## 0.9.0 — release candidate (2026-11-02)
 
+- **Stage 22, credits and audit.** All art, backgrounds included, is credited to
+  Space Pixels by Hex; Prepare for War stays with its CC BY-SA 3.0 note on the
+  card and in the README. `docs/audit_report.md` records a full audit; the two
+  CRITICAL findings are fixed (hull unlocks reachable through lifetime
+  conquests, and a corrupted save can no longer raise errors on load).
+- **Stage 21, credits close-out.** The sprite and background packs are credited
+  with the author's own free-use terms, and the credits card is captured at three
+  scroll positions with a layout test.
 - **Stage 18, boss coverage and release prep.** A dedicated bot mode flies each
   difficulty against a citadel station for 90 s and reports the fight, the
   station's HP over time and the damage per third of its bar; screenshots,
