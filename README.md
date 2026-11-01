@@ -4,18 +4,31 @@ A landscape twin-stick space shooter built with **Godot 4.7** (GL Compatibility)
 for desktop, the web and Android. Fly free in a 960x600 arena, shoot fighters and
 asteroids, chain kills for combo score, and take a galaxy one world at a time.
 
-This build is **stage 11: difficulty modes, between-planet healing, thruster
-alignment and wired sound effects**. NEW GAME opens a five-mode difficulty
-picker, the hull heals between planets by mode, a defeat follows the mode's own
-rule (keep the planets, start a new galaxy, or wipe everything), the exhaust is
-anchored at every hull's tail, and the real SFX packs are mapped by keyword.
-The campaign is still the seeded galaxy from 7B; the arena is the 7A/8 battle.
+This build is **0.9.0**, the release candidate (the version is also shown in
+the corner of the main menu). NEW GAME opens a five-mode difficulty picker, the
+hull heals between planets by mode, a defeat follows the mode's own rule (keep
+the planets, start a new galaxy, or wipe everything), shielding and two weapon
+hardpoints are in, and the music is a cross-faded playlist with a boss theme.
+The seeded galaxy campaign and the arena are unchanged in feel.
+
+See [CHANGELOG.md](CHANGELOG.md) for a one-line summary of every build stage.
 
 ## Screenshots
 
-> TODO: capture the menu, a mid-battle frame, the galaxy map, the upgrade screen
-> and the victory card at 960x600 and drop them in `docs/screenshots/`. Until
-> then this section is a placeholder; the game is playable with `F5`.
+Captured at 960x600 with `tests/screenshot_runner.tscn`, downscaled to 720x450
+by `tests/doc_shots.gd` and kept in `docs/screenshots/` (the full-size frames
+stay in the git-ignored `test_output/`).
+
+| | |
+| --- | --- |
+| ![Main menu](docs/screenshots/menu.png) | ![Difficulty picker](docs/screenshots/difficulty.png) |
+| **Main menu** — animated backdrop, footer, version | **Difficulty picker** — five modes, names only |
+| ![Galaxy map](docs/screenshots/map.png) | ![Battle](docs/screenshots/battle.png) |
+| **Galaxy map** — seeded bodies, frontier arrows | **Battle** — ship, rock field, wave banner |
+| ![Ship upgrades](docs/screenshots/upgrade.png) | ![Enemy bullets on the red band](docs/screenshots/bullets_red.png) |
+| **Ship upgrades** — Hull & Ship tab, ten skins | **Enemy fire** — hot diamonds on the red band |
+
+![Victory card](docs/screenshots/victory.png)
 
 ## What is in this build
 
@@ -153,10 +166,35 @@ events with no file are reported in a single startup warning.
 
 ## What is not in this build yet
 
-A how-to-play card and real screenshots. Sound effects are now wired from the
-two packs already in `assets/audio/sfx/` (see `assets/audio/README.md`); music is
-a playlist from `assets/audio/music/`. The only open audio item is filling in
-the per-pack credit TODO lines.
+- **The code license is undecided.** See [License](#license); a TODO line is
+  waiting for the choice. The bundled art, music and sound keep their own
+  licenses and are attributed in [Credits](#credits).
+- **No how-to-play card in game.** The rules are in this README (the `C` card
+  lists the live bindings, not the rules).
+- **Headless only for tests.** Audio output, touch and the Android build were
+  never verified on real hardware; see the limits listed there.
+- **Per-pack sound credits** still need author/license/source filled in.
+
+## How to play
+
+1. **NEW GAME** on the menu, then pick a difficulty. The choice is fixed for the
+   whole campaign; the map's top bar shows the mode, your hull and the planets
+   taken.
+2. **Pick a target on the map.** Bodies touching your conquered network glow
+   green. Single click (or a gamepad cursor + `A`) selects and shows the tooltip;
+   double-click, or `Enter` on a selected body, opens the CONQUER card.
+3. **Fly and shoot.** One stick/keyboard moves, the nose follows the mouse in
+   FREE AIM (or the ship turns under `A`/`D` in CLASSIC). `Space` fires the
+   primary, the secondary fires on `shoot_alt`; `Z` raises the shield in MANUAL
+   mode.
+4. **Clear every wave.** Fighters, elites, drones and asteroids; big rocks split
+   into debris. A citadel sends its station in after the last wave — kill it for
+   a large energy bonus and a shield drop.
+5. **Spend energy on the ship.** UPGRADE on the map buys hull, speed, shields and
+   fire power, and unlocks the weapon rack and hull skins.
+6. **Heal and push deeper.** A conquest heals by the mode's rule and raises the
+   planet count, which unlocks weapons and skins. Fall, and the mode decides what
+   survives (keep the galaxy, start a new one, or wipe the run).
 
 ## Controls
 
@@ -551,7 +589,8 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 
 - **SpacePixels** sprite packs: `assets/sprites/spacepixels-0.2.0` (ships, lasers,
   asteroids, thrusters, warpgates, bars, planets) and
-  `spacepixels_ships_stroked` (the stroked hulls).
+  `spacepixels_ships_stroked` (the stroked hulls). TODO: author, license and
+  source URL for both packs.
 - **Kenney** (<https://kenney.nl>) space backgrounds (`assets/backgrounds/background-*.png`).
 - **Pixel fonts**: Pixelify Sans (body) and Press Start 2P (titles, banners, big
   numbers), both OFL, in `assets/fonts/`. `UITheme` finds them by filename and
@@ -574,3 +613,35 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
 - Everything else (HUD, map markers and links, tooltips, cards, stick, particles,
   starfield, icon) is drawn in code or in `icon.svg` and was written for this
   project.
+
+## License
+
+> **TODO: the license for the code is not chosen yet.** MIT is the suggestion
+> (`Copyright (c) 2026 <your name>` plus the standard MIT permission text), but
+> nothing is committed: no `LICENSE` file exists and this line stands until you
+> decide. The bundled art, fonts, music and sound effects are **not** covered by
+> whatever you pick for the code; they keep the licenses listed under
+> [Credits](#credits) and in `assets/audio/music/CREDITS.md`.
+
+## Continuous integration
+
+`.github/workflows/export-web.yml` builds the Web preset on `ubuntu-latest` in
+the `barichello/godot-ci` container and uploads `build/web` as an artifact.
+
+**It is untested**: there was no GitHub runner or Godot install to run it
+against. Two things have to hold for it to work — the container tag has to exist
+for the engine version (`4.7` at the time of writing), and the project must
+still export cleanly with the templates that image ships. If the tag is missing,
+pin the closest published one; the workflow's header comment says the same.
+
+## Running the checks
+
+```
+godot --headless --path . --import                 # rebuild the class and uid caches
+godot --headless --path . res://tests/run_tests.tscn    # logic suite
+godot --headless --path . res://tests/battle_bot.tscn   # 60 s battle bot
+godot --path . res://tests/screenshot_runner.tscn -- <scene> <name> [frames] [mode] [option]
+```
+
+`tests/` explains every mode and what each check covers; `docs/todo.md` lists
+what is still open.

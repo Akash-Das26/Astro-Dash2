@@ -49,7 +49,26 @@ func _ready() -> void:
 		SaveData.energy, SaveData.campaign_best_planets,
 		Difficulty.title(mode), SaveData.high_score_for(mode),
 	]
+	_show_version()
 	_new_game.grab_focus()
+
+
+## The build number in the corner, small and out of the way. Built in code so
+## the scene stays the same shape whatever the version is.
+func _show_version() -> void:
+	var label := Label.new()
+	label.name = "Version"
+	label.text = "v%s" % ProjectSettings.get_setting("application/config/version", "0.0.0")
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.78, 0.9))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(label)
+	label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	label.offset_left = -150.0
+	label.offset_top = -26.0
+	label.offset_right = -14.0
+	label.offset_bottom = -8.0
 
 
 func _on_new_game() -> void:
