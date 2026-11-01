@@ -32,6 +32,8 @@ const ARENA_MARGIN: float = 36.0
 ## `shield_base_capacity` is how many charges a battle starts with before the
 ## SHIELDS upgrade: 1 on the two easier modes, 0 from SUPERNOVA up, where drops
 ## are the only way to get a shield until the track reaches level 3.
+## `elite_scale` multiplies the weight of every elite kind in a distance band
+## that mixes them in, so SINGULARITY sends twice as many as VECTOR.
 const DIFFICULTY_CADET: StringName = &"cadet"
 const DIFFICULTY_VECTOR: StringName = &"vector"
 const DIFFICULTY_SUPERNOVA: StringName = &"supernova"
@@ -49,7 +51,7 @@ const DIFFICULTIES: Dictionary = {
 		"heal_per_planet": 1.0, "milestones": {}, "on_defeat": "keep",
 		"defeat_hp": 1.0,
 		"enemy_hp": 0.8, "enemy_damage": 0.8, "enemies": 0.9,
-		"energy": 1.0, "score": 1.0, "shield_drop": 1.4,
+		"energy": 1.0, "score": 1.0, "shield_drop": 1.4, "elite_scale": 1.0,
 		"shield_base_capacity": 1,
 	},
 	DIFFICULTY_VECTOR: {
@@ -58,7 +60,7 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {5: 0.5, 10: 1.0},
 		"on_defeat": "keep", "defeat_hp": 0.5,
 		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemies": 1.0,
-		"energy": 1.0, "score": 1.0, "shield_drop": 1.0,
+		"energy": 1.0, "score": 1.0, "shield_drop": 1.0, "elite_scale": 1.0,
 		"shield_base_capacity": 1,
 	},
 	DIFFICULTY_SUPERNOVA: {
@@ -67,7 +69,7 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {5: 0.25, 10: 0.5},
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.25, "enemy_damage": 1.2, "enemies": 1.1,
-		"energy": 1.1, "score": 1.25, "shield_drop": 0.7,
+		"energy": 1.1, "score": 1.25, "shield_drop": 0.7, "elite_scale": 1.3,
 		"shield_base_capacity": 0,
 	},
 	DIFFICULTY_EVENT_HORIZON: {
@@ -76,7 +78,7 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {5: 0.1, 10: 0.25},
 		"on_defeat": "reset", "defeat_hp": 0.0,
 		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemies": 1.25,
-		"energy": 1.25, "score": 1.5, "shield_drop": 0.5,
+		"energy": 1.25, "score": 1.5, "shield_drop": 0.5, "elite_scale": 1.6,
 		"shield_base_capacity": 0,
 	},
 	DIFFICULTY_SINGULARITY: {
@@ -85,7 +87,7 @@ const DIFFICULTIES: Dictionary = {
 		"milestones": {10: 0.05},
 		"on_defeat": "wipe", "defeat_hp": 0.0,
 		"enemy_hp": 1.8, "enemy_damage": 1.7, "enemies": 1.4,
-		"energy": 1.5, "score": 2.0, "shield_drop": 0.4,
+		"energy": 1.5, "score": 2.0, "shield_drop": 0.4, "elite_scale": 2.0,
 		"shield_base_capacity": 0,
 	},
 }
@@ -266,7 +268,51 @@ const ENEMY_TYPES: Dictionary = {
 		"orbit_radius": 280.0, "fire_interval": 2.3, "bullet_speed": 220.0,
 		"aim_error": 0.2, "effect_color": Color(0.85, 0.55, 1.0),
 	},
+	# The elite family uses the pack's alternate fighter art. Contact damage and
+	# bullet damage are per kind here; a row without them falls back to the
+	# constants below, so the three original fighters are unchanged.
+	&"elite_red": {
+		"hp": 9, "speed": 265.0, "points": 55, "radius": 12.0,
+		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
+		"aim_error": 0.0, "contact_damage": 26, "thruster_scale": 1.0,
+		"effect_color": Color(1.0, 0.4, 0.4),
+	},
+	&"elite_green": {
+		"hp": 11, "speed": 115.0, "points": 70, "radius": 13.0,
+		"orbit_radius": 330.0, "fire_interval": 2.6, "bullet_speed": 400.0,
+		"aim_error": 0.02, "bullet_damage": 20, "contact_damage": 18,
+		"thruster_scale": 1.0, "effect_color": Color(0.45, 1.0, 0.6),
+	},
+	&"elite_yellow": {
+		"hp": 15, "speed": 100.0, "points": 90, "radius": 16.0,
+		"orbit_radius": 250.0, "fire_interval": 2.8, "bullet_speed": 240.0,
+		"aim_error": 0.15, "bullet_damage": 14, "contact_damage": 22,
+		"aura_radius": 190.0, "aura_multiplier": 0.5,
+		"thruster_scale": 1.15, "effect_color": Color(1.0, 0.9, 0.4),
+	},
+	# One hit point, spawned in clusters by the wave director.
+	&"drone": {
+		"hp": 1, "speed": 245.0, "points": 12, "radius": 8.0,
+		"orbit_radius": 0.0, "fire_interval": 0.0, "bullet_speed": 0.0,
+		"aim_error": 0.0, "contact_damage": 14, "swarm": true,
+		"thruster_scale": 0.8, "effect_color": Color(0.5, 0.9, 1.0),
+	},
 }
+## The elite family, in display order. They join the mix from ELITE_FROM_BAND
+## upward and get heavier with the difficulty mode (see `elite_weight`).
+const ELITE_KINDS: Array[StringName] = [
+	&"elite_red", &"elite_green", &"elite_yellow", &"drone",
+]
+## Index into GALAXY_BANDS from which elites are mixed in (2 = PURPLE DEEP).
+const ELITE_FROM_BAND: int = 2
+## Drone clusters: how many extra drones a single queue slot spawns, and how
+## far from the first one they appear.
+const DRONE_CLUSTER_MIN: int = 2
+const DRONE_CLUSTER_MAX: int = 3
+const DRONE_CLUSTER_SPREAD: float = 54.0
+## Fallbacks for a kind whose row leaves these out.
+const ENEMY_DEFAULT_BULLET_DAMAGE: int = ENEMY_BULLET_DAMAGE
+const ENEMY_DEFAULT_THRUSTER_SCALE: float = 1.0
 const ENEMY_CONTACT_DAMAGE: int = 20
 const ENEMY_BULLET_DAMAGE: int = 12
 const ENEMY_BULLET_SPEED: float = 260.0
@@ -596,14 +642,17 @@ const GALAXY_BANDS: Array[Dictionary] = [
 	{
 		"max_distance": 8, "label": "PURPLE DEEP",
 		"enemies": 12, "waves": 2,
-		"mix": {&"scout": 3, &"gunner": 4, &"heavy": 2},
+		"mix": {&"scout": 3, &"gunner": 4, &"heavy": 2, &"elite_red": 2, &"drone": 2},
 		"density": 1.1, "hp_scale": 1.3, "interval_scale": 0.9,
 		"background": preload("res://assets/backgrounds/background-purple.png"),
 	},
 	{
 		"max_distance": 99, "label": "RED EXPANSE",
 		"enemies": 14, "waves": 3,
-		"mix": {&"scout": 3, &"gunner": 5, &"heavy": 3},
+		"mix": {
+			&"scout": 3, &"gunner": 5, &"heavy": 3,
+			&"elite_red": 2, &"elite_green": 2, &"elite_yellow": 1, &"drone": 2,
+		},
 		"density": 1.4, "hp_scale": 1.5, "interval_scale": 0.8,
 		"background": preload("res://assets/backgrounds/background-red.png"),
 	},

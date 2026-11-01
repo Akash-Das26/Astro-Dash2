@@ -338,7 +338,8 @@ depends on the exact values.
 | Ship damage | `SHIP_INVULNERABILITY`, `SHIP_SHIELD_GRACE`, `MAX_SHIELD_CHARGES`, `SHIP_BLINK_*` |
 | Thruster | `THRUSTER_FRAME_FPS`, `THRUSTER_IDLE_SCALE`, `THRUSTER_FULL_SCALE`, `THRUSTER_MIN_VISIBLE`, `THRUSTER_TAIL_GAP`, `THRUSTER_ART_SIZE`, `THRUSTER_BAR_ROWS` |
 | Difficulty modes | `DIFFICULTIES` (heal, milestones, on_defeat, all battle multipliers), `DIFFICULTY_ORDER`, `DIFFICULTY_DEFAULT` (CADET), `DIFFICULTY_WIPE_LIST` |
-| Fighters | `ENEMY_TYPES`: per kind `hp`, `speed`, `points`, `radius`, `orbit_radius` (0 = dive), `fire_interval`, `bullet_speed`, `aim_error`, `effect_color` |
+| Fighters | `ENEMY_TYPES`: per kind `hp`, `speed`, `points`, `radius`, `orbit_radius` (0 = dive), `fire_interval`, `bullet_speed`, `aim_error`, `effect_color`, and optionally `contact_damage`, `bullet_damage`, `aura_radius`/`aura_multiplier`, `swarm`, `thruster_scale` |
+| Elite fighters | `ELITE_KINDS`, `ELITE_FROM_BAND` (2 = PURPLE DEEP), `DRONE_CLUSTER_MIN/MAX`, `DRONE_CLUSTER_SPREAD`, `ENEMY_DEFAULT_*`, and each mode's `elite_scale` |
 | Fighter behaviour | `ENEMY_APPROACH_SLACK`, `ENEMY_ORBIT_SPEED_RATIO`, `ENEMY_WARP_TIME`, `WARP_SCALE`, `WARP_FRAME_FPS`, `ENEMY_CONTACT_DAMAGE`, `ENEMY_BULLET_*` |
 | Asteroids | `ASTEROID_LARGE_HP`, `ASTEROID_LARGE/TINY_SCALE` (large art is ~2.6x the old size), `ASTEROID_*_RADIUS`, `ASTEROID_SHIP_CLEARANCE`, `ASTEROID_CONTACT_DAMAGE`, `ASTEROID_SPEED_MIN/MAX`, `ASTEROID_SPIN_MIN/MAX`, `ASTEROID_SPLIT_MIN/MAX`, `ASTEROID_MAX_LIVE`, `ASTEROID_SPAWN_INTERVAL`, `ASTEROID_SPAWN_OFFSET` |
 | Waves | `WAVE_GAP`, `SPAWN_STAGGER`, `ENEMY_THINK_INTERVAL` |
@@ -361,6 +362,21 @@ depends on the exact values.
 | Body traits | `GALAXY_TRAITS`: per trait `title`, `energy_scale`, `density_scale`, `enemies_delta`, `hp_scale`, `mix_bonus` |
 | Conquest payouts | `GALAXY_CONQUEST_ENERGY`, `GALAXY_CITADEL_ENERGY`, `GALAXY_GATE_ENERGY` |
 | Citadel boss | `BOSS_HP`, `BOSS_HP_PER_DISTANCE`, `BOSS_POINTS`, `BOSS_RADIUS`, `BOSS_SCALE`, `BOSS_FIRE_INTERVAL`, `BOSS_BULLETS_PER_VOLLEY`, `BOSS_SPREAD`, `BOSS_BULLET_DAMAGE`, `BOSS_CONTACT_DAMAGE`, `BOSS_HOVER_*` |
+
+### Elite fighters
+
+They join a battle from the third distance band (`ELITE_FROM_BAND = 2`: PURPLE
+DEEP and the RED EXPANSE) and their weight is multiplied by the mode's
+`elite_scale` (1.0 CADET and VECTOR, then 1.3 / 1.6 / 2.0). Contact damage and
+bullet damage are per kind; a row that leaves them out uses the base values, so
+the three original fighters are unchanged.
+
+| Kind | Art | HP | Behaviour |
+| --- | --- | --- | --- |
+| `elite_red` | `pixel_ship3_red` | 9 | Dive bomber: 265 speed, 26 contact damage, never shoots |
+| `elite_green` | `pixel_ship3_green` | 11 | Sniper: holds 330 px, fires 20-damage shots every 2.6 s |
+| `elite_yellow` | `pixel_ship3_yellow` | 15 | Shield carrier: fighters within 190 px take half damage while it lives |
+| `drone` | `pixel_shape3_blue` | 1 | Swarm unit: one wave slot spawns a cluster of 3-4 |
 
 ### Weapons
 
@@ -497,15 +513,15 @@ Paths are relative to `assets/` (the sprite pack rows start at
 | `spacepixels_ships_stroked/.../ship_purple_stroked.png` | STROKED PURPLE skin |
 | `spacepixels_ships_stroked/.../ship_yellow_stroked.png` | STROKED YELLOW skin |
 
-Unused, deliberately:
+Every PNG in the packs is now used. These five were idle until Stage 15:
 
-| PNG | Why it is unused |
+| PNG | Where it went |
 | --- | --- |
-| `spacepixels-0.2.0/.../pixel_ship.png` | the white base hull; the skins only use the coloured variants |
-| `spacepixels-0.2.0/.../pixel_shape3_blue.png` | an abstract blue shape, not a ship, rock or station |
-| `spacepixels-0.2.0/.../pixel_ship3_red.png` | alternate 32px fighter art, superseded by the small hulls |
-| `spacepixels-0.2.0/.../pixel_ship3_green.png` | same alternate art |
-| `spacepixels-0.2.0/.../pixel_ship3_yellow.png` | same alternate art |
+| `spacepixels-0.2.0/.../pixel_ship.png` | a fifth drifting escort in the main-menu backdrop |
+| `spacepixels-0.2.0/.../pixel_shape3_blue.png` | `drone`: the 1 HP swarm fighter |
+| `spacepixels-0.2.0/.../pixel_ship3_red.png` | `elite_red`: the dive bomber |
+| `spacepixels-0.2.0/.../pixel_ship3_green.png` | `elite_green`: the sniper |
+| `spacepixels-0.2.0/.../pixel_ship3_yellow.png` | `elite_yellow`: the shield carrier |
 
 `spacepixels-0.1.0` was deleted: every PNG in it was byte-identical to its
 `0.2.0` copy. No file under `res://assets/` is referenced by a missing path,

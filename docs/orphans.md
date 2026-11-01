@@ -18,18 +18,16 @@ loaded by name.
 
 ## Art
 
-Unreferenced PNGs under `assets/sprites/` (5):
+**No PNG is orphaned any more.** The five that were listed at the end of Stage
+14 were all wired up in Stage 15 instead of being deleted:
 
-| File | Why it is unused |
+| File | Now used by |
 | --- | --- |
-| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship.png` | The plain single hull from the pack; the game uses the four colour variants |
-| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_red.png` | Variant of the three-triangle hull; the palette in `Skins` uses other colours |
-| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_green.png` | Same |
-| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_yellow.png` | Same |
-| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_shape3_blue.png` | Shape variant never wired to an entity |
-
-Per the stage rules, art is listed rather than deleted: these stay available for
-future hulls, and the README asset audit already names them.
+| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship.png` | `MenuBackdrop.SHIP_TEXTURES`, the fifth drifting escort |
+| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_red.png` | `elite_red`, the dive bomber |
+| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_green.png` | `elite_green`, the sniper |
+| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_yellow.png` | `elite_yellow`, the shield carrier |
+| `spacepixels-0.2.0/spacepixels-0.2.0/pixel_shape3_blue.png` | `drone`, the swarm fighter |
 
 `assets/audio/**` and `assets/fonts/**` are **excluded** from the scan on
 purpose. Their files are resolved at runtime, not by path literals:

@@ -10,6 +10,8 @@ const SHIP_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_green_small_2.png"),
 	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_yellow.png"),
 	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship_red.png"),
+	# The pack's plain white hull: a drifting escort behind the title.
+	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship.png"),
 ]
 const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/asteroid_grey.png"),
@@ -24,7 +26,7 @@ const WARP_FRAMES: Array[Texture2D] = [
 ]
 const THRUSTER_SCENE: PackedScene = preload("res://entities/fx/thruster.tscn")
 const WARP_FPS: float = 9.0
-const SHIP_COUNT: int = 4
+const SHIP_COUNT: int = 5
 const ROCK_COUNT: int = 5
 const BIG_ROCK_POSITION: Vector2 = Vector2(64.0, 438.0)
 const BIG_ROCK_SCALE: float = 5.4

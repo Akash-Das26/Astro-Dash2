@@ -504,7 +504,8 @@ func _on_enemy_spawned(enemy: EnemyBase) -> void:
 	AudioManager.play_sfx("warp_in")
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	enemy.damaged.connect(_on_enemy_damaged.bind(enemy))
-	enemy.shot_requested.connect(_on_enemy_shot_requested)
+	# Bound, so a fighter's own bullet damage and the station's both work.
+	enemy.shot_requested.connect(_on_fighter_shot_requested.bind(enemy))
 	enemies.add_child(enemy)
 
 
@@ -530,10 +531,22 @@ func _on_enemy_died(points: int, enemy: EnemyBase) -> void:
 	_shake(KILL_SHAKE)
 
 
+func _on_fighter_shot_requested(origin: Vector2, direction: Vector2, enemy: EnemyBase) -> void:
+	_spawn_enemy_bullet(origin, direction, enemy.bullet_damage)
+
+
 func _on_enemy_shot_requested(origin: Vector2, direction: Vector2) -> void:
+	_spawn_enemy_bullet(origin, direction, Tuning.ENEMY_BULLET_DAMAGE)
+
+
+## One shot visual and hitbox for fighters and the station alike; only the
+## damage differs, and enemy bullets are always the red/orange art.
+func _spawn_enemy_bullet(origin: Vector2, direction: Vector2, damage: int) -> void:
 	var bullet := ENEMY_BULLET_SCENE.instantiate() as EnemyBullet
 	bullet.position = origin
 	bullet.direction = direction
+	if "damage" in bullet:
+		bullet.set("damage", damage)
 	bullet.high_contrast = SaveData.high_contrast_bullets
 	bullet.hot_backdrop = battle != null and battle.hot_backdrop
 	enemy_bullets.add_child(bullet)

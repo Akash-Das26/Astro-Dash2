@@ -13,6 +13,7 @@ extends Node
 const SAVE_PATH: String = "user://save.cfg"
 const BACKUP_PATH: String = "user://save.tests-backup.cfg"
 const SHIP_SCENE: PackedScene = preload("res://entities/player/ship.tscn")
+const FIGHTER_SCENE: PackedScene = preload("res://entities/enemies/enemy_base.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -30,6 +31,7 @@ func _ready() -> void:
 	_test_upgrades()
 	_test_persistence()
 	_test_weapons()
+	_test_elite_fighters()
 	_test_galaxy()
 	_test_audio()
 	_test_controls()
@@ -193,6 +195,111 @@ func _test_heal_clamp() -> void:
 	check_eq("SINGULARITY heals nothing at planet 1", int(sing.get("heal", -1)), 0)
 	check_eq("SINGULARITY keeps the hull at 40", int(sing.get("hp", -1)), 40)
 	_reset_state()
+
+
+# --- Elite fighters ---------------------------------------------------------
+
+## The elite family is data plus one real node: every kind has a Tuning row and
+## art, then a live instance is killed to prove the stat, the death signal and
+## the energy payout line up. Spawning is checked through the wave tables and
+## the swarm flag; the aura through real damage.
+func _test_elite_fighters() -> void:
+	var holder := Node2D.new()
+	holder.name = "EliteHolder"
+	add_child(holder)
+	for kind: StringName in Tuning.ELITE_KINDS:
+		var row: Dictionary = Tuning.ENEMY_TYPES.get(kind, {})
+		check("elite row %s exists" % String(kind), not row.is_empty(), "missing from ENEMY_TYPES")
+		check("elite art %s" % String(kind), EnemyBase.SPRITES.has(kind), "missing from SPRITES")
+		if row.is_empty():
+			continue
+		var enemy := FIGHTER_SCENE.instantiate() as EnemyBase
+		enemy.configure(kind, Vector2(300.0, 300.0), null)
+		holder.add_child(enemy)
+		check_eq("elite %s hp" % String(kind), enemy.max_hp, int(row["hp"]))
+		check_eq("elite %s points" % String(kind), enemy.points, int(row["points"]))
+		check_eq(
+			"elite %s contact damage" % String(kind),
+			enemy.contact_damage,
+			int(row.get("contact_damage", Tuning.ENEMY_CONTACT_DAMAGE))
+		)
+		var energy: int = maxi(enemy.points / Tuning.SCORE_POINTS_PER_ENERGY, Tuning.MIN_ENERGY_PER_KILL)
+		check("elite %s drops energy" % String(kind), energy >= Tuning.MIN_ENERGY_PER_KILL)
+		var want_points: int = enemy.points
+		var reported: Array[int] = []
+		enemy.died.connect(func(points: int) -> void: reported.append(points))
+		enemy.take_damage(enemy.max_hp)
+		check_eq("elite %s dies and reports points" % String(kind), reported, [want_points])
+		check("elite %s leaves the tree" % String(kind), enemy.is_queued_for_deletion())
+	check_eq(
+		"drone has one hit point",
+		int(Tuning.ENEMY_TYPES[&"drone"]["hp"]), 1
+	)
+
+	# A shield carrier halves what nearby fighters take, and itself not at all.
+	var carrier := FIGHTER_SCENE.instantiate() as EnemyBase
+	carrier.configure(&"elite_yellow", Vector2(300.0, 300.0), null)
+	holder.add_child(carrier)
+	var victim := FIGHTER_SCENE.instantiate() as EnemyBase
+	victim.configure(&"scout", Vector2(320.0, 300.0), null)
+	holder.add_child(victim)
+	var victim_hp: int = victim.hp
+	victim.take_damage(2)
+	check_eq("carrier halves nearby damage", victim.hp, victim_hp - 1)
+	check("carrier takes full damage itself", carrier.mitigated(2) == 2)
+	holder.remove_child(carrier)
+	carrier.queue_free()
+	var alone := FIGHTER_SCENE.instantiate() as EnemyBase
+	alone.configure(&"scout", Vector2(340.0, 300.0), null)
+	holder.add_child(alone)
+	alone.take_damage(2)
+	check_eq("without a carrier damage is full", alone.hp, 0)
+
+	# Bands and modes: elites start at ELITE_FROM_BAND, never earlier, and the
+	# mode multiplier rises with difficulty.
+	var early_bad: int = 0
+	for index: int in Tuning.GALAXY_BANDS.size():
+		var mix: Dictionary = Tuning.GALAXY_BANDS[index]["mix"]
+		for kind: StringName in Tuning.ELITE_KINDS:
+			if int(mix.get(kind, 0)) > 0 and index < Tuning.ELITE_FROM_BAND:
+				early_bad += 1
+	var late_kinds: int = 0
+	for index: int in range(Tuning.ELITE_FROM_BAND, Tuning.GALAXY_BANDS.size()):
+		var mix: Dictionary = Tuning.GALAXY_BANDS[index]["mix"]
+		for kind: StringName in Tuning.ELITE_KINDS:
+			if int(mix.get(kind, 0)) > 0:
+				late_kinds += 1
+	check("no elites before band 2", early_bad == 0, "%d early weights" % early_bad)
+	check("elites mix in from band 2", late_kinds >= 2, "%d elite weights" % late_kinds)
+	var scales: Array[float] = []
+	for mode: StringName in Tuning.DIFFICULTY_ORDER:
+		scales.append(float(Tuning.DIFFICULTIES[mode].get("elite_scale", -1.0)))
+	check("every mode has an elite scale", not scales.has(-1.0))
+	check(
+		"elite scale rises with difficulty",
+		scales[0] <= scales[2] and scales[2] < scales[4],
+		str(scales)
+	)
+
+	# Swarm: a drone slot turns into a cluster, a scout slot does not.
+	var director := WaveDirector.new()
+	add_child(director)
+	check("drones are a swarm kind", bool(director.call("_is_swarm", &"drone")))
+	check("scouts are not", not bool(director.call("_is_swarm", &"scout")))
+	var battle := Battle.new()
+	battle.waves = 1
+	battle.enemies_per_wave = 8
+	battle.enemy_mix = {&"drone": 4}
+	director.set("_battle", battle)
+	var queue: Array = director.call("_build_queue")
+	check_eq("a drone wave fills the queue", queue.size(), 8)
+	var all_drones: bool = true
+	for kind: StringName in queue:
+		if kind != &"drone":
+			all_drones = false
+	check("a drone-only mix deals only drones", all_drones)
+	director.queue_free()
+	holder.queue_free()
 
 
 # --- 4.2 Defeat rules -------------------------------------------------------

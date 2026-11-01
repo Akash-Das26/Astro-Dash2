@@ -157,6 +157,7 @@ func battle_for(body_id: StringName) -> Battle:
 	var bonus: Dictionary = body_trait["mix_bonus"]
 	for kind: StringName in bonus:
 		mix[kind] = int(mix.get(kind, 0)) + int(bonus[kind])
+	_apply_elite_weight(mix, band_index_of(body_id))
 	battle.enemy_mix = mix
 	battle.asteroid_density = maxf(float(band["density"]) * float(body_trait["density_scale"]), 0.0)
 	battle.background = band["background"]
@@ -175,6 +176,22 @@ func battle_for(body_id: StringName) -> Battle:
 		payout += Tuning.GALAXY_CITADEL_ENERGY
 	battle.reward_energy = payout
 	return battle
+
+
+## Elites only mix in from ELITE_FROM_BAND upward, and the mode's `elite_scale`
+## makes them heavier on the harder modes. A weight that was positive never
+## drops to zero, so the family is always present once a band includes it.
+func _apply_elite_weight(mix: Dictionary, band_index: int) -> void:
+	if band_index < Tuning.ELITE_FROM_BAND:
+		return
+	var scale: float = float(
+		Tuning.DIFFICULTIES.get(SaveData.campaign_difficulty, {}).get("elite_scale", 1.0)
+	)
+	for kind: StringName in Tuning.ELITE_KINDS:
+		var weight: int = int(mix.get(kind, 0))
+		if weight <= 0:
+			continue
+		mix[kind] = maxi(roundi(float(weight) * maxf(scale, 0.1)), 1)
 
 
 ## The station colour a citadel fights with, kept next to the art index so the

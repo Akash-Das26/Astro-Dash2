@@ -29,6 +29,23 @@ const SPRITES: Dictionary = {
 		"texture": preload("res://assets/sprites/spacepixels_ships_stroked/space_pixels_ships_stroked/ship_red_stroked.png"),
 		"scale": 0.6,
 	},
+	# Elite family: the pack's alternate fighter art, unused until now.
+	&"elite_red": {
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_red.png"),
+		"scale": 0.9,
+	},
+	&"elite_green": {
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_green.png"),
+		"scale": 0.85,
+	},
+	&"elite_yellow": {
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_ship3_yellow.png"),
+		"scale": 0.95,
+	},
+	&"drone": {
+		"texture": preload("res://assets/sprites/spacepixels-0.2.0/spacepixels-0.2.0/pixel_shape3_blue.png"),
+		"scale": 0.55,
+	},
 }
 
 const WARP_FRAMES: Array[Texture2D] = [
@@ -51,6 +68,14 @@ const MAX_FIRE_RANGE: float = 640.0
 @export var bullet_speed: float = 0.0
 @export var aim_error: float = 0.0
 @export var contact_damage: int = Tuning.ENEMY_CONTACT_DAMAGE
+## Damage of this kind's own shots; the battle reads it per fighter.
+@export var bullet_damage: int = Tuning.ENEMY_DEFAULT_BULLET_DAMAGE
+## Shield-carrier aura: while this fighter lives, other fighters inside the
+## radius take their damage multiplied by `aura_multiplier`.
+@export var aura_radius: float = 0.0
+@export var aura_multiplier: float = 1.0
+@export var thruster_scale: float = Tuning.ENEMY_DEFAULT_THRUSTER_SCALE
+@export var swarm: bool = false
 @export var hit_flash_time: float = 0.12
 @export var effect_color: Color = Color(0.45, 0.8, 1.0)
 
@@ -120,6 +145,12 @@ func _apply_kind() -> void:
 	fire_interval = float(row["fire_interval"])
 	bullet_speed = float(row["bullet_speed"])
 	aim_error = float(row["aim_error"])
+	contact_damage = int(row.get("contact_damage", Tuning.ENEMY_CONTACT_DAMAGE))
+	bullet_damage = int(row.get("bullet_damage", Tuning.ENEMY_DEFAULT_BULLET_DAMAGE))
+	aura_radius = float(row.get("aura_radius", 0.0))
+	aura_multiplier = float(row.get("aura_multiplier", 1.0))
+	thruster_scale = float(row.get("thruster_scale", Tuning.ENEMY_DEFAULT_THRUSTER_SCALE))
+	swarm = bool(row.get("swarm", false))
 	effect_color = row["effect_color"]
 	max_hp = maxi(roundi(float(max_hp) * _hp_scale), 1)
 	hp = max_hp
@@ -136,7 +167,9 @@ func _apply_kind() -> void:
 	# Anchor the exhaust at this art's rear edge, not at a fixed pixel count.
 	var hull_half: float = _sprite.get_rect().size.y * 0.5 * _sprite.scale.y
 	_thruster.position = Vector2(0.0, hull_half + Tuning.THRUSTER_TAIL_GAP)
-	_thruster.set_base_scale(Vector2.ONE * clampf(body_radius / 11.0, 0.8, 1.8))
+	_thruster.set_base_scale(
+		Vector2.ONE * clampf(body_radius / 11.0, 0.8, 1.8) * thruster_scale
+	)
 
 
 func _apply_body() -> void:
@@ -258,12 +291,42 @@ func apply_knockback(direction: Vector2, strength: float) -> void:
 func take_damage(amount: int) -> void:
 	if not _active:
 		return
-	hp -= amount
+	hp -= mitigated(amount)
 	damaged.emit(global_position)
 	if hp <= 0:
 		die()
 	else:
 		_flash_hit()
+
+
+## Damage after any shield-carrier aura in range. A carrier protects the
+## fighters around it while it lives, never itself.
+func mitigated(amount: int) -> int:
+	var carrier := _carrier_in_range()
+	if carrier == null:
+		return amount
+	return maxi(roundi(float(amount) * carrier.aura_multiplier), 1)
+
+
+func _carrier_in_range() -> EnemyBase:
+	var parent: Node = get_parent()
+	if parent == null:
+		return null
+	for sibling: Node in parent.get_children():
+		var other := sibling as EnemyBase
+		if other == null or other == self or not other.is_active():
+			continue
+		if other.aura_radius <= 0.0:
+			continue
+		if other.global_position.distance_to(global_position) > other.aura_radius:
+			continue
+		return other
+	return null
+
+
+## Still alive and in the fight (used by the aura scan).
+func is_active() -> bool:
+	return _active
 
 
 ## Killed by a bullet: awards points.
