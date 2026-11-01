@@ -20,6 +20,9 @@ const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
 const FIRE_AFTER: float = 12.0
 ## When the pause card is opened and closed, while the fight is certainly live.
 const PAUSE_AT: float = 10.0
+## Balance rows fly at this engine time scale, so 60 s of game time costs ~15 s
+## of wall time. Stated in the report; the physics stays the same, just faster.
+const BALANCE_TIME_SCALE: float = 4.0
 ## Every weapon is owned here so both hardpoints can hold any pair.
 const ALL_WEAPONS: Array[StringName] = [&"pulse", &"cannon", &"scatter", &"rail", &"missile"]
 
@@ -77,11 +80,20 @@ func _ready() -> void:
 	# Balance run: `-- <difficulty>` flies exactly one 60 s row of that mode, with
 	# no forced victory or kill, and prints the hull left plus who hurt the ship.
 	var balance_mode: StringName = _requested_mode()
+	var band_token: String = _requested_band()
 	if balance_mode != &"":
+		var target: StringName = _pick_body(band_token)
 		_rows = [{
 			"mode": balance_mode, "primary": &"pulse", "secondary": &"cannon",
-			"seconds": 60.0, "victory": false, "balance": true,
-			"label": "BALANCE %s" % String(balance_mode).to_upper(),
+			"seconds": 60.0, "balance": true,
+			# A citadel has to reach its station to be worth measuring, so the
+			# waves are cleared at 40 s and the boss fight fills the rest.
+			"victory": band_token == "citadel" or band_token == "gate",
+			# Clear the station's waves early so the boss itself is measured, not
+			# just its escort.
+			"clear_at": 8.0 if band_token == "citadel" else 40.0,
+			"body": target, "band_token": band_token,
+			"label": "BALANCE %s band %s" % [String(balance_mode).to_upper(), band_token],
 		}]
 	for row: Dictionary in _rows:
 		await _run_row(row)
@@ -108,11 +120,16 @@ func _run_row(row: Dictionary) -> void:
 	SaveData.weapon_secondary = row["secondary"]
 	SaveData.shield_mode = Tuning.SHIELD_MODE_AUTO
 
-	var open: Array[StringName] = Campaign.attackable()
-	if open.is_empty():
-		_problems.append("%s: no attackable body" % mode)
-		return
-	Campaign.start_battle(open[0])
+	var target: StringName = StringName(row.get("body", &""))
+	if target == &"":
+		var open: Array[StringName] = Campaign.attackable()
+		if open.is_empty():
+			_problems.append("%s: no attackable body" % mode)
+			return
+		target = open[0]
+	if bool(row.get("balance", false)):
+		Engine.time_scale = BALANCE_TIME_SCALE
+	Campaign.start_battle(target)
 	_battle = BATTLE_SCENE.instantiate()
 	if _probe:
 		# Signals first, so nothing the scene does on its first frame is missed.
@@ -200,7 +217,7 @@ func _drive(row: Dictionary) -> void:
 				and bool(_battle.get("_running")):
 			_pause_tested = true
 			await _exercise_pause()
-		if bool(row.get("victory", false)) and elapsed >= 40.0:
+		if bool(row.get("victory", false)) and elapsed >= float(row.get("clear_at", 40.0)):
 			_clear_wave()
 		if bool(row.get("defeat", false)) and elapsed >= kill_at and not killed_ship:
 			killed_ship = true
@@ -369,6 +386,39 @@ func _track_damage() -> void:
 	_last_hp_tracked = _ship.hp
 
 
+## The band token on the command line: "1".."4" (GALAXY_BANDS index + 1), or
+## "citadel" / "gate". Empty means "the first attackable body".
+func _requested_band() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg == "citadel" or arg == "gate":
+			return arg
+		if arg.length() == 1 and arg.is_valid_int():
+			return arg
+	return ""
+
+
+## A body in the requested band, skipping home, gate and citadels so a band row
+## really measures that band's mix. Returns an empty id when the seed has none.
+func _pick_body(token: String) -> StringName:
+	var map: Galaxy = Campaign.galaxy()
+	if token == "citadel" or token == "gate":
+		for body_id: StringName in map.order:
+			if token == "gate" and map.is_gate(body_id):
+				return body_id
+			if token == "citadel" and map.has_boss(body_id):
+				return body_id
+		return &""
+	if token.is_empty():
+		return &""
+	var band: int = int(token) - 1
+	for body_id: StringName in map.order:
+		if map.is_home(body_id) or map.is_gate(body_id) or map.has_boss(body_id):
+			continue
+		if map.band_index_of(body_id) == band:
+			return body_id
+	return &""
+
+
 ## The difficulty named on the command line, or an empty name for the full run.
 func _requested_mode() -> StringName:
 	for arg: String in OS.get_cmdline_user_args():
@@ -391,6 +441,7 @@ func _damage_report() -> String:
 
 
 func _finish_row(row: Dictionary, mode: StringName) -> void:
+	Engine.time_scale = 1.0
 	await get_tree().process_frame
 	var growth: int = 0
 	if _samples.size() >= 2:
@@ -409,9 +460,10 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 	)
 	if bool(row.get("balance", false)):
 		print(
-			"BOT balance %s: result=%s hull=%d/%d (%.0f%%) damage: %s"
+			"BOT balance %s band=%s seed=%d: result=%s hull=%d/%d (%.0f%%) damage: %s"
 			% [
-				String(mode), "WIN" if _battle.victory else ("LOSS" if not _ship.alive else "TIMEOUT"),
+				String(mode), String(row.get("band_token", "1")), SaveData.campaign_seed,
+				"WIN" if _battle.victory else ("LOSS" if not _ship.alive else "TIMEOUT"),
 				_ship.hp, _ship.max_hp,
 				100.0 * float(_ship.hp) / float(maxi(_ship.max_hp, 1)), _damage_report(),
 			]
@@ -422,7 +474,9 @@ func _finish_row(row: Dictionary, mode: StringName) -> void:
 		_problems.append("%s: the ship never wrapped" % mode)
 	if growth > 200:
 		_problems.append("%s: node count grew by %d" % [mode, growth])
-	if bool(row.get("defeat", false)) and _ship.alive:
+	# Only the dedicated row can assert this: the difficulty rows are allowed to
+	# win their wave before the forced kill lands.
+	if bool(row.get("verify_defeat", false)) and _ship.alive:
 		_problems.append("%s: the ship survived the forced defeat" % mode)
 	# Only the dedicated row asserts the game-over card: the SINGULARITY row can
 	# legitimately win the wave before its forced kill lands.
