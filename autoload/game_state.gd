@@ -29,7 +29,12 @@ func change_state(new_state: State) -> void:
 	if new_state == state:
 		return
 	state = new_state
-	get_tree().paused = state != State.PLAYING
+	# A battle can finish while the engine is tearing the tree down (quit during
+	# a run, or a headless --quit-after landing on the same frame), and the
+	# battle reports its result through here: a null tree must not raise.
+	var tree: SceneTree = get_tree()
+	if tree != null:
+		tree.paused = state != State.PLAYING
 	state_changed.emit(state)
 
 
