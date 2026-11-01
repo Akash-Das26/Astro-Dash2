@@ -96,7 +96,8 @@ stay in the git-ignored `test_output/`).
 - **Ten hull skins** in the picker: `pixel_ship_red/blue/yellow` plus the green
   interceptor, then the six stroked hulls. They unlock at 0, 5, 10, 15, 20, 25,
   30, 35, 40 and 45 planets conquered (best run counts, so a skin can unlock
-  mid-run). The picker is saved as `skin` and the ship wears it in battle.
+  mid-run, or across campaigns through lifetime conquests). The picker is saved
+  as `skin` and the ship wears it in battle.
 
 ### Battles from a body
 
@@ -179,7 +180,6 @@ events with no file are reported in a single startup warning.
   lists the live bindings, not the rules).
 - **Headless only for tests.** Audio output, touch and the Android build were
   never verified on real hardware; see the limits listed there.
-- **Per-pack sound credits** still need author/license/source filled in.
 
 ## How to play
 
@@ -369,7 +369,7 @@ no autoload globals, so any script naming `SaveData` fails to compile there.
 ## Balancing
 
 Every number worth tweaking lives in **`config/config/tuning.gd`**, plus UI sizes in
-`config/ui_theme.gd` and skin unlock thresholds in `config/config/skins.gd`. Nothing in the logic
+`config/ui_theme.gd` and skin unlock thresholds in `config/skins.gd`. Nothing in the logic
 depends on the exact values.
 
 | What | Constant(s) |
@@ -393,7 +393,7 @@ depends on the exact values.
 | Effects | `MAX_LIVE_EXPLOSIONS`, `MAX_LIVE_FLOAT_TEXTS`, `EXPLOSION_PARTICLES`, `EXPLOSION_LIFE`, `SHOCKWAVE_LIFE`, `SHOCKWAVE_RADIUS`, `STARFIELD_*` |
 | Upgrades | `UPGRADES` (price is `base_cost + cost_step * level`), `UPGRADE_MAX_LEVEL`, `HULL_LEVELS_PER_STEP` + `HP_PER_HULL_STEP`, `SPEED_PER_LEVEL`, `SHIELD_LEVELS_PER_CHARGE`, `FIRE_LEVELS_PER_DAMAGE`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` |
 | Perfect victory | `PERFECT_BONUS_SCORE` (500), `PERFECT_BONUS_ENERGY` (25) |
-| Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `config/config/skins.gd` |
+| Skins | `Skins.PLANETS_PER_UNLOCK` and each row's `unlock` in `config/skins.gd` |
 | Legacy single-laser values | `SHIP_FIRE_INTERVAL`, `SHIP_BULLET_*`, `SHIP_MUZZLE_OFFSET`, `FIRE_INTERVAL_PER_LEVEL`, `MIN_FIRE_INTERVAL` (kept for the fallback bullet, superseded by `WEAPONS`) |
 | UI scale and fonts | `UITheme.SIZE_*` (including `SIZE_DISPLAY`), `UITheme.COLOR_*`, the font-name hints in `config/ui_theme.gd` and the button/card styleboxes |
 | Galaxy layout | `GALAXY_MAP_SIZE`, `GALAXY_BODY_COUNT_MIN/MAX`, `GALAXY_MIN_SPACING`, `GALAXY_EDGE_MARGIN`, `GALAXY_LINKS_PER_BODY`, `GALAXY_MAX_LINK_LENGTH`, `GALAXY_HOME_ANCHOR`, `GALAXY_TAP_RADIUS`, `GALAXY_PAN_SPEED` |

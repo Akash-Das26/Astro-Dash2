@@ -37,6 +37,12 @@ tests exercise the real singletons and the real classes.
 - **Upgrades:** prices, the four tracks' effects, the max-level stop.
 - **Save persistence:** energy, levels, volumes and shield mode through
   `save_data()` / `load_data()`.
+- **Broken saves:** a missing, empty, truncated, mistyped, unknown-key and
+  oldest-schema `save.cfg` all load without an error, keep the volumes in range
+  and the hull known, and a normal save still round-trips afterwards.
+- **Hull reachability:** every hull milestone unlocks at its own count, lifetime
+  conquests accumulate across campaigns, and the counter survives a reload and a
+  SINGULARITY wipe.
 - **Weapons:** the planet gate, purchase rules, the two-slot rule, persistence
   and FIRE POWER scaling.
 - **Galaxy:** seed determinism, reachability from home, five citadels and the
