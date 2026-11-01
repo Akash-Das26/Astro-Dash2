@@ -458,6 +458,22 @@ func _flash_hit() -> void:
 
 ## F3 overlay: the body circle and the exhaust anchor in the fighter's frame.
 func _draw() -> void:
+	# The elite art is thin coloured lines on black, so a rim copy only makes it
+	# a bigger set of thin lines. A soft filled disc behind the hull (this runs
+	# before the child sprites draw) gives the silhouette something to sit on.
+	if Tuning.ELITE_GLOW.has(kind):
+		var elite_tint: Color = Tuning.ELITE_GLOW[kind]
+		var hull: Vector2 = drawn_size()
+		var hull_radius: float = maxf(hull.x, hull.y) * 0.5
+		if hull_radius > 0.0:
+			draw_circle(
+				Vector2.ZERO, hull_radius * 1.15,
+				Color(elite_tint.r, elite_tint.g, elite_tint.b, 0.16)
+			)
+			draw_circle(
+				Vector2.ZERO, hull_radius * 0.85,
+				Color(elite_tint.r, elite_tint.g, elite_tint.b, 0.2)
+			)
 	# A shield carrier shows its protection: a faint ring at the aura radius.
 	if aura_radius > 0.0:
 		draw_arc(
