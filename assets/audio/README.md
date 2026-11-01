@@ -56,6 +56,11 @@ finds, sorted by file name.
   `AudioManager.play_context(&"boss")` and the normal rotation resumes with
   `release_context()` after the fight. Mapped tracks are left out of the shuffle
   bag and the in-order walk; if the file is missing the context is ignored.
+- **Excluding a track.** `Tuning.MUSIC_EXCLUDE` is an array of base names
+  (file name without extension) that stay on disk but never enter the playlist
+  or the shuffle bag. It is empty by default; add `"Preparing for War"` there to
+  ship without the CC BY-SA track. Excluding a name never deletes a file and the
+  credits entry stays, so the card still lists the track if it is put back.
 - **Exports.** The listing comes from `ResourceLoader.list_directory` when the
   engine has it, plus a `DirAccess` scan with `.import` / `.remap` suffixes
   stripped. Each export preset also includes the raw files under

@@ -614,6 +614,10 @@ For an itch.io embed use **960x600** and enable the fullscreen button.
   Settings shows **NOW PLAYING** as title and author. The citadel theme is mapped
   in `Tuning.MUSIC_CONTEXTS` and plays only for boss battles; it is kept out of
   the normal shuffle.
+
+  **CC BY-SA 3.0 (share-alike).** *Prepare for War* by Trevor Lentz is kept:
+  decide before publishing whether to keep it; to disable, add
+  `"Preparing for War"` to `Tuning.MUSIC_EXCLUDE` or delete the file.
 - **Sound effects**, from the two packs under `assets/audio/sfx/`:
   - *512 Sound Effects (8-bit style)* (The Essential Retro Video Game Sound
     Effects Collection) — SubspaceAudio (Juhani Junkala), CC0, credit given

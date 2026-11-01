@@ -248,6 +248,12 @@ func music_tracks() -> Array[String]:
 	return _track_names.duplicate()
 
 
+## The one predicate the playlist uses for Tuning.MUSIC_EXCLUDE, kept separate
+## so a test can ask what would happen to a listing without touching the files.
+static func is_excluded(track_name: String, exclude: Array[String]) -> bool:
+	return exclude.has(track_name)
+
+
 func track_count() -> int:
 	return _tracks.size()
 
@@ -458,8 +464,12 @@ func _build_playlist() -> void:
 		else:
 			by_base[base_name] = path
 	for path: String in by_base.values():
+		var track_name: String = path.get_file().get_basename()
+		# An excluded name stays on disk but never enters the playlist.
+		if is_excluded(track_name, Tuning.MUSIC_EXCLUDE):
+			continue
 		_tracks.append(path)
-		_track_names.append(path.get_file().get_basename())
+		_track_names.append(track_name)
 	if _tracks.is_empty() and ResourceLoader.exists(LEGACY_MUSIC):
 		_tracks.append(LEGACY_MUSIC)
 		_track_names.append("music")

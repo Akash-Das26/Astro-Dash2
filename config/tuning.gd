@@ -161,6 +161,10 @@ const MUSIC_CONTEXTS: Dictionary = {
 const MUSIC_SILENT_DB: float = -40.0
 const MUSIC_PAUSE_GAIN: float = 0.45
 const MUSIC_PAUSE_FADE: float = 2.0
+## Tracks kept out of the playlist without deleting the files: base names as the
+## playlist reports them (file name without extension), e.g. "Preparing for War".
+## Empty by default; see assets/audio/README.md.
+static var MUSIC_EXCLUDE: Array[String] = []
 ## Credits roll speed in pixels per second (the card pauses on any key).
 const CREDITS_SCROLL_SPEED: float = 26.0
 

@@ -36,8 +36,10 @@ func _ready() -> void:
 ## instance every time the button is pressed.
 func open() -> void:
 	if not _built:
-		_build()
+		# Built after this frame's layout, so the clipped area already has its
+		# real width and every line wraps to it instead of to zero.
 		_built = true
+		_build.call_deferred()
 	_offset = 0.0
 	_roll.position = Vector2.ZERO
 	_paused = false

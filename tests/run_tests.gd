@@ -22,6 +22,7 @@ const BATTLE_SCENE: PackedScene = preload("res://game/battle/battle_game.tscn")
 const MAP_SCENE: PackedScene = preload("res://ui/map/galaxy_map.tscn")
 const UPGRADE_SCENE: PackedScene = preload("res://ui/panels/upgrade_panel.tscn")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
+const CREDITS_SCENE: PackedScene = preload("res://ui/panels/credits_card.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -47,7 +48,7 @@ func _ready() -> void:
 	await _test_upgrade_layout()
 	_test_galaxy()
 	_test_audio()
-	_test_credits()
+	await _test_credits()
 	_test_controls()
 	_test_paths()
 	_restore_save()
@@ -986,6 +987,19 @@ func _test_credits() -> void:
 				not String(credit.get("author", "")).is_empty() \
 					and not String(credit.get("license", "")).is_empty()
 			)
+	check(
+		"an excluded track is filtered out",
+		AudioManager.is_excluded("Preparing for War", ["Preparing for War"])
+	)
+	check(
+		"a track that is not excluded survives",
+		not AudioManager.is_excluded("8bit", ["Preparing for War"])
+	)
+	check(
+		"the default exclude list is empty",
+		Tuning.MUSIC_EXCLUDE.is_empty(),
+		str(Tuning.MUSIC_EXCLUDE)
+	)
 	# A real rebuild: with the default (empty) exclude list every banked track has
 	# to come back, which is the state the menu and the tests run against.
 	var bases: Dictionary = {}
@@ -997,6 +1011,33 @@ func _test_credits() -> void:
 		AudioManager.track_count() == bases.size(),
 		"%d tracks for %d files" % [AudioManager.track_count(), bases.size()]
 	)
+	# The card itself: it opens, its panel stays inside the 960x600 viewport and it
+	# builds the whole roll (no missing section, no scrollbar).
+	var card := CREDITS_SCENE.instantiate() as CreditsCard
+	add_child(card)
+	card.open()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check("the credits card opens", card.visible)
+	var panel := card.get_node("Panel") as Control
+	check(
+		"the credits panel fits the viewport",
+		Rect2(Vector2.ZERO, Tuning.VIEW_SIZE).encloses(panel.get_global_rect()),
+		str(panel.get_global_rect())
+	)
+	var roll := card.get_node("Panel/Margin/Box/Roll/RollBox") as VBoxContainer
+	var expected: int = 0
+	for group: Dictionary in Credits.groups():
+		expected += 1 + (group.get("entries", []) as Array).size()
+	check(
+		"the credits roll lists every group and entry",
+		roll.get_child_count() >= expected,
+		"%d lines for %d entries" % [roll.get_child_count(), expected]
+	)
+	card.close()
+	check("the credits card closes", not card.visible)
+	card.queue_free()
+	await get_tree().process_frame
 
 
 # --- 4.7 Audio --------------------------------------------------------------
