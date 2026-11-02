@@ -14,3 +14,7 @@ D:\Project\Game\Astro-Dash2\reference
 # Headless test output (run logs and captured PNGs)
 test_output/
 test_output*.zip
+.freebuff/
+# Local tool folder and hand-made backups (never part of the project)
+Backup/
+*.bundle
