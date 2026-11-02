@@ -77,7 +77,10 @@ var _blink_timer: float = 0.0
 var _base_scale: Vector2 = Vector2.ONE
 ## Touch sets this while a finger holds the right zone; zero means "no override".
 var _aim_override: Vector2 = Vector2.ZERO
-var _mouse_active: bool = false
+## Seconds of "the pointer is still aiming" left. Refreshed by mouse movement
+## and counted down every physics tick, so keyboard aim is not undone by a
+## mouse that has not moved for a while.
+var _mouse_idle: float = 0.0
 
 
 func _ready() -> void:
@@ -370,22 +373,31 @@ func _wrap_position() -> void:
 	if wrapped:
 		_thruster.snap()
 
-## Three aim sources in priority order: the touch zone, the right stick, the
-## mouse. With none of them active the nose keeps its last heading, so a
-## keyboard-only player flies and shoots forward.
+## Four aim sources in priority order: the touch zone, the right stick, the
+## keyboard aim keys, the mouse. The first one that is actually being used wins
+## that tick, so no two of them fight over the nose. With none of them active
+## it keeps its last heading, so a keyboard-only player flies and shoots
+## forward until J or L is pressed.
 func _update_aim(delta: float) -> void:
-	# Classic has no aim stick and no mouse aim: the nose is the aim, and the
-	# next shot goes wherever the hull points.
+	# Classic has no aim stick, no aim keys and no mouse aim: the nose is the
+	# aim, and the next shot goes wherever the hull points.
 	if control_scheme == Tuning.CONTROL_SCHEME_CLASSIC:
 		aim = Vector2.UP.rotated(rotation)
 		return
+	_mouse_idle = maxf(_mouse_idle - delta, 0.0)
+	var stick: Vector2 = Vector2.ZERO
+	if Input.is_action_pressed("aim"):
+		stick = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+	# The same two actions carry the stick's horizontal axis and the J/L keys;
+	# the stick branch above claims them whenever a stick is actually deflected.
+	var keyboard_turn: float = Input.get_axis("aim_left", "aim_right")
 	if _aim_override.length() > 0.1:
 		aim = _aim_override.normalized()
-	elif Input.is_action_pressed("aim"):
-		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-		if stick.length() > 0.3:
-			aim = stick.normalized()
-	elif _mouse_active:
+	elif stick.length() > 0.3:
+		aim = stick.normalized()
+	elif absf(keyboard_turn) > 0.01:
+		aim = aim.rotated(keyboard_turn * Tuning.KEYBOARD_AIM_TURN_RATE * delta).normalized()
+	elif _mouse_idle > 0.0:
 		var to_mouse: Vector2 = get_global_mouse_position() - global_position
 		# The nose only re-aims once the pointer is a few pixels away from the
 		# hull, so a mouse sitting still does not jitter the ship.
@@ -421,7 +433,7 @@ func _muzzle(slot: int) -> Vector2:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion or event is InputEventMouseButton:
-		_mouse_active = true
+		_mouse_idle = Tuning.SHIP_MOUSE_AIM_HOLD
 
 
 # --- Feedback ---------------------------------------------------------------

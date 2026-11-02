@@ -52,6 +52,7 @@ func _ready() -> void:
 	_test_audio()
 	await _test_credits()
 	_test_controls()
+	_test_keyboard_aim()
 	_test_paths()
 	_restore_save()
 	print("")
@@ -1333,3 +1334,75 @@ func _test_controls() -> void:
 		"the help text names the gamepad controls binding",
 		Controls.help_text().contains(Controls.binding_text(&"controls", true))
 	)
+
+
+## H-2: a keyboard-only player in FREE AIM can swing the nose with J/L, the
+## mouse still aims, and the two never both drive the same tick.
+func _test_keyboard_aim() -> void:
+	check("keyboard aim is bound", Controls.binding_text(&"aim_left", false) != "UNBOUND")
+	check(
+		"keyboard aim is remappable",
+		Tuning.CONTROL_ACTIONS.has(&"aim_left") and not Controls.is_fixed(&"aim_left")
+	)
+	var ship := SHIP_SCENE.instantiate() as Ship
+	if ship == null:
+		check("ship scene loads for the aim test", false)
+		return
+	add_child(ship)
+	ship.control_scheme = Tuning.CONTROL_SCHEME_FREE
+	ship.aim = Vector2.UP
+	ship.rotation = 0.0
+
+	# J holds left for half a second: the aim direction turns anticlockwise at
+	# the tuned rate and the nose follows it.
+	Input.action_press("aim_left")
+	for tick: int in 10:
+		ship._update_aim(0.05)
+	Input.action_release("aim_left")
+	# Vector2.UP is -PI/2, so the expected angle is that plus the turn.
+	check_near(
+		"keyboard aim rotates at the tuned rate",
+		ship.aim.angle(),
+		-PI * 0.5 - Tuning.KEYBOARD_AIM_TURN_RATE * 0.5,
+		0.03
+	)
+	check("keyboard aim turns the nose", ship.rotation < -0.2, "rotation %.2f" % ship.rotation)
+
+	# L turns back the other way from wherever the aim now points.
+	Input.action_press("aim_right")
+	for tick: int in 10:
+		ship._update_aim(0.05)
+	Input.action_release("aim_right")
+	check_near("keyboard aim turns both ways", ship.aim.angle(), -PI * 0.5, 0.03)
+
+	# A mouse movement arms pointer aim again; the direction is the pointer's.
+	ship.global_position = Vector2(200.0, 200.0)
+	ship.aim = Vector2.UP
+	ship._mouse_idle = 0.0
+	ship._unhandled_input(InputEventMouseMotion.new())
+	check("a mouse movement arms pointer aim", ship._mouse_idle > 0.0)
+	var to_pointer: Vector2 = ship.get_global_mouse_position() - ship.global_position
+	ship._update_aim(0.05)
+	if to_pointer.length() > Tuning.SHIP_AIM_DEADZONE:
+		check_near("mouse aim still points at the pointer", ship.aim.angle(), to_pointer.angle(), 0.02)
+	else:
+		check("the headless pointer is far from the hull", false, "pointer at the hull")
+
+	# With the keys held, the keys own the tick even while the pointer is live.
+	ship.aim = Vector2.UP
+	ship._mouse_idle = Tuning.SHIP_MOUSE_AIM_HOLD
+	Input.action_press("aim_right")
+	ship._update_aim(0.05)
+	Input.action_release("aim_right")
+	check_near(
+		"aim keys win over a live pointer",
+		ship.aim.angle(),
+		-PI * 0.5 + Tuning.KEYBOARD_AIM_TURN_RATE * 0.05,
+		0.02
+	)
+
+	# The pointer's claim expires, so it cannot recapture the nose later.
+	ship._mouse_idle = 0.2
+	ship._update_aim(0.5)
+	check("a resting pointer stops aiming", ship._mouse_idle <= 0.0)
+	ship.queue_free()

@@ -190,9 +190,9 @@ events with no file are reported in a single startup warning.
    green. Single click (or a gamepad cursor + `A`) selects and shows the tooltip;
    double-click, or `Enter` on a selected body, opens the CONQUER card.
 3. **Fly and shoot.** One stick/keyboard moves, the nose follows the mouse in
-   FREE AIM (or the ship turns under `A`/`D` in CLASSIC). `Space` fires the
-   primary, the secondary fires on `shoot_alt`; `Z` raises the shield in MANUAL
-   mode.
+   FREE AIM (`J` / `L` swing it round with the keyboard), or the ship turns
+   under `A`/`D` in CLASSIC. `Space` fires the primary, the secondary fires on
+   `shoot_alt`; `Z` raises the shield in MANUAL mode.
 4. **Clear every wave.** Fighters, elites, drones and asteroids; big rocks split
    into debris. A citadel sends its station in after the last wave — kill it for
    a large energy bonus and a shield drop.
@@ -230,7 +230,7 @@ at startup; Esc and Back stay fixed so a remap can never lock the player out.
 | Close a card | `CANCEL`, `Esc` / `B`, or Android Back |
 | Back to the menu | `Esc` / `B` / Android Back on the bare map |
 | Zoom | Mouse wheel (around the cursor), pinch, or `+` / `-` |
-| Controls card | `C` anywhere |
+| Controls card | `C` or gamepad `Back` anywhere |
 | Debug battle (debug builds) | `F9` starts the one-wave harness instead |
 
 ### Battle
@@ -240,7 +240,7 @@ at startup; Esc and Back stay fixed so a remap can never lock the player out.
 | Action | Input |
 | --- | --- |
 | Move | `W` `A` `S` `D` or the arrow keys |
-| Aim | Mouse (the nose follows the pointer once it moves) |
+| Aim | Mouse (the nose follows the pointer once it moves), or `J` / `L` to swing the nose round |
 | Fire primary | `Space` or hold left click |
 | Fire secondary | `Shift`, hold right click, or the touch **FIRE II** button |
 | Raise the manual shield | `Z` (MANUAL shield mode), or the touch **SHIELD** button |
@@ -256,8 +256,8 @@ is the aim. Both schemes' bindings persist.
 
 **Gamepad** (twin-stick): left stick moves, right stick aims, right trigger or
 `A` / Cross fires the primary, left shoulder or left trigger fires the
-secondary, `X` / Square raises the manual shield, `Start` pauses, d-pad and `A`
-navigate cards.
+secondary, `X` / Square raises the manual shield, `Start` pauses, `Back` opens
+the controls card, d-pad and `A` navigate cards.
 
 **Touch:** virtual stick on the left half, aim-and-fire on the right half, a
 second 48px+ **FIRE II** button for the secondary, 48px pause button. On the map,
@@ -265,8 +265,10 @@ drag pans and a tap selects.
 
 Everything reaches the game through InputMap actions (`move_up`, `move_down`,
 `move_left`, `move_right`, `aim`, `aim_left/right/up/down`, `shoot`, `shoot_alt`,
-`pause`, plus Godot's built-in `ui_*` actions for every screen), so no screen
-asks where an input came from.
+`shield`, `controls`, `pause`, plus Godot's built-in `ui_*` actions for every
+screen), so no screen asks where an input came from. In FREE AIM the analogue
+`aim_*` axes and the keyboard `J` / `L` keys drive the same actions; the aim
+source is picked in this order: touch zone, stick, aim keys, mouse.
 
 ## How a campaign runs
 

@@ -180,10 +180,12 @@ const CONTROL_SCHEME_DEFAULT: StringName = CONTROL_SCHEME_FREE
 const CONTROL_ACTIONS: Array[StringName] = [
 	&"move_up", &"move_down", &"move_left", &"move_right",
 	&"turn_left", &"turn_right", &"thrust", &"brake",
+	&"aim_left", &"aim_right",
 	&"shoot", &"shoot_alt", &"shield", &"controls", &"pause",
 ]
 const CONTROL_ACTIONS_FREE: Array[StringName] = [
 	&"move_up", &"move_down", &"move_left", &"move_right",
+	&"aim_left", &"aim_right",
 	&"shoot", &"shoot_alt", &"shield", &"controls", &"pause",
 ]
 const CONTROL_ACTIONS_CLASSIC: Array[StringName] = [
@@ -201,6 +203,8 @@ const CONTROL_LABELS: Dictionary = {
 	&"turn_right": "TURN RIGHT",
 	&"thrust": "THRUST",
 	&"brake": "BRAKE",
+	&"aim_left": "AIM LEFT",
+	&"aim_right": "AIM RIGHT",
 	&"shoot": "PRIMARY FIRE",
 	&"shoot_alt": "SECONDARY FIRE",
 	&"shield": "SHIELD",
@@ -217,8 +221,6 @@ const CONTROL_LABELS: Dictionary = {
 ## not in this list once their keys are bound.
 const CONTROL_PAD_ONLY: Dictionary = {
 	&"aim": "any right-stick deflection; the keyboard aim keys cover this",
-	&"aim_left": "analogue axis; keyboard aim uses the same action",
-	&"aim_right": "analogue axis; keyboard aim uses the same action",
 	&"aim_up": "vertical stick axis with no keyboard equivalent (aim rotates the nose)",
 	&"aim_down": "vertical stick axis with no keyboard equivalent (aim rotates the nose)",
 }
@@ -229,6 +231,14 @@ const CONTROL_AIM_ACTIONS: Array[StringName] = [
 ]
 ## Classic flight: how fast the hull turns, in radians per second.
 const SHIP_CLASSIC_TURN_RATE: float = 3.0
+## Free aim, keyboard only: J/L swing the aim direction round at this many
+## radians per second. A stick or a mouse names a direction outright; the keys
+## can only rotate, so they turn at a fixed rate instead.
+const KEYBOARD_AIM_TURN_RATE: float = 2.6
+## How long after the last mouse movement the pointer keeps aiming. Without a
+## limit a resting mouse would pull the nose back the instant the player let go
+## of the aim keys, so keyboard aim needs a moment of its own.
+const SHIP_MOUSE_AIM_HOLD: float = 2.0
 ## Shield behaviour. AUTO spends a charge on every hit (the original rule);
 ## MANUAL spends one charge to raise a timed bubble that absorbs everything.
 const SHIELD_MODE_AUTO: StringName = &"auto"
