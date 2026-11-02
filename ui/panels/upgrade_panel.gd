@@ -79,7 +79,7 @@ enum Tab { HULL, WEAPONS }
 @onready var _weapon_box: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Weapons
 @onready var _weapon_row: VBoxContainer = $Panel/Margin/Box/Scroll/Page/Body/Weapons/Row
 @onready var _weapon_hint: Label = $Panel/Margin/Box/Scroll/Page/Body/Weapons/Hint
-@onready var _weapon_icon: TextureRect = $Panel/Margin/Box/Scroll/Page/Body/Stats/WeaponIcon
+@onready var _weapon_icon: UIIcon = $Panel/Margin/Box/Scroll/Page/Body/Stats/WeaponIcon
 @onready var _buy_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/BuyButton
 @onready var _equip_primary_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/EquipPrimaryButton
 @onready var _equip_secondary_button: Button = $Panel/Margin/Box/Scroll/Page/Body/Stats/EquipSecondaryButton
@@ -230,8 +230,14 @@ func _build_skins() -> void:
 		button.custom_minimum_size = SKIN_ICON_SIZE
 		button.toggle_mode = true
 		button.button_group = group
-		button.expand_icon = true
-		button.icon = skin["texture"]
+		# The hull art carries a different transparent margin per skin, so the
+		# icon is centred by its opaque pixels, not by its texture box.
+		var icon := UIIcon.new()
+		icon.name = "Icon"
+		icon.texture = skin["texture"]
+		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		icon.padding = 3.0
+		button.add_child(icon)
 		button.pressed.connect(_on_skin_pressed.bind(skin["id"]))
 		_skin_row.add_child(button)
 		_skin_buttons[skin["id"]] = button
@@ -343,7 +349,9 @@ func _refresh_skins() -> void:
 ## the same way the ship is built in battle: the flame starts at the tail and
 ## burns away from the nose. The block is sized below the box so the skin name
 ## underneath stays clear at every skin size.
-func _place_preview_pair(hull_height: float, alpha: float, zoom: float) -> void:
+func _place_preview_pair(
+	hull_height: float, alpha: float, zoom: float, used: Rect2, tex_size: Vector2
+) -> void:
 	var amount: float = lerpf(
 		Tuning.THRUSTER_IDLE_SCALE, Tuning.THRUSTER_FULL_SCALE, PREVIEW_THRUST
 	)
@@ -365,7 +373,14 @@ func _place_preview_pair(hull_height: float, alpha: float, zoom: float) -> void:
 		_preview_ship.scale = Vector2.ONE * zoom * shrink
 	var top: float = maxf(PREVIEW_MARGIN, (PREVIEW_SIZE.y - block) * 0.5)
 	var tail: float = top + hull_height + Tuning.THRUSTER_TAIL_GAP
-	_preview_ship.position = Vector2(PREVIEW_CENTER_X, top + hull_height * 0.5)
+	# The hull is positioned by its OPAQUE centre: the transparent margin is
+	# lopsided per skin, so centring the texture left the ship off-centre and
+	# the flame started away from the real tail.
+	var centre_shift := Vector2(
+		used.position.x + used.size.x * 0.5 - tex_size.x * 0.5,
+		used.position.y + used.size.y * 0.5 - tex_size.y * 0.5
+	) * _preview_ship.scale.x
+	_preview_ship.position = Vector2(PREVIEW_CENTER_X, top + hull_height * 0.5) - centre_shift
 	_preview_thruster.position = Vector2(PREVIEW_CENTER_X, tail)
 	# The base scale is what `set_thrust` lerps from, so it stays separate.
 	_preview_thruster.set_base_scale(Vector2.ONE * flame_scale)
@@ -388,10 +403,9 @@ func _refresh_preview() -> void:
 	_preview_ship.texture = texture
 	_preview_ship.scale = Vector2.ONE * zoom
 	_preview_ship.modulate = Color(1.0, 1.0, 1.0, alpha)
-	var height: float = 0.0
-	if texture != null:
-		height = float(texture.get_height()) * zoom
-	_place_preview_pair(height, alpha, zoom)
+	var used: Rect2 = UIIcons.opaque_rect(texture)
+	var tex_size: Vector2 = Vector2.ZERO if texture == null else texture.get_size()
+	_place_preview_pair(used.size.y * zoom, alpha, zoom, used, tex_size)
 	_preview_name.text = Skins.title(id)
 	_preview_name.add_theme_color_override(
 		"font_color", UITheme.COLOR_TEXT if unlocked else UITheme.COLOR_MUTED

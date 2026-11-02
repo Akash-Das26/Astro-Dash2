@@ -36,7 +36,7 @@ const WEAPON_SLOT_PATHS: Array[String] = [
 	"Root/BottomBar/PrimarySlot", "Root/BottomBar/SecondarySlot",
 ]
 
-var _weapon_icons: Array[TextureRect] = []
+var _weapon_icons: Array[UIIcon] = []
 var _weapon_names: Array[Label] = []
 var _weapon_cooldowns: Array[TextureProgressBar] = []
 
@@ -105,7 +105,7 @@ func _ready() -> void:
 	_boss_panel.visible = false
 	for path: String in WEAPON_SLOT_PATHS:
 		var slot: Control = get_node(path) as Control
-		_weapon_icons.append(slot.get_node("Icon") as TextureRect)
+		_weapon_icons.append(slot.get_node("Icon") as UIIcon)
 		_weapon_names.append(slot.get_node("Name") as Label)
 		_weapon_cooldowns.append(slot.get_node("Cooldown") as TextureProgressBar)
 
@@ -229,7 +229,7 @@ func set_weapon_cooldowns(primary: float, secondary: float) -> void:
 
 func _render_weapon_slot(slot: int, id: StringName) -> void:
 	var data: Dictionary = Weapons.entry(id)
-	var icon: TextureRect = _weapon_icons[slot]
+	var icon: UIIcon = _weapon_icons[slot]
 	var name_label: Label = _weapon_names[slot]
 	if data.is_empty():
 		icon.texture = null

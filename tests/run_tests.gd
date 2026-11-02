@@ -49,6 +49,7 @@ func _ready() -> void:
 	await _test_primary_weapon_always_equipped()
 	await _test_touch_controls_desktop()
 	await _test_hud_above_playfield()
+	await _test_icon_centering()
 	_test_elite_fighters()
 	_test_thrusters()
 	_test_boss_telegraph()
@@ -1216,6 +1217,103 @@ func _highest_layer(node: Node) -> int:
 	for child: Node in node.get_children():
 		top = maxi(top, _highest_layer(child))
 	return top
+
+
+## Every icon in a box is aligned by its OPAQUE pixels. The hull art carries a
+## different transparent margin per skin, which is what put the thumbnails left
+## of and above their boxes and the interceptor low in its own.
+func _test_icon_centering() -> void:
+	for skin: Dictionary in Skins.all():
+		var texture: Texture2D = skin["texture"]
+		var used: Rect2 = UIIcons.opaque_rect(texture)
+		check(
+			"%s has opaque art inside its texture" % String(skin["id"]),
+			used.size.x > 0.0 and used.size.y > 0.0 \
+				and used.size.x <= float(texture.get_width()) \
+				and used.size.y <= float(texture.get_height())
+		)
+	var panel: Control = load("res://ui/panels/upgrade_panel.tscn").instantiate()
+	add_child(panel)
+	if panel.has_method("open"):
+		panel.call("open")
+	panel.visible = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var icons: Array[UIIcon] = []
+	_collect_icons(panel, icons)
+	check(
+		"every hull has a thumbnail icon and the rack has its own",
+		icons.size() >= Skins.all().size()
+	)
+	var worst: float = 0.0
+	var tightest: float = 999.0
+	for icon: UIIcon in icons:
+		if icon.size.x <= 0.0 or icon.size.y <= 0.0:
+			continue
+		var rect: Rect2 = icon.drawn_rect()
+		var centre: Vector2 = rect.get_center()
+		worst = maxf(worst, absf(centre.x - icon.size.x * 0.5))
+		worst = maxf(worst, absf(centre.y - icon.size.y * 0.5))
+		tightest = minf(tightest, rect.position.x)
+		tightest = minf(tightest, rect.position.y)
+		tightest = minf(tightest, icon.size.x - rect.end.x)
+		tightest = minf(tightest, icon.size.y - rect.end.y)
+	check(
+		"every icon is centred within a pixel of its box",
+		worst <= 1.0,
+		"worst offset %.2f" % worst
+	)
+	check(
+		"every icon keeps its margin inside its box",
+		tightest >= 2.5,
+		"tightest margin %.2f" % tightest
+	)
+	# The large preview is centred on the OPAQUE hull, so the flame starts at the
+	# real tail and the ship sits in the middle of the box.
+	var ship := panel.find_child("ShipSprite", true, false) as Sprite2D
+	check("the preview has a hull sprite", ship != null and ship.texture != null)
+	if ship != null and ship.texture != null:
+		var hull: Rect2 = UIIcons.opaque_rect(ship.texture)
+		var drawn := Rect2(
+			ship.global_position - hull.size * ship.scale.x * 0.5, hull.size * ship.scale.x
+		)
+		var preview_box := (ship.get_parent() as Control).get_global_rect()
+		check(
+			"the big skin preview is centred by its opaque pixels",
+			absf(drawn.get_center().x - preview_box.get_center().x) <= 1.0,
+			"offset %.2f" % (drawn.get_center().x - preview_box.get_center().x)
+		)
+		check("the big skin preview fits inside its box", preview_box.encloses(drawn))
+	panel.queue_free()
+	await get_tree().process_frame
+	# The battle HUD weapon slots use the same rule.
+	var battle: Node = load("res://game/battle/battle_game.tscn").instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var primary := battle.find_child("PrimarySlot", true, false) as Control
+	var slot_icon: UIIcon = null
+	if primary != null:
+		slot_icon = primary.get_node_or_null("Icon") as UIIcon
+	check("the primary weapon slot draws an opaque-aligned icon", slot_icon != null)
+	if slot_icon != null and slot_icon.size.x > 0.0:
+		var slot_rect: Rect2 = slot_icon.drawn_rect()
+		check(
+			"the primary weapon icon is centred in its slot",
+			slot_icon.texture == null \
+				or (absf(slot_rect.get_center().x - slot_icon.size.x * 0.5) <= 1.0 \
+					and absf(slot_rect.get_center().y - slot_icon.size.y * 0.5) <= 1.0),
+			"texture %s" % str(slot_icon.texture)
+		)
+	battle.queue_free()
+	await get_tree().process_frame
+
+
+func _collect_icons(node: Node, out: Array[UIIcon]) -> void:
+	for child: Node in node.get_children():
+		if child is UIIcon:
+			out.append(child as UIIcon)
+		_collect_icons(child, out)
 
 
 # --- 4.6 Galaxy -------------------------------------------------------------

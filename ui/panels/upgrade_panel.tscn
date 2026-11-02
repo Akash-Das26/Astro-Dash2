@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/panels/upgrade_panel.gd" id="1_panel"]
 [ext_resource type="PackedScene" path="res://entities/fx/thruster.tscn" id="2_thruster"]
+[ext_resource type="Script" path="res://ui/ui_icon.gd" id="3_icon"]
 
 [node name="UpgradePanel" type="Control"]
 visible = false
@@ -155,13 +156,13 @@ text = "LASER BLUE"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="WeaponIcon" type="TextureRect" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
+[node name="WeaponIcon" type="Control" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
 visible = false
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
+script = ExtResource("3_icon")
+padding = 4.0
 
 [node name="EquipButton" type="Button" parent="Panel/Margin/Box/Scroll/Page/Body/Stats"]
 custom_minimum_size = Vector2(0, 34)
