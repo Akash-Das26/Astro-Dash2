@@ -10,11 +10,19 @@ extends SceneTree
 ## 720x450 and lands well under the 300 KB budget.
 
 const WIDTH: int = 720
-## Capture name -> name it is published under, where the two differ.
+## Published name -> the capture the runner actually wrote. Every entry is
+## explicit on purpose: the old table only remapped three names and quietly fell
+## back to test_output/<name>.png for the rest, which republished stale frames
+## (a battle shot with empty weapon slots, a map shot from before the badge fix).
+## A missing capture is now a hard error instead of a silent stale image.
 const SOURCE_NAMES: Dictionary = {
-	"upgrade": "shot_upgrade_hull_equipped",
-	"bullets_red": "shot_bullets_red",
-	"victory": "shot_victory",
+	"menu": "readme_menu",
+	"difficulty": "readme_difficulty",
+	"map": "readme_map",
+	"battle": "readme_battle",
+	"upgrade": "readme_upgrade",
+	"bullets_red": "readme_bullets_red",
+	"victory": "readme_victory",
 }
 const SHOTS: Array[String] = [
 	"menu", "difficulty", "map", "battle", "upgrade", "bullets_red", "victory",
@@ -30,7 +38,7 @@ func _initialize() -> void:
 		return
 	var failures: int = 0
 	for shot: String in SHOTS:
-		var source_name: String = String(SOURCE_NAMES.get(shot, shot))
+		var source_name: String = String(SOURCE_NAMES.get(shot, "readme_%s" % shot))
 		var from: String = ProjectSettings.globalize_path("res://test_output/%s.png" % source_name)
 		var image := Image.new()
 		var read_error: Error = image.load(from)

@@ -15,6 +15,12 @@ extends Node
 ##   defeat       battle: fill the game-over card with a sample run
 ##   bullets      battle: freeze four enemy bullets; option = background colour
 ##   thruster     option = "player" or an enemy kind; five copies at five headings
+##   badges       galaxy map: every body conquered; option = zoom
+##   docs_map     galaxy map: fixed seed, the home and two neighbours taken
+##
+## A capture whose name starts with "readme" starts from a pristine save in
+## memory (no energy, no upgrades, no conquests, pulse laser equipped), so a
+## published frame never shows numbers left behind by testing.
 ##
 ## Needs a real window and GPU (no `--headless`): the headless driver has no
 ## framebuffer, so the image would come back empty. The scene is added as a
@@ -48,6 +54,8 @@ func _ready() -> void:
 	var frames: int = int(args[2]) if args.size() > 2 else 60
 	var mode: String = args[3] if args.size() > 3 else ""
 	var option: String = args[4] if args.size() > 4 else ""
+	if shot_name.begins_with("readme"):
+		_fresh_defaults()
 	# The map leaves for the front end without an active run; a map capture needs
 	# a galaxy, and a fixed seed in memory keeps captures comparable between
 	# runs. Nothing is written to the save.
@@ -82,6 +90,13 @@ func _ready() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		await get_tree().process_frame
+		# No battle frame may publish an empty primary slot; the secondary may be
+		# empty on a fresh save, which is the point of the first buy.
+		var primary := node.get_node_or_null("HUD/Root/BottomBar/PrimarySlot/Name") as Label
+		if primary != null and primary.text == "EMPTY":
+			push_error("screenshot runner: the primary weapon slot is empty")
+			get_tree().quit(1)
+			return
 		if mode == "victory":
 			# A README frame that shows the card must not also show a wave banner.
 			# An earlier capture of a live battle caught the director's next banner
@@ -160,6 +175,8 @@ func _apply_mode(node: Node, mode: String, option: String) -> void:
 				node.call("open")
 		"badges":
 			_pose_map_badges(node, option)
+		"docs_map":
+			_pose_docs_map(node)
 
 
 ## The map with every body conquered, at the zoom the shot asks for, so the
@@ -178,6 +195,50 @@ func _pose_map_badges(node: Node, option: String) -> void:
 	map.call("_refresh")
 	map.call("_set_zoom", zoom, Tuning.VIEW_SIZE * 0.5)
 	map.call("_center_on", galaxy.home_id)
+
+
+## The README map: a fixed seed with the home and two neighbours taken, so a
+## conquered badge is clearly on the shot without a fully conquered galaxy.
+func _pose_docs_map(node: Node) -> void:
+	var map := node as GalaxyMap
+	if map == null:
+		push_warning("screenshot runner: docs_map needs the galaxy map scene")
+		return
+	SaveData.campaign_active = true
+	SaveData.campaign_seed = 20260101
+	SaveData.campaign_difficulty = Tuning.DIFFICULTY_CADET
+	SaveData.campaign_conquered.clear()
+	var galaxy: Galaxy = Campaign.galaxy()
+	var open: Array[StringName] = galaxy.attackable(SaveData.campaign_conquered)
+	for index: int in mini(2, open.size()):
+		SaveData.campaign_conquered.append(open[index])
+	map.call("_reload_map")
+	map.call("_set_zoom", 1.0, Tuning.VIEW_SIZE * 0.5)
+	map.call("_center_on", galaxy.home_id)
+
+
+## A pristine save in memory: no energy, no upgrades, no conquests, only the
+## pulse laser owned and equipped. Nothing is written to disk.
+func _fresh_defaults() -> void:
+	SaveData.energy = 0
+	SaveData.high_scores.clear()
+	SaveData.skin_id = Skins.DEFAULT_ID
+	SaveData.campaign_active = false
+	SaveData.campaign_seed = 0
+	SaveData.campaign_difficulty = Tuning.DIFFICULTY_CADET
+	SaveData.campaign_conquered.clear()
+	SaveData.campaign_score = 0
+	SaveData.campaign_hp = 0
+	SaveData.campaign_shields = 0
+	SaveData.campaign_best_score = 0
+	SaveData.campaign_best_planets = 0
+	SaveData.lifetime_planets = 0
+	SaveData.weapons_owned.clear()
+	SaveData.weapons_owned.append(Weapons.DEFAULT_ID)
+	SaveData.weapon_primary = Weapons.DEFAULT_ID
+	SaveData.weapon_secondary = &""
+	for kind: StringName in Tuning.UPGRADE_ORDER:
+		SaveData.upgrade_levels[kind] = 0
 
 
 ## The victory card, built through the HUD's own show_victory. The live director
