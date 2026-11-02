@@ -34,7 +34,7 @@ var attackable: bool = false
 var focused: bool = false
 
 var _art: Node2D
-var _badge: Node2D
+var _badge: MapBadge
 var _tint: Color = Color.WHITE
 var _radius: float = 32.0
 var _phase: float = 0.0
@@ -56,13 +56,26 @@ func _ready() -> void:
 
 ## The check lives on its own node above the art. Drawn from this marker's
 ## _draw() it was *behind* the sprite child, so any hull wider than the old
-## fixed offset buried all of the badge except the rim.
+## fixed offset buried all of the badge except the rim. The badge draws itself;
+## this marker only places it, because draw_* calls made through another node's
+## signal are rejected and drew nothing at all.
 func _build_badge() -> void:
-	_badge = Node2D.new()
+	_badge = MapBadge.new()
 	_badge.name = "Badge"
 	_badge.z_index = CHECK_Z_INDEX
-	_badge.draw.connect(_draw_check)
 	add_child(_badge)
+	_place_badge()
+
+
+func _place_badge() -> void:
+	if _badge == null:
+		return
+	_badge.visible = conquered
+	if not conquered:
+		return
+	_badge.position = badge_center()
+	_badge.radius = badge_radius()
+	_badge.queue_redraw()
 
 
 func _build_art() -> void:
@@ -99,8 +112,7 @@ func set_state(conquered_now: bool, attackable_now: bool, focused_now: bool) -> 
 	focused = focused_now
 	_apply_state_colors()
 	queue_redraw()
-	if _badge != null:
-		_badge.queue_redraw()
+	_place_badge()
 
 
 func _apply_state_colors() -> void:
@@ -121,8 +133,8 @@ func _process(delta: float) -> void:
 	_phase += delta
 	queue_redraw()
 	# The zoom changes under a live marker, so the badge radius has to follow.
-	if conquered and _badge != null:
-		_badge.queue_redraw()
+	if conquered:
+		_place_badge()
 
 
 func _draw() -> void:
@@ -215,30 +227,6 @@ func badge_global_rect() -> Rect2:
 func _badge_rect() -> Rect2:
 	var radius: float = badge_radius()
 	return Rect2(badge_center() - Vector2.ONE * radius, Vector2.ONE * radius * 2.0)
-
-
-func _draw_check() -> void:
-	if not conquered:
-		return
-	var centre: Vector2 = badge_center()
-	var radius: float = badge_radius()
-	draw_circle(centre, radius, Color(0.07, 0.28, 0.16, 0.95))
-	draw_arc(
-		centre,
-		radius,
-		0.0,
-		TAU,
-		18,
-		Color(0.45, 1.0, 0.65, 0.9),
-		1.5,
-		true
-	)
-	var tick := PackedVector2Array([
-		centre + Vector2(-0.40, 0.02) * radius,
-		centre + Vector2(-0.10, 0.42) * radius,
-		centre + Vector2(0.48, -0.38) * radius,
-	])
-	draw_polyline(tick, Color(0.7, 1.0, 0.8), 2.0)
 
 
 func _warp_frames() -> SpriteFrames:
