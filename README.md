@@ -372,9 +372,11 @@ godot --headless --path . res://tests/battle_bot.tscn
 godot --headless --path . res://tests/battle_bot.tscn -- soak cadet 20
 ```
 
-`tests/run_all.ps1` runs the suite through PowerShell and prints the PASS/FAIL
-count. The suite copies `user://save.cfg` aside before its first write and puts
-it back afterwards, so a real playthrough is not damaged. `tests/README.md`
+`tests/run_all.ps1` runs **both** checks through PowerShell - the logic suite and
+the UI audit - prints the PASS/FAIL count, every audit finding, and one summary
+line, and exits non-zero if either one fails. The suite copies `user://save.cfg`
+aside before its first write and puts it back afterwards, so a real playthrough
+is not damaged. `tests/README.md`
 explains why the suite is a scene rather than a `--script`: `--script` mode has
 no autoload globals, so any script naming `SaveData` fails to compile there.
 
@@ -691,11 +693,21 @@ pin the closest published one; the workflow's header comment says the same.
 ## Running the checks
 
 ```
+# Everything that must pass before a commit: logic suite + UI audit, one exit code.
+powershell -ExecutionPolicy Bypass -File tests/run_all.ps1
+
+# The same two checks by hand, plus the longer runs:
 godot --headless --path . --import                 # rebuild the class and uid caches
 godot --headless --path . res://tests/run_tests.tscn    # logic suite
+godot --headless --path . res://tests/ui_audit.tscn     # live UI measurements
 godot --headless --path . res://tests/battle_bot.tscn   # 60 s battle bot
 godot --path . res://tests/screenshot_runner.tscn -- <scene> <name> [frames] [mode] [option]
 ```
+
+`tests/run_all.ps1` prints `SUMMARY suite <n> passed, 0 failed; UI audit 0
+findings` and exits 0 when both are clean; any failed check or any audit finding
+prints a `FAIL` line and exits 1. Pass `-Godot <path>` when the editor is not at
+the default location.
 
 `tests/` explains every mode and what each check covers; `docs/todo.md` lists
 what is still open.

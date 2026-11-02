@@ -110,3 +110,22 @@ world `-1`, map UI `0`, map cards and the upgrade/difficulty panels `0`–`90`,
 the `UIOverlay` autoload `100`. Poses added: `map + upgrades: hull`,
 `map + upgrades: weapons`, `map CONQUER card` (opened on a reachable body) and
 `map + difficulty picker`, all on a seed with three conquered bodies.
+
+## Running it in the gate
+
+`tests/run_all.ps1` runs this audit after the logic suite, in the same pass:
+
+- the audit prints every `FINDING` line in red,
+- the script reads the closing `AUDIT DONE findings=N` line and fails if `N` is
+  not zero, or if the audit exits non-zero without printing it,
+- it prints one summary line, `SUMMARY suite <n> passed, 0 failed; UI audit 0
+  findings`, and exits 0 only when both checks are clean; otherwise it prints a
+  `FAIL` line and exits 1.
+
+```
+powershell -ExecutionPolicy Bypass -File tests/run_all.ps1
+powershell -ExecutionPolicy Bypass -File tests/run_all.ps1 -Godot "D:\Godot\godot_console.exe"
+```
+
+The audit itself always exits 0 when it finishes the poses, because findings are
+data, not a crash; the script is what turns a finding into a red build.
