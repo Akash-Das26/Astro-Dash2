@@ -46,6 +46,8 @@ func _ready() -> void:
 	_test_save_robustness()
 	_test_skin_reachability()
 	_test_weapons()
+	await _test_primary_weapon_always_equipped()
+	await _test_touch_controls_desktop()
 	_test_elite_fighters()
 	_test_thrusters()
 	_test_boss_telegraph()
@@ -1037,6 +1039,113 @@ func _test_weapons() -> void:
 	check_eq("equipped secondary survives a reload", String(SaveData.weapon_secondary), "pulse")
 	check("owned weapon survives a reload", Weapons.owned(&"cannon"))
 	_reset_state()
+
+
+## The primary hardpoint is never silent. A fresh save, a corrupted save and a
+## SINGULARITY wipe all fight with the Pulse Laser, and it actually fires.
+func _test_primary_weapon_always_equipped() -> void:
+	_reset_state()
+	check_eq("a fresh save starts on the pulse laser", String(SaveData.weapon_primary), "pulse")
+	check("the pulse laser is owned on a fresh save", Weapons.owned(Weapons.DEFAULT_ID))
+	check_eq(
+		"an empty primary resolves to the pulse laser",
+		String(SaveData.usable_primary(&"")),
+		"pulse"
+	)
+	check_eq(
+		"an unknown primary resolves to the pulse laser",
+		String(SaveData.usable_primary(&"plasma_cannon")),
+		"pulse"
+	)
+
+	# A corrupt file on disk: an unknown primary, the pulse laser the only gun.
+	_write_weapon_save("plasma_cannon")
+	SaveData.load_data()
+	check_eq("a corrupt save loads the pulse laser", String(SaveData.weapon_primary), "pulse")
+	check_eq(
+		"a corrupt save keeps an empty secondary", String(SaveData.weapon_secondary), ""
+	)
+
+	# The battle itself: an empty in-memory primary still has a gun that fires.
+	SaveData.weapon_primary = &""
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var ship := battle.get_node_or_null("World/Ship") as Ship
+	var slot := battle.get_node_or_null("HUD/Root/BottomBar/PrimarySlot/Name") as Label
+	check("the battle ship resolves for the weapon test", ship != null)
+	check(
+		"an empty primary starts the battle on the pulse laser",
+		ship != null and ship.weapon_id(0) == Weapons.DEFAULT_ID
+	)
+	check(
+		"the HUD names the pulse laser",
+		slot != null and slot.text == "PULSE LASER",
+		"" if slot == null else slot.text
+	)
+	var bullets := battle.get_node_or_null("World/Bullets") as Node2D
+	Input.action_press("shoot")
+	await get_tree().create_timer(0.7, true).timeout
+	Input.action_release("shoot")
+	var fired: int = 0 if bullets == null else bullets.get_child_count()
+	check("the fallback primary can fire", fired > 0, "%d bullets" % fired)
+	battle.queue_free()
+	await get_tree().process_frame
+
+	# SINGULARITY's wipe: the meta progression is gone, the primary is not.
+	SaveData.weapon_primary = &"rail"
+	SaveData.wipe_meta_progress()
+	check_eq("a SINGULARITY wipe keeps the pulse laser", String(SaveData.weapon_primary), "pulse")
+	_reset_state()
+
+
+## Writes a save whose primary is `primary` with only the pulse laser owned, the
+## way a hand-edited or truncated file can look.
+func _write_weapon_save(primary: String) -> void:
+	var config := ConfigFile.new()
+	config.set_value("weapons", "owned", PackedStringArray([String(Weapons.DEFAULT_ID)]))
+	config.set_value("weapons", "primary", primary)
+	config.set_value("weapons", "secondary", "")
+	config.save("user://save.cfg")
+
+
+## Desktop runs must not show the touch buttons: they appear only when the
+## display server reports a touchscreen, or after the first real touch event.
+func _test_touch_controls_desktop() -> void:
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	var touch := battle.get_node_or_null("HUD/Root/TouchControls") as TouchControls
+	check("the battle carries touch controls", touch != null)
+	if touch == null:
+		battle.queue_free()
+		return
+	var pause := touch.get_node_or_null("PauseButton") as Button
+	var alt := touch.get_node_or_null("AltFireButton") as Button
+	var shield := touch.get_node_or_null("ShieldButton") as Button
+	check("the touch buttons resolve", pause != null and alt != null and shield != null)
+	if pause == null or alt == null or shield == null:
+		battle.queue_free()
+		return
+	if not DisplayServer.is_touchscreen_available():
+		check("a desktop run hides the pause button", not pause.visible)
+		check("a desktop run hides the secondary button", not alt.visible)
+		check("a desktop run hides the shield button", not shield.visible)
+	# The first real touch is what turns them on.
+	var begin := InputEventScreenTouch.new()
+	begin.index = 0
+	begin.pressed = true
+	begin.position = Vector2(40.0, 300.0)
+	touch.call("_unhandled_input", begin)
+	check("a first touch reveals the touch buttons", pause.visible)
+	var end := InputEventScreenTouch.new()
+	end.index = 0
+	end.pressed = false
+	end.position = begin.position
+	touch.call("_unhandled_input", end)
+	battle.queue_free()
+	await get_tree().process_frame
 
 
 # --- 4.6 Galaxy -------------------------------------------------------------

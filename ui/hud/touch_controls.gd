@@ -50,7 +50,7 @@ func _ready() -> void:
 	_shield_button.button_up.connect(_on_shield_up)
 	GameState.state_changed.connect(_on_state_changed)
 	_touch_seen = DisplayServer.is_touchscreen_available()
-	_refresh_visibility()
+	refresh_visibility()
 
 
 func _process(_delta: float) -> void:
@@ -185,7 +185,7 @@ func _on_shield_up() -> void:
 
 func _on_state_changed(_new_state: int) -> void:
 	_release_all()
-	_refresh_visibility()
+	refresh_visibility()
 
 
 ## Never leave an action stuck down when the battle pauses or restarts.
@@ -211,10 +211,12 @@ func _note_touch() -> void:
 	if _touch_seen:
 		return
 	_touch_seen = true
-	_refresh_visibility()
+	refresh_visibility()
 
 
-func _refresh_visibility() -> void:
+## Public because the HUD owns the end card: closing it must not force the
+## pause button back on a desktop, where no touch controls belong.
+func refresh_visibility() -> void:
 	var playing: bool = _touch_seen and GameState.is_playing()
 	_pause_button.visible = playing
 	_alt_fire_button.visible = playing

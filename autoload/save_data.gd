@@ -153,6 +153,15 @@ func owns_weapon(id: StringName) -> bool:
 	return weapons_owned.has(id)
 
 
+## The primary that may actually be equipped. A stored id that is empty, unknown
+## or no longer owned falls back to the Pulse Laser, which every save owns, so
+## the primary hardpoint is never silent. The secondary may stay empty.
+func usable_primary(id: StringName) -> StringName:
+	if id != &"" and Weapons.exists(id) and owns_weapon(id):
+		return id
+	return Weapons.DEFAULT_ID
+
+
 ## Buys a weapon with energy. The planet gate is checked here as well, so a
 ## purchase can never outrun the campaign that unlocked it.
 func buy_weapon(id: StringName) -> bool:
@@ -410,7 +419,7 @@ func load_data() -> void:
 	var stored_primary := StringName(_as_string(
 		config.get_value(SECTION_WEAPONS, KEY_WEAPON_PRIMARY, String(Weapons.DEFAULT_ID))
 	))
-	weapon_primary = stored_primary if weapons_owned.has(stored_primary) else Weapons.DEFAULT_ID
+	weapon_primary = usable_primary(stored_primary)
 	var stored_secondary := StringName(
 		_as_string(config.get_value(SECTION_WEAPONS, KEY_WEAPON_SECONDARY, ""))
 	)

@@ -170,6 +170,13 @@ func _start_fight(fight: Battle) -> void:
 	if _campaign:
 		# The hull carries between battles of the run; the shield refills.
 		ship.carry_over(SaveData.campaign_hp, SaveData.campaign_shields)
+	# The primary hardpoint is never silent: a save that lost its weapon falls
+	# back to the Pulse Laser here as well as at load, so a corrupted file cannot
+	# start a battle with an empty slot. The secondary may stay empty.
+	SaveData.weapon_primary = SaveData.usable_primary(SaveData.weapon_primary)
+	if SaveData.weapon_secondary == SaveData.weapon_primary \
+			or not Weapons.exists(SaveData.weapon_secondary):
+		SaveData.weapon_secondary = &""
 	ship.apply_loadout(SaveData.weapon_primary, SaveData.weapon_secondary)
 	_hp_at_start = ship.hp
 	hud.reset(battle)

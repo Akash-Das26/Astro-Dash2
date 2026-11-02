@@ -62,6 +62,11 @@ func _ready() -> void:
 		return
 	var node: Node = packed.instantiate()
 	add_child(node)
+	# Touch buttons belong on a touchscreen. A capture is a desktop frame, so it
+	# is hidden even on a machine whose display server reports touch support.
+	var touch := node.get_node_or_null("HUD/Root/TouchControls") as Control
+	if touch != null:
+		touch.visible = false
 	# The project theme, applied before any capture: a bare overlay panel has no
 	# parent screen to inherit it from, so without this the shot would use the
 	# engine defaults and look nothing like the game.

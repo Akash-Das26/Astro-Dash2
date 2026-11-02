@@ -158,11 +158,12 @@ func apply_controls() -> void:
 	shield_mode = SaveData.shield_mode
 
 
-## The two equipped weapons, from SaveData. An empty or unknown id leaves that
-## hardpoint silent, which is how the secondary starts before the first buy.
+## The two equipped weapons, from SaveData. The primary is never silent: an
+## empty or unknown id falls back to the Pulse Laser. An empty secondary is
+## normal -- it is the hardpoint nothing has been bought for yet.
 func apply_loadout(primary: StringName, secondary: StringName) -> void:
-	weapon_ids[0] = primary
-	weapon_ids[1] = secondary
+	weapon_ids[0] = primary if Weapons.exists(primary) else Weapons.DEFAULT_ID
+	weapon_ids[1] = secondary if secondary != weapon_ids[0] and Weapons.exists(secondary) else &""
 	for slot: int in 2:
 		_weapon_intervals[slot] = 0.0
 		_weapon_cooldowns[slot] = 0.0

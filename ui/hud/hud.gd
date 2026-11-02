@@ -407,7 +407,9 @@ func _on_end_button_pressed() -> void:
 func hide_end() -> void:
 	_end_card.visible = false
 	_end_heal.visible = false
-	_pause_button.visible = true
+	# The touch layer decides: on a desktop the pause button stays hidden even
+	# after the end card closes, because no touch controls belong on that run.
+	_touch_controls.refresh_visibility()
 
 
 func _open_controls() -> void:
