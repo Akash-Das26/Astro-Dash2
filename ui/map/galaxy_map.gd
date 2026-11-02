@@ -18,9 +18,12 @@ const FOCUS_MARGIN: float = 110.0
 ## A press that moves less than this is a tap, not a drag.
 const TAP_SLOP: float = 8.0
 
-@onready var _world: Node2D = $View/World
-@onready var _bodies_root: Node2D = $View/World/Bodies
-@onready var _links: GalaxyLinks = $View/World/Links
+# The world lives in a CanvasLayer at -1 and every card, tooltip and label stays
+# on the default canvas above it, so no z_index inside the world can ever draw
+# over an overlay. The badges keep z_index 3 to stay above the planet art.
+@onready var _world: Node2D = $WorldLayer/View/World
+@onready var _bodies_root: Node2D = $WorldLayer/View/World/Bodies
+@onready var _links: GalaxyLinks = $WorldLayer/View/World/Links
 @onready var _planets_label: Label = $TopBar/PlanetsLabel
 @onready var _hull_label: Label = $TopBar/HullLabel
 @onready var _difficulty_label: Label = $TopBar/DifficultyLabel
@@ -277,7 +280,10 @@ func _body_at(world_point: Vector2) -> StringName:
 ## the engine's emulated mouse events, so a finger and a mouse share this path
 ## (project setting `emulate_mouse_from_touch` stays at its default).
 func _gui_input(event: InputEvent) -> void:
-	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible:
+	# An open overlay owns the pointer: no pan, no zoom-to-cursor, no tap on a
+	# body that happens to sit under the card.
+	if _confirm_card.visible or _result_card.visible or _upgrade_panel.visible \
+			or _difficulty_picker.picker_open():
 		return
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton

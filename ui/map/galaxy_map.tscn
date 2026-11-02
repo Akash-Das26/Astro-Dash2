@@ -92,7 +92,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_map")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="WorldLayer" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Background" type="ColorRect" parent="WorldLayer"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -102,10 +105,10 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.015, 0.02, 0.05, 1)
 
-[node name="Starfield" type="Node2D" parent="."]
+[node name="Starfield" type="Node2D" parent="WorldLayer"]
 script = ExtResource("2_stars")
 
-[node name="View" type="Control" parent="."]
+[node name="View" type="Control" parent="WorldLayer"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 15
@@ -115,12 +118,12 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="World" type="Node2D" parent="View"]
+[node name="World" type="Node2D" parent="WorldLayer/View"]
 
-[node name="Links" type="Node2D" parent="View/World"]
+[node name="Links" type="Node2D" parent="WorldLayer/View/World"]
 script = ExtResource("3_links")
 
-[node name="Bodies" type="Node2D" parent="View/World"]
+[node name="Bodies" type="Node2D" parent="WorldLayer/View/World"]
 
 [node name="TopBar" type="ColorRect" parent="."]
 layout_mode = 1
