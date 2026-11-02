@@ -394,7 +394,11 @@ func _present_end() -> void:
 	_end_card.visible = true
 	# The end card owns the screen; a stray pause tap behind it would fight it.
 	_pause_button.visible = false
-	_end_button.grab_focus()
+	# A wave can be cleared in the same frame the battle is torn down, and a
+	# control that has left the tree cannot take focus: the engine logged
+	# "Condition !is_inside_tree() is true" once per soak restart.
+	if _end_button.is_inside_tree():
+		_end_button.grab_focus()
 
 
 func _on_end_button_pressed() -> void:
