@@ -182,7 +182,7 @@ func _run_row(row: Dictionary) -> void:
 	print(
 		"BOT hull %d/%d  shield %d/%d  primary %s  secondary %s"
 		% [
-			_ship.hp, _ship.max_hp, _ship.shields, _ship.shield_capacity,
+			_ship.hp, _ship.max_hp, _ship.shields, _ship.shield_limit(),
 			_ship.weapon_id(0), _ship.weapon_id(1),
 		]
 	)
@@ -255,7 +255,7 @@ func _drive(row: Dictionary) -> void:
 				"BOT t=%.0fs nodes=%d fps=%.0f alive=%s hull=%d/%d shield=%d/%d"
 				% [
 					elapsed, _samples[-1], _fps_samples[-1], _ship.alive,
-					_ship.hp, _ship.max_hp, _ship.shields, _ship.shield_capacity,
+					_ship.hp, _ship.max_hp, _ship.shields, _ship.shield_limit(),
 				]
 			)
 		# Only worth testing on a live fight: a ship that already died on a hard

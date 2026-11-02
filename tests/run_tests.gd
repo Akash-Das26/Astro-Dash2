@@ -23,6 +23,7 @@ const MAP_SCENE: PackedScene = preload("res://ui/map/galaxy_map.tscn")
 const UPGRADE_SCENE: PackedScene = preload("res://ui/panels/upgrade_panel.tscn")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
 const CREDITS_SCENE: PackedScene = preload("res://ui/panels/credits_card.tscn")
+const HUD_SCENE: PackedScene = preload("res://ui/hud/hud.tscn")
 
 var _passed: int = 0
 var _failed: int = 0
@@ -261,6 +262,11 @@ func _test_banner_cards() -> void:
 ## The Hull & Ship page must hold the stats, the preview with its flame, the
 ## name and status lines, EQUIP, the ten thumbnails and the wearing line inside
 ## the panel at 960x600 -- and the flame may never reach the name label.
+func _hud_shield_text(hud: BattleHUD) -> String:
+	var label := hud.get_node_or_null("Root/BottomBar/ShieldLabel") as Label
+	return "" if label == null else label.text
+
+
 func _test_upgrade_layout() -> void:
 	var panel := UPGRADE_SCENE.instantiate() as Control
 	add_child(panel)
@@ -329,6 +335,29 @@ func _test_upgrade_layout() -> void:
 			preview.get_global_rect().encloses(flame_rect),
 			"flame %s box %s" % [flame_rect, preview.get_global_rect()]
 		)
+
+	# M-1: the stats line reads current/limit as well, so a zero-base mode shows
+	# 0/1 (nothing now, one droppable charge) instead of 0/0 or NONE.
+	var stats_value := panel.get_node_or_null(
+		"Panel/Margin/Box/Scroll/Page/Body/Stats/Value"
+	) as Label
+	_reset_state()
+	SaveData.campaign_active = true
+	SaveData.campaign_difficulty = Tuning.DIFFICULTY_SINGULARITY
+	panel.call("refresh")
+	check(
+		"upgrade stats read 0/1 on a zero-base mode",
+		stats_value != null and stats_value.text.contains("SHIELDS   0/1"),
+		"" if stats_value == null else stats_value.text
+	)
+	SaveData.campaign_difficulty = Tuning.DIFFICULTY_CADET
+	panel.call("refresh")
+	check(
+		"upgrade stats read 1/1 on CADET",
+		stats_value != null and stats_value.text.contains("SHIELDS   1/1"),
+		"" if stats_value == null else stats_value.text
+	)
+	_reset_state()
 	panel.queue_free()
 	await get_tree().process_frame
 
@@ -748,6 +777,20 @@ func _test_shields() -> void:
 	check("pickup at the limit refuses", not ship.add_shield(1))
 	check_eq("charge stays at the limit", ship.shields, 1)
 	ship.queue_free()
+
+	# M-1: the HUD reads current/limit, so a charge taken at capacity 0 shows
+	# 1/1 - never 1/0 - and an empty shield stays NO SHIELD.
+	var hud := HUD_SCENE.instantiate() as BattleHUD
+	add_child(hud)
+	hud.set_shields(0, 0)
+	check_eq("HUD at 0/0 reads NO SHIELD", _hud_shield_text(hud), "NO SHIELD")
+	hud.set_shields(1, 0)
+	check_eq("HUD never prints current/0", _hud_shield_text(hud), "SHIELD 1/1")
+	hud.set_shields(2, 3)
+	check_eq("HUD reads current/limit", _hud_shield_text(hud), "SHIELD 2/3")
+	hud.set_shields(9, 3)
+	check_eq("HUD clamps to the limit", _hud_shield_text(hud), "SHIELD 3/3")
+	hud.queue_free()
 	_reset_state()
 
 

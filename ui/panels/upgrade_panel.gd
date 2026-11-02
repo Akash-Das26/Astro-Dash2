@@ -164,9 +164,12 @@ func _render_stats() -> void:
 	var capacity: int = int(stats["shield_charges"])
 	if SaveData.campaign_active and SaveData.campaign_hp > 0:
 		hp = clampi(SaveData.campaign_hp, 1, max_hp)
-	# A mode with a zero base starts every battle with no shield at all, which
-	# reads better as NONE than as 0/0.
-	var shields_text: String = "NONE" if capacity <= 0 else "%d/%d" % [capacity, capacity]
+	# Same rule as the HUD: current/limit, and the limit is never below the one
+	# charge a drop can hold even on a zero-base mode. NONE only when both are
+	# zero, which no mode reaches today but the label still handles.
+	var limit: int = maxi(capacity, Tuning.SHIELD_PICKUP_MIN_CAPACITY)
+	var shields_text: String = "NONE" if capacity <= 0 and limit <= 0 \
+		else "%d/%d" % [capacity, limit]
 	_stats_label.text = "HEALTH    %d/%d\nSPEED      %d\nSHIELDS   %s\nFIRE       %d%%" % [
 		hp,
 		max_hp,
