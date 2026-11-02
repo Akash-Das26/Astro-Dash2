@@ -533,6 +533,37 @@ func _test_map_badges() -> void:
 			"centre %.1f radius %.1f" % [home.badge_center().length(), home.body_radius()]
 		)
 
+	# The home system is a warpgate animation, not a planet sprite, and it is
+	# conquered from the start: its badge is the one the published map lost.
+	var warp := null if home == null else home.get_node_or_null("Warp") as AnimatedSprite2D
+	check("the home marker is a warpgate", warp != null)
+	if home != null and warp != null and badge_node != null:
+		check(
+			"the home badge draws above the warpgate art",
+			badge_node.z_index > warp.z_index,
+			"badge z %d, warp z %d" % [badge_node.z_index, warp.z_index]
+		)
+		map.call("_center_on", galaxy.home_id)
+		var badge_on_screen: Rect2 = home.badge_global_rect()
+		var frame: Texture2D = warp.sprite_frames.get_frame_texture(warp.animation, 0)
+		var gate_size: Vector2 = frame.get_size() * warp.global_scale
+		var gate_rect := Rect2(warp.global_position - gate_size * 0.5, gate_size)
+		check(
+			"the home badge overlaps the gate's rim",
+			badge_on_screen.intersects(gate_rect),
+			"badge %s gate %s" % [str(badge_on_screen), str(gate_rect)]
+		)
+		check(
+			"the home badge is fully on screen",
+			Rect2(Vector2.ZERO, Tuning.VIEW_SIZE).grow(0.5).encloses(badge_on_screen),
+			str(badge_on_screen)
+		)
+		check(
+			"the home badge is at least 18 px across",
+			badge_on_screen.size.x >= 18.0,
+			"%.1f" % badge_on_screen.size.x
+		)
+
 	var screen := Rect2(Vector2.ZERO, Tuning.VIEW_SIZE)
 	for zoom: float in BADGE_ZOOMS:
 		map.call("_set_zoom", zoom, Tuning.VIEW_SIZE * 0.5)
