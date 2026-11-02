@@ -328,3 +328,68 @@ they are not reported.
 Totals: **2 CRITICAL (both fixed), 2 HIGH (open), 7 MEDIUM (open), 9 LOW (open)**.
 Commits from this stage: credits (Part A), `Fix:` save coercion + lifetime counter,
 `Docs:` corrections.
+
+---
+
+## Stage 25 — icon centring, UI alignment and the delta since Stage 22
+
+Measured this stage with `godot --headless --path . res://tests/ui_audit.tscn`
+(see `docs/ui_audit.md` for the per-card table) and the usual suite, smoke, bot
+and soak runs.
+
+### Fixed (one commit each)
+
+| # | Finding | Severity | Root cause | Commit |
+| --- | --- | --- | --- | --- |
+| A-1 | Skin thumbnails, the big preview and the HUD weapon icons sat off-centre | HIGH | icons were centred by texture box while the hull art carries a different transparent margin per skin | `c35e181` |
+| A-2 | Conquered map badge drew nothing and logged 3 engine errors per marker per frame | HIGH | the badge's `draw` signal was connected to a method on the marker, so `draw_circle` ran outside any `_draw()` | `d2c66a9` |
+| A-3 | `ENEMIES` and the shield readout overlapped by 130x15 px | MEDIUM | both labels share the 24 px bottom strip and their x ranges crossed | `c5bd05a` |
+| A-4 | `grab_focus()` on a control that had left the tree, once per soak restart | LOW | the last wave can be cleared in the frame the battle is torn down | this stage |
+
+### Delta audit (what was actually re-run)
+
+| Area | Status | Evidence |
+| --- | --- | --- |
+| Clean import (`.godot` deleted) | PASS | `IMPORT_EXIT=0`; the only "error" grep hits are filenames such as `sfx_sounds_error1.wav` |
+| Suite | PASS | `SUMMARY 422 passed, 0 failed` |
+| Scene smoke, 7 scenes, 5 s each | PASS | `main_menu`, `galaxy_map`, `battle_game`, `upgrade_panel`, `settings_panel`, `controls_card`, `difficulty_picker` all `exit=0` |
+| Boss mode, CADET | PASS | station down at 90 s, hull 8/100, boss 68 of the damage |
+| Boss mode, SINGULARITY | PASS | ship down at 26 s, station 248/305 |
+| Soak, SINGULARITY 20 game minutes at time_scale 8 | PASS | 74 restarts, nodes 440 → 462, orphans 0, static memory 78.1 → 78.5 MB, objects 2778 → 2820, `no growth over 15%` |
+| Soak re-run after the focus fix (CADET, 2 game minutes) | PASS | no `!is_inside_tree()` error, objects +7 (0.3 %) |
+| Code scan | ISSUES (LOW) | 5 scripts over 600 lines (`config/tuning.gd` 878, `game/battle/battle_game.gd` 819, `autoload/audio_manager.gd` 791, `ui/map/galaxy_map.gd` 733, `ui/panels/upgrade_panel.gd` 684); no reserved-word identifiers; one `print()` and it is inside the debug-gated mixer summary |
+| Debug gating | PASS | F4 in `ui_overlay.gd:47`, F3 in `battle_game.gd:404`, F9 in `battle_game.gd:399` and `galaxy_map.gd:477`, all behind `OS.is_debug_build()`; R is gameplay (needs `GAME_STATE == GAME_OVER`) |
+| Security / privacy | PASS | no secrets, no `D:\` or `C:\Users`, no e-mail in the tree, no codebuff/freebuff mention; three tracked files over 5 MB and all three are music tracks (`8bit.mp3` 5.1 MB, `Orbital Colossus.mp3` 6.1 MB, `Preparing for War.mp3` 5.2 MB) |
+| License / assets | PASS | only duplicate hash is the standard OFL text beside the two font families, one per family as intended |
+| Save data | PASS | hostile-file tests still cover missing, empty, truncated, mistyped and unknown-key saves plus the old schema |
+| Progression | PASS | lifetime-conquest hull unlocks, weapon planets and gate reachability tests still pass |
+| Input | PASS | every gameplay action has a gamepad binding, the declared exceptions are listed, remaps persist |
+| Export readiness | unchanged | read-only: `exclude_filter` is still empty (`tests/` would ship), Android preset name still `1.0.0` against project `0.9.0` |
+
+### Not done in this stage
+
+- Bot rows on every difficulty and band: only CADET band 1 and SINGULARITY band
+  1 were flown (plus boss on two modes). The remaining band combinations were not
+  re-run.
+- Screenshot captures at 640x400, 800x500, 1280x720, 1920x1080 and 2560x1080, and
+  the 60 s real-window performance run: not captured, so no draw-call or FPS
+  numbers beyond the headless soak's `fps=142` (which is not a real-window
+  measurement).
+- Stage 22 backlog: M-5 (export exclude filters) is an export-preset change and
+  stays open; M-6 is reduced but the "resources still in use at exit" line and
+  19 leaked ObjectDB instances at exit remain; M-8/M-9 and L-1..L-4 are untouched.
+
+### Summary
+
+| Area | Status | CRITICAL | HIGH | MEDIUM | LOW | Fixed here | Remains |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Icon centring | PASS | 0 | 1 | 1 | 0 | 3 | — |
+| UI alignment (960x600) | PASS | 0 | 0 | 0 | 0 | 1 | pause card not presented by the audit pose |
+| Health (import, suite, smoke) | PASS | 0 | 0 | 0 | 0 | 1 | M-6 exit-time leftovers |
+| Bot / boss / soak | PASS | 0 | 0 | 0 | 0 | — | band coverage incomplete |
+| Code scan | ISSUES | 0 | 0 | 0 | 1 | — | 5 long scripts |
+| Debug gating | PASS | 0 | 0 | 0 | 0 | — | — |
+| Security / privacy | PASS | 0 | 0 | 0 | 0 | — | — |
+| License / assets | PASS | 0 | 0 | 0 | 0 | — | — |
+| Resolutions / performance | NOT RUN | — | — | — | — | — | no captures beyond 960x600 |
+| Export readiness | ISSUES | 0 | 0 | 1 | 0 | — | M-5, Android version |

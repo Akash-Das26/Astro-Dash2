@@ -5,6 +5,19 @@ Newest first. One line per build stage; the version number is what
 
 ## 0.9.0 — release candidate (2026-11-02)
 
+- **Stage 25, icon centring and UI audit.** Every icon in a box is centred by its
+  opaque pixels (the ten skin thumbnails, the big preview, the weapon rack icon
+  and both HUD weapon slots), the conquered map badge draws on its own node
+  instead of failing an engine draw call every frame, and the shield readout no
+  longer runs under the enemies readout. `tests/ui_audit.gd` measures the live
+  rects of every screen and `docs/ui_audit.md` records the numbers.
+- **Stage 24, clean history.** The history was rewritten from a fresh clone: the
+  large blobs, build output and the three third-party zips are gone, and a
+  commit-msg hook keeps tool footers out of future messages.
+- **Stage 23, audit follow-ups.** Gamepad can open the controls card, keyboard
+  aiming works in free aim, the shield display reads current/limit, reduce motion
+  also covers hit flashes and elite glows, the duplicate font and the 22 MB
+  `8bit.wav` are gone, and a soak harness samples node and orphan counts.
 - **Stage 22, credits and audit.** All art, backgrounds included, is credited to
   Space Pixels by Hex; Prepare for War stays with its CC BY-SA 3.0 note on the
   card and in the README. `docs/audit_report.md` records a full audit; the two
