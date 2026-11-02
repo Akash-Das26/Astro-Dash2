@@ -81,7 +81,7 @@ func _ready() -> void:
 	await RenderingServer.frame_post_draw
 
 	var image: Image = get_viewport().get_texture().get_image()
-	DirAccess.make_dir_recursive_absolute("res://test_output")
+	_ensure_output_dir()
 	var path: String = "res://test_output/%s.png" % shot_name
 	var error: Error = image.save_png(path)
 	print(
@@ -89,6 +89,20 @@ func _ready() -> void:
 		% [scene_path, path, image.get_width(), image.get_height(), error]
 	)
 	get_tree().quit(0 if error == OK else 1)
+
+
+## The capture folder is not part of the project. An empty .gdignore stops
+## Godot from importing every PNG it collects (which used to leave a .import
+## beside each shot and put the folder into the import scan), while .gitignore
+## keeps the folder out of the tree. Written here so a fresh checkout gets it.
+func _ensure_output_dir() -> void:
+	DirAccess.make_dir_recursive_absolute("res://test_output")
+	var marker: String = "res://test_output/.gdignore"
+	if FileAccess.file_exists(marker):
+		return
+	var file := FileAccess.open(marker, FileAccess.WRITE)
+	if file != null:
+		file.close()
 
 
 func _apply_mode(node: Node, mode: String, option: String) -> void:
