@@ -48,6 +48,7 @@ func _ready() -> void:
 	_test_weapons()
 	await _test_primary_weapon_always_equipped()
 	await _test_touch_controls_desktop()
+	await _test_hud_above_playfield()
 	_test_elite_fighters()
 	_test_thrusters()
 	_test_boss_telegraph()
@@ -1177,6 +1178,44 @@ func _test_touch_controls_desktop() -> void:
 	touch.call("_unhandled_input", end)
 	battle.queue_free()
 	await get_tree().process_frame
+
+
+## The battle HUD is its own CanvasLayer above the playfield, so a rock or an
+## enemy can never cover the score, the wave banner or the bars.
+func _test_hud_above_playfield() -> void:
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	var hud := battle.get_node_or_null("HUD") as CanvasLayer
+	check("the battle HUD is a CanvasLayer", hud != null)
+	if hud != null:
+		check("the HUD draws above the default canvas", hud.layer > 0, "layer %d" % hud.layer)
+		var world := battle.get_node_or_null("World") as Node
+		check("the battle has a world node", world != null)
+		if world != null:
+			check(
+				"no world node draws at or above the HUD layer",
+				_highest_layer(world) < hud.layer,
+				"world %d, HUD %d" % [_highest_layer(world), hud.layer]
+			)
+		var score := hud.get_node_or_null("Root/TopBar/ScoreLabel") as Label
+		check(
+			"the score label lives inside the HUD layer",
+			score != null and hud.is_ancestor_of(score)
+		)
+	battle.queue_free()
+	await get_tree().process_frame
+
+
+## Highest CanvasLayer value anywhere under `node` (0 when there is none).
+func _highest_layer(node: Node) -> int:
+	var top: int = 0
+	var layer := node as CanvasLayer
+	if layer != null:
+		top = layer.layer
+	for child: Node in node.get_children():
+		top = maxi(top, _highest_layer(child))
+	return top
 
 
 # --- 4.6 Galaxy -------------------------------------------------------------
