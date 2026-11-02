@@ -177,6 +177,8 @@ func _apply_mode(node: Node, mode: String, option: String) -> void:
 			_pose_map_badges(node, option)
 		"docs_map":
 			_pose_docs_map(node)
+		"overlay":
+			_pose_map_overlay(node, option)
 
 
 ## The map with every body conquered, at the zoom the shot asks for, so the
@@ -256,6 +258,46 @@ func _pose_victory(node: Node) -> void:
 		push_warning("screenshot runner: the victory mode needs the battle HUD")
 		return
 	hud.show_victory(_sample_victory())
+
+
+## A card, the tooltip or the upgrade panel over a map that already has three
+## conquered bodies: the frame that caught conquered ticks drawing through the
+## WEAPONS tab before the world moved into its own CanvasLayer.
+func _pose_map_overlay(node: Node, option: String) -> void:
+	var galaxy: Galaxy = Campaign.galaxy()
+	if galaxy == null:
+		push_warning("screenshot runner: the overlay mode needs a galaxy")
+		return
+	SaveData.campaign_conquered.clear()
+	var open: Array[StringName] = galaxy.attackable(SaveData.campaign_conquered)
+	for i: int in range(mini(3, open.size())):
+		SaveData.campaign_conquered.append(open[i])
+	if node.has_method("_refresh"):
+		node.call("_refresh")
+	var still_open: Array[StringName] = galaxy.attackable(SaveData.campaign_conquered)
+	var target: StringName = still_open[0] if not still_open.is_empty() else &""
+	match option:
+		"hull", "weapons":
+			if node.has_method("_open_upgrades"):
+				node.call("_open_upgrades")
+			else:
+				push_warning("screenshot runner: the map has no _open_upgrades")
+				return
+			var panel := node.get_node_or_null("UpgradePanel")
+			if panel != null and option == "weapons":
+				var tab := panel.get_node_or_null("Panel/Margin/Box/Tabs/WeaponTab") as Button
+				if tab != null:
+					tab.pressed.emit()
+		"card":
+			if target == &"":
+				push_warning("screenshot runner: no attackable body for the CONQUER card")
+				return
+			node.call("_open_card", target)
+		"tooltip":
+			if target == &"":
+				push_warning("screenshot runner: no attackable body for the tooltip")
+				return
+			node.call("_show_tooltip", target)
 
 
 ## The first body the player may attack, which is what a tap on the map picks.

@@ -70,7 +70,22 @@ func _poses() -> Array[Dictionary]:
 		{
 			"label": "map CONQUER card",
 			"scene": "res://ui/map/galaxy_map.tscn",
-			"actions": ["seed", "map_card"],
+			"actions": ["seed", "conquer3", "map_card"],
+		},
+		{
+			"label": "map + upgrades: hull",
+			"scene": "res://ui/map/galaxy_map.tscn",
+			"actions": ["seed", "conquer3", "upgrade_hull"],
+		},
+		{
+			"label": "map + upgrades: weapons",
+			"scene": "res://ui/map/galaxy_map.tscn",
+			"actions": ["seed", "conquer3", "upgrade_weapons"],
+		},
+		{
+			"label": "map + difficulty picker",
+			"scene": "res://ui/map/galaxy_map.tscn",
+			"actions": ["seed", "conquer3", "difficulty_picker"],
 		},
 		{
 			"label": "battle HUD",
@@ -123,6 +138,7 @@ func _audit(pose: Dictionary) -> void:
 	_audit_overlaps(controls)
 	_audit_gaps(controls)
 	_audit_icons(controls)
+	_audit_draw_order(node)
 	print("   findings this pose %d" % _pose_findings)
 	node.queue_free()
 	await get_tree().process_frame
@@ -154,8 +170,49 @@ func _run_action(node: Node, action: String) -> void:
 		if node.has_method("_refresh"):
 			node.call("_refresh")
 		return
+	if action == "conquer3":
+		# Three conquered bodies put three badges on the map, which is what the
+		# draw-order check needs to be worth running.
+		var galaxy: Galaxy = Campaign.galaxy()
+		if galaxy == null:
+			_report("the map has no galaxy to conquer")
+			return
+		SaveData.campaign_conquered.clear()
+		var take: Array[StringName] = galaxy.attackable(SaveData.campaign_conquered)
+		for i: int in range(mini(3, take.size())):
+			SaveData.campaign_conquered.append(take[i])
+		if node.has_method("_refresh"):
+			node.call("_refresh")
+		print("   conquered %d bodies" % SaveData.campaign_conquered.size())
+		return
+	if action == "upgrade_hull" or action == "upgrade_weapons":
+		if node.has_method("_open_upgrades"):
+			node.call("_open_upgrades")
+		else:
+			_report("the map has no _open_upgrades()")
+			return
+		var panel := node.get_node_or_null("UpgradePanel")
+		if panel == null:
+			_report("the map has no UpgradePanel")
+			return
+		if action == "upgrade_weapons":
+			var tab := panel.get_node_or_null("Panel/Margin/Box/Tabs/WeaponTab") as Button
+			if tab == null:
+				_report("the upgrade panel has no weapon tab")
+			else:
+				tab.pressed.emit()
+		return
+	if action == "difficulty_picker":
+		var picker := node.get_node_or_null("DifficultyPicker")
+		if picker == null:
+			_report("the map has no DifficultyPicker")
+		elif not picker.has_method("open"):
+			_report("the difficulty picker has no open()")
+		else:
+			picker.call("open")
+		return
 	if action == "tooltip" or action == "map_card":
-		var body_id: StringName = _first_body()
+		var body_id: StringName = _first_attackable()
 		if body_id == &"":
 			_report("the map has no body to show")
 			return
@@ -181,10 +238,15 @@ func _run_action(node: Node, action: String) -> void:
 	_report("unknown action %s" % action)
 
 
-func _first_body() -> StringName:
+## The CONQUER card only opens on a body that can actually be attacked, so the
+## pose asks the map what is open right now rather than taking the first body.
+func _first_attackable() -> StringName:
 	var galaxy: Galaxy = Campaign.galaxy()
 	if galaxy == null or galaxy.order.is_empty():
 		return &""
+	var open: Array[StringName] = galaxy.attackable(SaveData.campaign_conquered)
+	if not open.is_empty():
+		return open[0]
 	return galaxy.order[0]
 
 
@@ -390,6 +452,87 @@ func _audit_icons(controls: Array[Control]) -> void:
 			_report(
 				"icon %s is off centre by %.2f,%.2f" % [icon.name, offset.x, offset.y]
 			)
+
+
+## Draw order: no map world item may draw above an overlay. Control rects do not
+## catch this class of bug, so the check compares the effective canvas layer and
+## z_index of every visible world item against each top-level UI root.
+##
+## A badge is a Node2D at z_index 3 inside the world, and a Control overlay at
+## z_index 0 in the same canvas draws *under* it however late it comes in the
+## tree, which is how conquered ticks ended up on top of the upgrade panel.
+func _audit_draw_order(node: Node) -> void:
+	var world_root := node.find_child("World", true, false)
+	if world_root == null:
+		print("   draw order: no map world in this pose")
+		return
+	var world: Array[CanvasItem] = []
+	_collect_visible_items(world_root, world)
+	var world_layer: int = -1000
+	var world_z: int = -1000
+	for item: CanvasItem in world:
+		var layer: int = _canvas_layer_of(item)
+		if layer > world_layer or (layer == world_layer and item.z_index > world_z):
+			world_layer = layer
+			world_z = item.z_index
+	print(
+		"   draw order: %d world items, max layer %d, max z %d"
+		% [world.size(), world_layer, world_z]
+	)
+	var overlays: Array[Control] = []
+	for child: Node in node.get_children():
+		var child_layer := child as CanvasLayer
+		if child_layer != null:
+			# A layer below the default canvas *is* the world (the map keeps its
+			# backdrop and bodies at -1); its Controls are not overlays.
+			if child_layer.layer < 0:
+				continue
+			for grandchild: Node in child.get_children():
+				var nested := grandchild as Control
+				if nested != null and nested.is_visible_in_tree():
+					overlays.append(nested)
+			continue
+		var control := child as Control
+		if control == null or not control.is_visible_in_tree():
+			continue
+		overlays.append(control)
+	if overlays.is_empty():
+		print("   draw order: no overlay open")
+		return
+	for overlay: Control in overlays:
+		var layer: int = _canvas_layer_of(overlay)
+		var above: bool = layer > world_layer \
+			or (layer == world_layer and overlay.z_index > world_z)
+		print(
+			"   overlay %s layer %d z %d -> %s"
+			% [overlay.name, layer, overlay.z_index, "above the world" if above else "UNDER the world"]
+		)
+		if not above:
+			_report(
+				"overlay %s draws under map world content (layer %d, z %d vs world %d, %d)"
+				% [overlay.name, layer, overlay.z_index, world_layer, world_z]
+			)
+
+
+func _collect_visible_items(node: Node, out: Array[CanvasItem]) -> void:
+	for child: Node in node.get_children():
+		var item := child as CanvasItem
+		if item != null and item.is_visible_in_tree():
+			out.append(item)
+		_collect_visible_items(child, out)
+
+
+## Nested CanvasLayers add up, which is how the autoload overlay at 100 sits
+## above any card the screens put in their own layer of 10.
+func _canvas_layer_of(item: CanvasItem) -> int:
+	var total: int = 0
+	var parent: Node = item
+	while parent != null:
+		var layer := parent as CanvasLayer
+		if layer != null:
+			total += layer.layer
+		parent = parent.get_parent()
+	return total
 
 
 ## Scrolling and fixed-height credit rolls clip their content on purpose, so an

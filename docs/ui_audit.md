@@ -85,3 +85,28 @@ texture icons, so there is nothing to centre.
   existing thruster tests (`the flame starts at the tail`), not re-derived here.
 - Only 960x600 was measured. The other resolutions from the Stage 25 plan were
   not captured in this pass.
+
+## Draw order (added after the badge-over-panel bug)
+
+Rects alone never catch this class of defect, so the tool also compares the
+effective `(CanvasLayer.layer, z_index)` of every visible item in the map's
+`World` subtree against every top-level UI root:
+
+```
+draw order: 109 world items, max layer -1, max z 3
+overlay TopBar layer 0 z 0 -> above the world
+overlay UpgradePanel layer 0 z 0 -> above the world
+```
+
+Before the fix the same pose printed `max layer 0, max z 3` and
+`overlay UpgradePanel layer 0 z 0 -> UNDER the world`, because a badge is a
+`Node2D` at `z_index 3` and the panel sat at `z_index 0` in the same canvas, so
+later tree order could not save it.
+
+The map now keeps its backdrop, starfield and world in a `CanvasLayer` named
+`WorldLayer` at `layer = -1`, so the world can never reach any UI, and badges
+keep `z_index 3` to stay above the planet art. Layer order in the game:
+world `-1`, map UI `0`, map cards and the upgrade/difficulty panels `0`–`90`,
+the `UIOverlay` autoload `100`. Poses added: `map + upgrades: hull`,
+`map + upgrades: weapons`, `map CONQUER card` (opened on a reachable body) and
+`map + difficulty picker`, all on a seed with three conquered bodies.
