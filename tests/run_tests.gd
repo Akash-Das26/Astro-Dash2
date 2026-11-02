@@ -24,6 +24,9 @@ const UPGRADE_SCENE: PackedScene = preload("res://ui/panels/upgrade_panel.tscn")
 const BOSS_SCENE: PackedScene = preload("res://entities/enemies/boss_station.tscn")
 const CREDITS_SCENE: PackedScene = preload("res://ui/panels/credits_card.tscn")
 const HUD_SCENE: PackedScene = preload("res://ui/hud/hud.tscn")
+## The three zoom levels the map badge layout is checked at: widest, default,
+## tightest.
+const BADGE_ZOOMS: Array[float] = [0.55, 1.0, 1.7]
 
 var _passed: int = 0
 var _failed: int = 0
@@ -49,6 +52,7 @@ func _ready() -> void:
 	_test_overlays()
 	_test_banner_cards()
 	await _test_upgrade_layout()
+	await _test_map_badges()
 	_test_galaxy()
 	_test_audio()
 	await _test_credits()
@@ -424,6 +428,74 @@ func _flame_rect(flame: Thruster) -> Rect2:
 		Tuning.THRUSTER_ART_SIZE, float(Tuning.THRUSTER_BAR_ROWS.back())
 	) * flame.scale
 	return Rect2(flame.global_position - Vector2(size.x * 0.5, 0.0), size)
+
+
+## Badges: the check must sit on every conquered hull's rim without being buried
+## by the art, stay inside the viewport at every zoom, and be drawn above the
+## bodies and links. Home, the citadels and the gate are all in the set, because
+## those are the big sprites the old fixed offset hid the badge behind.
+func _test_map_badges() -> void:
+	_reset_state()
+	# The map bounces straight back to the menu without an active run; this is
+	# memory only, the save is not written.
+	SaveData.campaign_active = true
+	SaveData.campaign_seed = 20260101
+	SaveData.campaign_conquered.clear()
+	var map := MAP_SCENE.instantiate() as GalaxyMap
+	check("the map scene loads for the badge test", map != null)
+	if map == null:
+		_reset_state()
+		return
+	add_child(map)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var galaxy: Galaxy = Campaign.galaxy()
+	for body_id: StringName in galaxy.order:
+		SaveData.campaign_conquered.append(body_id)
+	map.call("_refresh")
+	await get_tree().process_frame
+
+	var markers: Dictionary = map.get("_markers")
+	check("every body has a marker for the badge test", markers.size() == galaxy.body_count())
+	var home: MapBody = markers.get(galaxy.home_id) as MapBody
+	check("home is conquered from the start", home != null and home.conquered)
+	var badge_node: Node2D = null if home == null else home.get_node_or_null("Badge") as Node2D
+	check(
+		"the badge is drawn above the art",
+		badge_node != null and badge_node.z_index > 0,
+		"z %d" % (0 if badge_node == null else badge_node.z_index)
+	)
+	if home != null:
+		check(
+			"the badge overlaps the rim, not the middle",
+			home.badge_center().length() > home.body_radius() * 0.5,
+			"centre %.1f radius %.1f" % [home.badge_center().length(), home.body_radius()]
+		)
+
+	var screen := Rect2(Vector2.ZERO, Tuning.VIEW_SIZE)
+	for zoom: float in BADGE_ZOOMS:
+		map.call("_set_zoom", zoom, Tuning.VIEW_SIZE * 0.5)
+		var outside: PackedStringArray = []
+		var buried: PackedStringArray = []
+		var small: PackedStringArray = []
+		for body_id: StringName in galaxy.order:
+			var marker: MapBody = markers[body_id] as MapBody
+			if marker == null:
+				continue
+			map.call("_center_on", body_id)
+			var rect: Rect2 = marker.badge_global_rect()
+			if not screen.grow(0.5).encloses(rect):
+				outside.append("%s %s" % [String(body_id), str(rect)])
+			if marker.badge_center().length() <= marker.body_radius() * 0.5:
+				buried.append(String(body_id))
+			if rect.size.x < 18.0:
+				small.append("%s %.1f" % [String(body_id), rect.size.x])
+		check("badges stay on screen at zoom %.2f" % zoom, outside.is_empty(), ", ".join(outside))
+		check("badge centres clear the hull at zoom %.2f" % zoom, buried.is_empty(), ", ".join(buried))
+		check("badges read at zoom %.2f (>= 18 px)" % zoom, small.is_empty(), ", ".join(small))
+
+	map.queue_free()
+	_reset_state()
 
 
 ## Overlay smoke test: the C card, the F4 layout audit and the difficulty picker

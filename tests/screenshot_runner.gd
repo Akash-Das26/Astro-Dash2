@@ -47,6 +47,12 @@ func _ready() -> void:
 	var frames: int = int(args[2]) if args.size() > 2 else 60
 	var mode: String = args[3] if args.size() > 3 else ""
 	var option: String = args[4] if args.size() > 4 else ""
+	# The map leaves for the front end without an active run. The badge shots
+	# need a galaxy; a fixed seed in memory keeps captures comparable between
+	# runs. Nothing is written to the save.
+	if mode == "badges" and not SaveData.campaign_active:
+		SaveData.campaign_active = true
+		SaveData.campaign_seed = 20260101
 
 	var packed := load(scene_path) as PackedScene
 	if packed == null:
@@ -137,6 +143,26 @@ func _apply_mode(node: Node, mode: String, option: String) -> void:
 		"credits":
 			if node.has_method("open"):
 				node.call("open")
+		"badges":
+			_pose_map_badges(node, option)
+
+
+## The map with every body conquered, at the zoom the shot asks for, so the
+## check badges can be judged on a rock, a big planet, a citadel and a warpgate
+## in one still.
+func _pose_map_badges(node: Node, option: String) -> void:
+	var map := node as GalaxyMap
+	if map == null:
+		push_warning("screenshot runner: the badges mode needs the galaxy map scene")
+		return
+	var zoom: float = float(option) if not option.is_empty() else 1.0
+	var galaxy: Galaxy = Campaign.galaxy()
+	SaveData.campaign_conquered.clear()
+	for body_id: StringName in galaxy.order:
+		SaveData.campaign_conquered.append(body_id)
+	map.call("_refresh")
+	map.call("_set_zoom", zoom, Tuning.VIEW_SIZE * 0.5)
+	map.call("_center_on", galaxy.home_id)
 
 
 ## The first body the player may attack, which is what a tap on the map picks.
