@@ -50,6 +50,7 @@ func _ready() -> void:
 	await _test_touch_controls_desktop()
 	await _test_hud_above_playfield()
 	await _test_icon_centering()
+	await _test_hud_bottom_bar()
 	_test_elite_fighters()
 	_test_thrusters()
 	_test_boss_telegraph()
@@ -1305,6 +1306,38 @@ func _test_icon_centering() -> void:
 					and absf(slot_rect.get_center().y - slot_icon.size.y * 0.5) <= 1.0),
 			"texture %s" % str(slot_icon.texture)
 		)
+	battle.queue_free()
+	await get_tree().process_frame
+
+
+## The bottom bar's readouts share one 24 px strip, so no two of them may sit on
+## top of each other: the shield line used to run under ENEMIES on the right.
+func _test_hud_bottom_bar() -> void:
+	var battle: Node = load("res://game/battle/battle_game.tscn").instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var bar := battle.get_node_or_null("HUD/Root/BottomBar") as Control
+	check("the battle HUD has a bottom bar", bar != null)
+	if bar == null:
+		battle.queue_free()
+		return
+	var labels: Array[Control] = []
+	for child: Node in bar.get_children():
+		var control := child as Control
+		if control is Label and control.is_visible_in_tree():
+			labels.append(control)
+	check("the bottom bar shows its readouts", labels.size() >= 3)
+	for i: int in range(labels.size()):
+		for j: int in range(i + 1, labels.size()):
+			var shared: Rect2 = labels[i].get_global_rect().intersection(
+				labels[j].get_global_rect()
+			)
+			check(
+				"bottom bar %s and %s do not overlap" % [labels[i].name, labels[j].name],
+				shared.size.x <= 1.0 or shared.size.y <= 1.0,
+				"%.0fx%.0f" % [shared.size.x, shared.size.y]
+			)
 	battle.queue_free()
 	await get_tree().process_frame
 
