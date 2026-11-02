@@ -51,6 +51,7 @@ func _ready() -> void:
 	_test_boss_telegraph()
 	_test_overlays()
 	_test_banner_cards()
+	await _test_banner_victory_flow()
 	await _test_upgrade_layout()
 	await _test_map_badges()
 	_test_galaxy()
@@ -261,6 +262,64 @@ func _test_banner_cards() -> void:
 	# Closing a card must not bring the banner back.
 	check("the banner stays hidden after the card closes", not banner.visible)
 	battle.queue_free()
+	_reset_state()
+
+
+## The same rule through the real end-of-battle flow, not a direct HUD call:
+## the last wave clears (or a banner starts in the very same frame as the
+## victory) while a banner is animating. The end card must never share the
+## screen with a wave banner, and nothing may bring one back afterwards.
+func _test_banner_victory_flow() -> void:
+	_reset_state()
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	await get_tree().process_frame
+	var hud := battle.get_node_or_null("HUD") as BattleHUD
+	var banner: Label = null if hud == null else hud.get_node_or_null("Root/BannerLabel") as Label
+	var end_card: Control = null if hud == null else hud.get_node_or_null("Root/EndCard") as Control
+	check(
+		"the battle HUD resolves for the victory banner test",
+		hud != null and banner != null and end_card != null
+	)
+	if banner == null or end_card == null:
+		battle.queue_free()
+		_reset_state()
+		return
+
+	# Case 1: the wave-start banner is still animating when the last wave ends.
+	battle.call("_on_wave_started", 1, 1)
+	check("the wave banner is up before the victory", banner.visible)
+	battle.call("_on_waves_cleared")
+	check("the victory card opens on the last wave", end_card.visible)
+	check("no wave banner over the victory card", not banner.visible)
+	await get_tree().create_timer(3.0, true).timeout
+	check(
+		"the banner stays hidden for 3 s of victory",
+		not banner.visible and end_card.visible
+	)
+	battle.queue_free()
+	await get_tree().process_frame
+
+	# Case 2: a banner starts in the same frame as the victory.
+	var second := BATTLE_SCENE.instantiate()
+	add_child(second)
+	await get_tree().process_frame
+	var hud2 := second.get_node_or_null("HUD") as BattleHUD
+	var banner2: Label = null if hud2 == null else hud2.get_node_or_null("Root/BannerLabel") as Label
+	var end2: Control = null if hud2 == null else hud2.get_node_or_null("Root/EndCard") as Control
+	if banner2 == null or end2 == null:
+		check("the second battle HUD resolves", false)
+		second.queue_free()
+		_reset_state()
+		return
+	second.call("_on_wave_started", 2, 2)
+	second.call("_on_waves_cleared")
+	check("the card opens when the banner starts with the victory", end2.visible)
+	check("no banner survives a same-frame victory", not banner2.visible)
+	await get_tree().create_timer(3.0, true).timeout
+	check("the banner is still gone 3 s after the victory", not banner2.visible)
+	second.queue_free()
+	GameState.change_state(GameState.State.PLAYING)
 	_reset_state()
 
 
