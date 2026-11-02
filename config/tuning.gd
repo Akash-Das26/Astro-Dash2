@@ -125,6 +125,11 @@ const SHIP_INVULNERABILITY: float = 0.9
 const SHIP_SHIELD_GRACE: float = 0.4
 const SHIP_BLINK_INTERVAL: float = 0.08
 const SHIP_BLINK_ALPHA: float = 0.3
+## Accessibility. With reduce motion on, hit flashes peak at this alpha instead
+## of a full-brightness spike, the hull never scale-pops, shockwave rings are
+## not spawned, the elite rim glow holds still and the wave banner fades in
+## place instead of popping. README lists every effect it covers.
+const REDUCE_MOTION_FLASH_ALPHA: float = 0.3
 const MAX_SHIELD_CHARGES: int = 3
 ## Shield drops: a blue bubble that drifts down, always worth one charge.
 const SHIELD_DROP_CHANCE: float = 0.05

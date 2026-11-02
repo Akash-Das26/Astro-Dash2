@@ -438,10 +438,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- Feedback ---------------------------------------------------------------
 
+## A hit shows as a tinted flash over the hull. Reduce motion keeps the tint
+## but lowers the peak and drops the scale pop (which is the moving part).
 func _play_hit_feedback(tint: Color) -> void:
-	_flash.modulate = Color(tint.r, tint.g, tint.b, 0.85)
+	var peak: float = Tuning.REDUCE_MOTION_FLASH_ALPHA if SaveData.reduce_motion else 0.85
+	_flash.modulate = Color(tint.r, tint.g, tint.b, peak)
 	var flash_tween := create_tween()
 	flash_tween.tween_property(_flash, "modulate:a", 0.0, 0.16)
+	if SaveData.reduce_motion:
+		return
 	_sprite.scale = _base_scale * 1.25
 	var pop_tween := create_tween()
 	pop_tween.tween_property(_sprite, "scale", _base_scale, 0.18) \

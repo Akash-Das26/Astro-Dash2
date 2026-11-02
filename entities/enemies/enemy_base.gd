@@ -233,6 +233,10 @@ func _build_glow(texture: Texture2D, used: Rect2, art_scale: float) -> void:
 	_glow.modulate = Color(tint.r, tint.g, tint.b, Tuning.ELITE_GLOW_ALPHA)
 	if _glow_tween != null and _glow_tween.is_valid():
 		_glow_tween.kill()
+	_glow_tween = null
+	# Reduce motion keeps the rim but stops the breathing: static, not pulsing.
+	if SaveData.reduce_motion:
+		return
 	_glow_tween = create_tween().set_loops()
 	_glow_tween.tween_property(
 		_glow, "modulate:a", Tuning.ELITE_GLOW_ALPHA_MIN, Tuning.ELITE_GLOW_PULSE_SECONDS
@@ -448,10 +452,11 @@ func on_player_contact() -> void:
 	destroy()
 
 
+## Reduce motion softens the peak so a stream of hits does not strobe.
 func _flash_hit() -> void:
 	if _flash_tween != null and _flash_tween.is_valid():
 		_flash_tween.kill()
-	_flash.modulate.a = 0.9
+	_flash.modulate.a = Tuning.REDUCE_MOTION_FLASH_ALPHA if SaveData.reduce_motion else 0.9
 	_flash_tween = create_tween()
 	_flash_tween.tween_property(_flash, "modulate:a", 0.0, hit_flash_time)
 

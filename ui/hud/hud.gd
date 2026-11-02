@@ -267,12 +267,18 @@ func show_banner(text: String) -> void:
 	_banner_label.visible = true
 	_banner_label.modulate.a = 1.0
 	_banner_label.pivot_offset = _banner_label.size * 0.5
-	_banner_label.scale = Vector2(BANNER_SCALE_FROM, BANNER_SCALE_FROM)
 	if _banner_tween != null and _banner_tween.is_valid():
 		_banner_tween.kill()
-	_banner_tween = create_tween()
-	_banner_tween.tween_property(_banner_label, "scale", Vector2.ONE, BANNER_POP_SECONDS) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_banner_tween = null
+	# Reduce motion: the banner fades out on its timer as usual but never pops
+	# in, so nothing on screen scales.
+	if SaveData.reduce_motion:
+		_banner_label.scale = Vector2.ONE
+	else:
+		_banner_label.scale = Vector2(BANNER_SCALE_FROM, BANNER_SCALE_FROM)
+		_banner_tween = create_tween()
+		_banner_tween.tween_property(_banner_label, "scale", Vector2.ONE, BANNER_POP_SECONDS) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_banner_timer.start(BANNER_SECONDS)
 
 

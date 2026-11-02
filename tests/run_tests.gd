@@ -54,6 +54,7 @@ func _ready() -> void:
 	await _test_credits()
 	_test_controls()
 	_test_keyboard_aim()
+	_test_reduce_motion()
 	_test_paths()
 	_restore_save()
 	print("")
@@ -1449,3 +1450,72 @@ func _test_keyboard_aim() -> void:
 	ship._update_aim(0.5)
 	check("a resting pointer stops aiming", ship._mouse_idle <= 0.0)
 	ship.queue_free()
+
+
+## Accessibility: every effect reduce motion claims to switch off, measured on
+## the real nodes rather than inferred from the flag.
+func _test_reduce_motion() -> void:
+	var before: bool = SaveData.reduce_motion
+	SaveData.reduce_motion = true
+
+	var ship := SHIP_SCENE.instantiate() as Ship
+	add_child(ship)
+	var sprite := ship.get_node("ShipSprite") as Sprite2D
+	var flash := ship.get_node("FlashSprite") as Sprite2D
+	var steady: Vector2 = sprite.scale
+	ship.call("_play_hit_feedback", Color.WHITE)
+	check(
+		"reduce motion softens the ship hit flash",
+		flash.modulate.a <= Tuning.REDUCE_MOTION_FLASH_ALPHA + 0.001,
+		"alpha %.2f" % flash.modulate.a
+	)
+	check("reduce motion removes the ship scale pop", sprite.scale.is_equal_approx(steady))
+	ship.queue_free()
+
+	var holder := Node2D.new()
+	add_child(holder)
+	var enemy := FIGHTER_SCENE.instantiate() as EnemyBase
+	enemy.configure(&"scout", Vector2(300.0, 300.0), null)
+	holder.add_child(enemy)
+	enemy.call("_flash_hit")
+	var enemy_flash := enemy.get_node("FlashSprite") as Sprite2D
+	check(
+		"reduce motion softens the fighter hit flash",
+		enemy_flash.modulate.a <= Tuning.REDUCE_MOTION_FLASH_ALPHA + 0.001,
+		"alpha %.2f" % enemy_flash.modulate.a
+	)
+	var elite := FIGHTER_SCENE.instantiate() as EnemyBase
+	elite.configure(&"elite_red", Vector2(350.0, 300.0), null)
+	holder.add_child(elite)
+	var glow_tween: Variant = elite.get("_glow_tween")
+	check(
+		"reduce motion keeps the elite rim static",
+		glow_tween == null or not (glow_tween as Tween).is_valid()
+	)
+	holder.queue_free()
+
+	var battle := BATTLE_SCENE.instantiate()
+	add_child(battle)
+	var effects := battle.get_node("World/Effects")
+	var before_count: int = effects.get_child_count()
+	battle.call("_spawn_shockwave", Vector2(100.0, 100.0), Color.WHITE)
+	check(
+		"reduce motion skips shockwave rings",
+		effects.get_child_count() == before_count,
+		"%d -> %d" % [before_count, effects.get_child_count()]
+	)
+	battle.queue_free()
+
+	var hud := HUD_SCENE.instantiate() as BattleHUD
+	add_child(hud)
+	hud.show_banner("WAVE 1/3")
+	var banner := hud.get_node("Root/BannerLabel") as Label
+	check(
+		"reduce motion fades the banner without a pop",
+		banner.scale.is_equal_approx(Vector2.ONE),
+		"scale %s" % banner.scale
+	)
+	hud.call("hide_banner")
+	hud.queue_free()
+
+	SaveData.reduce_motion = before

@@ -162,6 +162,12 @@ persisted), mute (a Master-bus mute), reduce motion, touch auto-fire,
 `user://save.cfg`) and **REMAP CONTROLS**, which opens the binding card. The note
 under the sliders always shows the keys that are bound right now.
 
+**REDUCE MOTION** turns off every screen-shaking and popping effect: camera
+shake, the ship's hit flash peak and its scale pop, the fighters' hit flash
+peak, shockwave rings, the elite rim glow's pulse (the rim stays, static) and
+the wave banner's scale pop (the banner still fades out on its timer). Nothing
+it covers changes how the game plays.
+
 Music is a playlist of every `.ogg` / `.mp3` / `.wav` in
 `assets/audio/music/`. Settings shows **NOW PLAYING**, **PREV**, **NEXT** and a
 **SHUFFLE / IN ORDER** toggle. Shuffle uses a bag, so a full pass plays every

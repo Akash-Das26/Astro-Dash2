@@ -775,7 +775,11 @@ func _live_explosions() -> int:
 	return count
 
 
+## Reduce motion skips the expanding ring entirely: it is pure motion and the
+## explosion or hit flash behind it already shows that something landed.
 func _spawn_shockwave(at: Vector2, tint: Color) -> void:
+	if SaveData.reduce_motion:
+		return
 	var wave := SHOCKWAVE_SCRIPT.new() as Shockwave
 	wave.position = at
 	wave.tint = tint
