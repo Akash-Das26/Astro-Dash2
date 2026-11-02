@@ -28,6 +28,15 @@ const ALL_WEAPONS: Array[StringName] = [&"pulse", &"cannon", &"scatter", &"rail"
 ## A boss row runs this long, so even a losing loadout has time to bring the
 ## station down before the row ends.
 const BOSS_SECONDS: float = 90.0
+## Soak: a leak hunt, not a balance run (`-- soak <difficulty> <minutes>`).
+## The clock runs this fast, so 20 game minutes cost about two wall minutes.
+const SOAK_TIME_SCALE: float = 8.0
+## One sample per this many GAME seconds, so the table lines up with the short
+## rows' 10 s samples at 1x.
+const SOAK_SAMPLE_SECONDS: float = 60.0
+## Growth of nodes, objects or orphans between the first and last sample above
+## this fraction is reported as a leak.
+const SOAK_LEAK_FRACTION: float = 0.15
 
 var _rows: Array[Dictionary] = []
 var _battle: Node = null
@@ -61,6 +70,11 @@ var _phase_damage: Dictionary = {}
 ## `-- --probe` runs a single 12 s row with a frame-by-frame log, for working
 ## out why a battle is not simulating.
 var _probe: bool = false
+## Soak run samples; each is one printed line plus the numbers the growth check
+## compares. Empty unless `-- soak` was passed.
+var _soak_samples: Array[Dictionary] = []
+## Battles started because the previous one was won or the ship died.
+var _soak_restarts: int = 0
 
 
 func _ready() -> void:
@@ -92,6 +106,12 @@ func _ready() -> void:
 		var first: Dictionary = _rows[0].duplicate()
 		first["seconds"] = 12.0
 		_rows = [first]
+	# Soak: `-- soak <difficulty> <minutes>` is its own mode, not a row.
+	var soak_args: PackedStringArray = _requested_soak()
+	if not soak_args.is_empty():
+		await _run_soak(StringName(soak_args[0]), float(soak_args[1]))
+		get_tree().quit(1 if not _problems.is_empty() else 0)
+		return
 	# Balance run: `-- <difficulty>` flies exactly one 60 s row of that mode, with
 	# no forced victory or kill, and prints the hull left plus who hurt the ship.
 	var balance_mode: StringName = _requested_mode()
@@ -568,6 +588,167 @@ func _requested_mode() -> StringName:
 		if Tuning.DIFFICULTY_ORDER.has(candidate):
 			return candidate
 	return &""
+
+
+## The soak request: ["cadet", "20"] from `-- soak cadet 20`, or empty.
+func _requested_soak() -> PackedStringArray:
+	var args: PackedStringArray = OS.get_cmdline_user_args()
+	var at: int = args.find("soak")
+	if at < 0 or at + 2 >= args.size():
+		return PackedStringArray()
+	var mode: String = args[at + 1].to_lower()
+	var minutes: String = args[at + 2]
+	if not Tuning.DIFFICULTY_ORDER.has(StringName(mode)) or not minutes.is_valid_float():
+		return PackedStringArray()
+	if float(minutes) <= 0.0:
+		return PackedStringArray()
+	return PackedStringArray([mode, minutes])
+
+
+# --- Soak -------------------------------------------------------------------
+
+## One continuous battle for N game minutes at SOAK_TIME_SCALE: the bot flies
+## and fires, and a battle that is won or lost is replaced by a fresh one (the
+## restarts are counted). Every SOAK_SAMPLE_SECONDS it prints the counters, so
+## growth over the run is visible line by line and judged at the end.
+func _run_soak(mode: StringName, minutes: float) -> void:
+	print("")
+	print(
+		"SOAK %s %.0f game minutes at time_scale %.0f (wall ~%.0f min)"
+		% [String(mode).to_upper(), minutes, SOAK_TIME_SCALE, minutes / SOAK_TIME_SCALE]
+	)
+	SaveData.begin_campaign(20261102, mode)
+	SaveData.energy = 500
+	SaveData.campaign_best_planets = 40
+	SaveData.weapons_owned = ALL_WEAPONS.duplicate()
+	SaveData.weapon_primary = &"scatter"
+	SaveData.weapon_secondary = &"missile"
+	SaveData.shield_mode = Tuning.SHIELD_MODE_AUTO
+	var open: Array[StringName] = Campaign.attackable()
+	if open.is_empty():
+		_problems.append("soak: no attackable body")
+		return
+	var target: StringName = open[0]
+	_soak_samples.clear()
+	_soak_restarts = 0
+	Engine.time_scale = SOAK_TIME_SCALE
+	await _soak_start(target, 0.0)
+	var duration: float = minutes * 60.0
+	var elapsed: float = 0.0
+	var next_sample: float = SOAK_SAMPLE_SECONDS
+	while elapsed < duration:
+		await get_tree().process_frame
+		if not is_instance_valid(_battle) or not is_instance_valid(_ship):
+			break
+		elapsed += get_process_delta_time()
+		_steer(elapsed)
+		if not _ship.alive or _battle.victory:
+			_soak_restarts += 1
+			print(
+				"SOAK t=%.0fs restart #%d (%s) nodes=%d orphans=%d"
+				% [
+					elapsed, _soak_restarts,
+					"won" if _battle.victory else "ship down",
+					_perf(Performance.OBJECT_NODE_COUNT),
+					_perf(Performance.OBJECT_ORPHAN_NODE_COUNT),
+				]
+			)
+			await _soak_start(target, elapsed)
+		if elapsed >= next_sample:
+			next_sample += SOAK_SAMPLE_SECONDS
+			_soak_sample(elapsed)
+	Engine.time_scale = 1.0
+	Input.action_release(&"shoot")
+	Input.action_release(&"shoot_alt")
+	_hold_move(Vector2.ZERO)
+	_soak_finish(mode, minutes)
+	if is_instance_valid(_battle):
+		_battle.queue_free()
+		_battle = null
+		_ship = null
+	await get_tree().process_frame
+
+
+## Replaces the battle: a new scene instance of the same body and a fresh hull.
+## The body is re-armed first because a battle scene consumes the pending id.
+func _soak_start(target: StringName, elapsed: float) -> void:
+	if is_instance_valid(_battle):
+		_battle.queue_free()
+		_battle = null
+		_ship = null
+		await get_tree().process_frame
+	if GameState.state != GameState.State.PLAYING:
+		GameState.change_state(GameState.State.PLAYING)
+	Campaign.start_battle(target)
+	_battle = BATTLE_SCENE.instantiate()
+	add_child(_battle)
+	_ship = _battle.ship
+	if _ship == null:
+		_problems.append("soak: restart produced no ship")
+		return
+	print(
+		"SOAK t=%.0fs battle started hull=%d/%d nodes=%d"
+		% [elapsed, _ship.hp, _ship.max_hp, _perf(Performance.OBJECT_NODE_COUNT)]
+	)
+	Input.action_press(&"shoot")
+	Input.action_press(&"shoot_alt")
+
+
+func _perf(monitor: Performance.Monitor) -> int:
+	return int(Performance.get_monitor(monitor))
+
+
+## One line per sample: node, orphan, object, memory and live-body counts. The
+## texture figure is the only GPU memory the engine exposes as a monitor; audio
+## memory has none, so it is not printed.
+func _soak_sample(elapsed: float) -> void:
+	var nodes: int = _perf(Performance.OBJECT_NODE_COUNT)
+	var orphans: int = _perf(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	var objects: int = _perf(Performance.OBJECT_COUNT)
+	var live: bool = is_instance_valid(_battle)
+	_soak_samples.append({
+		"t": elapsed, "nodes": nodes, "orphans": orphans, "objects": objects,
+	})
+	print(
+		"SOAK t=%.0fs nodes=%d orphans=%d objects=%d static=%.1fMB tex=%.1fMB fps=%d bullets=%d enemies=%d rocks=%d"
+		% [
+			elapsed, nodes, orphans, objects,
+			Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
+			Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0,
+			Engine.get_frames_per_second(),
+			_battle.bullets.get_child_count() if live else 0,
+			_battle.enemies.get_child_count() if live else 0,
+			_battle.asteroids.get_child_count() if live else 0,
+		]
+	)
+
+
+## Compares the first and last sample and names every counter that grew past
+## SOAK_LEAK_FRACTION. Fewer than two samples cannot judge growth.
+func _soak_finish(mode: StringName, minutes: float) -> void:
+	print(
+		"SOAK SUMMARY %s %.0f min restarts=%d samples=%d"
+		% [String(mode).to_upper(), minutes, _soak_restarts, _soak_samples.size()]
+	)
+	if _soak_samples.size() < 2:
+		_problems.append("soak: not enough samples to judge growth")
+		return
+	var first: Dictionary = _soak_samples[0]
+	var last: Dictionary = _soak_samples[-1]
+	var leaked: PackedStringArray = []
+	for key: String in ["nodes", "orphans", "objects"]:
+		var from: int = int(first[key])
+		var to: int = int(last[key])
+		var growth: float = float(to - from) / float(maxi(from, 1))
+		print("SOAK growth %s %+d (%+.1f%%)" % [key, to - from, growth * 100.0])
+		if growth > SOAK_LEAK_FRACTION:
+			leaked.append("%s +%.1f%%" % [key, growth * 100.0])
+	if leaked.is_empty():
+		print("SOAK no growth over %.0f%%" % (SOAK_LEAK_FRACTION * 100.0))
+	else:
+		_problems.append(
+			"soak: growth over %.0f%%: %s" % [SOAK_LEAK_FRACTION * 100.0, ", ".join(leaked)]
+		)
 
 
 ## "scout=12 heavy=8" worst first, so the biggest threat reads first.

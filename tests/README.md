@@ -72,6 +72,25 @@ tests exercise the real singletons and the real classes.
 `user://save.cfg` is copied to `user://save.tests-backup.cfg` before the first
 write and restored when the run ends, so a real playthrough is not damaged.
 
+## Soak
+
+```bat
+"D:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe" ^
+  --headless --path . res://tests/battle_bot.tscn -- soak cadet 20
+```
+
+`-- soak <difficulty> <minutes>` flies one continuous battle for that many
+**game** minutes at `SOAK_TIME_SCALE` (8x), so 20 game minutes cost about two
+and a half wall minutes. A battle that is won or the hull that dies is replaced
+by a fresh one and counted as a restart. Every `SOAK_SAMPLE_SECONDS` (60 game
+seconds) it prints node count, orphan nodes, object count, static and texture
+memory, FPS and the live bullet/enemy/rock counts. At the end it compares the
+first and last sample and fails when nodes, orphans or objects grew by more than
+`SOAK_LEAK_FRACTION` (15%). Audio memory has no Performance monitor, so it is not
+reported. Results from the last run: CADET 20 min, 175 restarts, nodes +4.4%,
+objects +0.8%, orphans 0; SINGULARITY 20 min, 66 restarts, nodes -10.8%
+(the run ends with fewer bodies alive), objects -1.3%, orphans 0 - no leak.
+
 ## Notes
 
 - `Performance.get_monitor(Performance.OBJECT_NODE_COUNT)` growth checks and the

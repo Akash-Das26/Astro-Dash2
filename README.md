@@ -366,6 +366,10 @@ godot --headless --path . res://tests/run_tests.tscn
 # wrap, open and close the pause card, then reach the victory and game-over
 # cards. It prints the live node count and frame rate every 10 s.
 godot --headless --path . res://tests/battle_bot.tscn
+# Soak: one continuous battle for N game minutes at 8x speed, restarted on
+# every win and loss, printing nodes, orphans, objects and memory once a game
+# minute and a growth verdict (over 15% counts as a leak).
+godot --headless --path . res://tests/battle_bot.tscn -- soak cadet 20
 ```
 
 `tests/run_all.ps1` runs the suite through PowerShell and prints the PASS/FAIL
