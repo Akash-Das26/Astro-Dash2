@@ -1278,3 +1278,58 @@ func _test_controls() -> void:
 	check("binding survives a reload", String(SaveData.keyboard_bindings.get(&"shoot", "")) != "")
 	Controls.reset_all()
 	check("reset clears the custom binding", not SaveData.keyboard_bindings.has(&"shoot"))
+
+	# Every action the game itself uses must be playable with both device
+	# families. The engine's own ui_* actions are out of scope: they are editor
+	# navigation, not gameplay, and many of them are keyboard-only on purpose.
+	# Tuning.CONTROL_PAD_ONLY carries the intentional exceptions and the reason.
+	var actions: Array[StringName] = Tuning.CONTROL_ACTIONS.duplicate()
+	for action: StringName in Tuning.CONTROL_AIM_ACTIONS:
+		if not actions.has(action):
+			actions.append(action)
+	var no_pad: PackedStringArray = []
+	var no_key: PackedStringArray = []
+	for action: StringName in actions:
+		var has_key: bool = false
+		var has_pad: bool = false
+		for existing: InputEvent in InputMap.action_get_events(action):
+			if existing is InputEventKey or existing is InputEventMouseButton:
+				has_key = true
+			elif existing is InputEventJoypadButton or existing is InputEventJoypadMotion:
+				has_pad = true
+		if not has_pad:
+			no_pad.append(String(action))
+		if not has_key and not Tuning.CONTROL_PAD_ONLY.has(action):
+			no_key.append(String(action))
+	check("every gameplay action has a gamepad binding", no_pad.is_empty(), ", ".join(no_pad))
+	check("no gameplay action is keyboard-only", no_key.is_empty(), ", ".join(no_key))
+
+	# The exception list has to stay honest: a declared pad-only action really
+	# has a pad binding and no keyboard one, so the list cannot hide a gap.
+	var mislabelled: PackedStringArray = []
+	for action: StringName in Tuning.CONTROL_PAD_ONLY:
+		var pad_seen: bool = false
+		var key_seen: bool = false
+		for existing: InputEvent in InputMap.action_get_events(action):
+			if existing is InputEventKey or existing is InputEventMouseButton:
+				key_seen = true
+			elif existing is InputEventJoypadButton or existing is InputEventJoypadMotion:
+				pad_seen = true
+		if not pad_seen or key_seen:
+			mislabelled.append(String(action))
+		else:
+			print("INFO pad-only %s: %s" % [action, Tuning.CONTROL_PAD_ONLY[action]])
+	check("the pad-only list matches the InputMap", mislabelled.is_empty(), ", ".join(mislabelled))
+
+	# H-1: a pad-only player can open the controls card with Select/Back.
+	var back_bound: bool = false
+	for existing: InputEvent in InputMap.action_get_events(&"controls"):
+		if existing is InputEventJoypadButton \
+				and (existing as InputEventJoypadButton).button_index == JOY_BUTTON_BACK:
+			back_bound = true
+	check("the controls card opens from gamepad BACK", back_bound)
+	check("the controls binding is remappable", not Controls.is_fixed(&"controls"))
+	check(
+		"the help text names the gamepad controls binding",
+		Controls.help_text().contains(Controls.binding_text(&"controls", true))
+	)

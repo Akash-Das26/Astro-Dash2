@@ -207,6 +207,26 @@ const CONTROL_LABELS: Dictionary = {
 	&"controls": "CONTROLS CARD",
 	&"pause": "PAUSE / MENU",
 }
+## Actions that intentionally have no keyboard/mouse binding, with the reason.
+## The input test reads this: every action not listed here must have at least
+## one keyboard/mouse binding AND at least one gamepad binding, so no screen
+## and no move is locked to one device. Nothing in the game is keyboard-only.
+##
+## The analogue aim axes only exist on a stick. A keyboard rotates the nose
+## through aim_left / aim_right instead (Ship._update_aim), so those two are
+## not in this list once their keys are bound.
+const CONTROL_PAD_ONLY: Dictionary = {
+	&"aim": "any right-stick deflection; the keyboard aim keys cover this",
+	&"aim_left": "analogue axis; keyboard aim uses the same action",
+	&"aim_right": "analogue axis; keyboard aim uses the same action",
+	&"aim_up": "vertical stick axis with no keyboard equivalent (aim rotates the nose)",
+	&"aim_down": "vertical stick axis with no keyboard equivalent (aim rotates the nose)",
+}
+## The aim actions, listed apart from CONTROL_ACTIONS because they are not in
+## the remap card's scheme lists.
+const CONTROL_AIM_ACTIONS: Array[StringName] = [
+	&"aim", &"aim_left", &"aim_right", &"aim_up", &"aim_down",
+]
 ## Classic flight: how fast the hull turns, in radians per second.
 const SHIP_CLASSIC_TURN_RATE: float = 3.0
 ## Shield behaviour. AUTO spends a charge on every hit (the original rule);

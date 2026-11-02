@@ -168,9 +168,10 @@ static func help_text() -> String:
 			continue
 		parts.append("%s %s" % [label(action), binding_text(action, false)])
 	var text: String = "%s   |   %s" % [scheme_label(), "   ".join(parts)]
-	text += "\nPAUSE %s (FIXED)   |   ESC / B BACK   |   %s CONTROLS" % [
+	text += "\nPAUSE %s (FIXED)   |   ESC / B BACK   |   %s / %s CONTROLS" % [
 		binding_text(&"pause", false),
 		binding_text(&"controls", false),
+		binding_text(&"controls", true),
 	]
 	text += "\nTHE HULL HEALS BETWEEN PLANETS BY DIFFICULTY; THE SHIELD STARTS FULL EVERY BATTLE"
 	text += "\nSHIELD %s   |   FIRST CHARGE: %d ON CADET / VECTOR, 0 ON SUPERNOVA AND ABOVE" % [
