@@ -13,15 +13,35 @@ const MAX_EXAMPLES := 6
 
 var _findings: Array[String] = []
 var _pose_label: String = ""
+## Root children that existed before the first pose: the autoloads and this
+## audit. Anything else at the root afterwards came from a scene change.
+var _root_baseline: Array[Node] = []
 
 
 func _ready() -> void:
+	# A pose may legally change the scene: the map hands the player back to the
+	# front end when no run is active, and a finished campaign returns to the
+	# map. change_scene_to_file frees the tree's current_scene, which would be
+	# this audit, leaving it unable to print or quit. Detach it first and free
+	# whatever scene a pose opens after the pose instead.
+	get_tree().current_scene = null
+	_root_baseline.assign(get_tree().root.get_children())
 	await get_tree().process_frame
 	for pose: Dictionary in _poses():
 		await _audit(pose)
 	print("")
 	print("AUDIT DONE findings=%d" % _findings.size())
 	get_tree().quit(0)
+
+
+## Drops a scene a pose opened, plus the root's current_scene pointer, so the
+## next pose starts from the same tree it did before.
+func _clear_strays() -> void:
+	for child: Node in get_tree().root.get_children():
+		if not _root_baseline.has(child):
+			child.free()
+	if get_tree().current_scene != null:
+		get_tree().current_scene = null
 
 
 func _poses() -> Array[Dictionary]:
@@ -119,6 +139,11 @@ func _audit(pose: Dictionary) -> void:
 	if packed == null:
 		_report("the scene cannot be loaded")
 		return
+	# The map refuses to open without a run behind it and would bounce straight
+	# to the front end, so the run is set up before its _ready runs, not after.
+	if (pose["actions"] as Array).has("seed"):
+		SaveData.campaign_active = true
+		SaveData.campaign_seed = 20260101
 	var node: Node = packed.instantiate()
 	add_child(node)
 	if node is Control:
@@ -142,6 +167,7 @@ func _audit(pose: Dictionary) -> void:
 	print("   findings this pose %d" % _pose_findings)
 	node.queue_free()
 	await get_tree().process_frame
+	_clear_strays()
 
 
 var _pose_findings: int = 0
