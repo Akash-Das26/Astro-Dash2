@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Space Shooter"
+config/name="Astro Dash 2"
 config/version="0.9.0"
 run/main_scene="res://ui/menu/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
