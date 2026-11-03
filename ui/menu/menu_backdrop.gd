@@ -1,8 +1,10 @@
 class_name MenuBackdrop
 extends Node2D
 ## The animated main-menu background: ships with live thrusters crossing the
-## screen, rocks tumbling past, one large asteroid on the left and the warpgate
-## frames breathing behind the title. All of it is existing sprite art, moved
+## screen, rocks tumbling past, one large asteroid in the lower right and the
+## warpgate frames breathing behind the title. The large rock sits away from
+## the button column and is kept fully on screen: a texture this size anchored
+## half off the edge read as a pale rectangle behind the menu. All of it is existing sprite art, moved
 ## with simple sine drift so the front end costs nothing.
 
 const SHIP_TEXTURES: Array[Texture2D] = [
@@ -28,8 +30,8 @@ const THRUSTER_SCENE: PackedScene = preload("res://entities/fx/thruster.tscn")
 const WARP_FPS: float = 9.0
 const SHIP_COUNT: int = 5
 const ROCK_COUNT: int = 5
-const BIG_ROCK_POSITION: Vector2 = Vector2(64.0, 438.0)
-const BIG_ROCK_SCALE: float = 5.4
+const BIG_ROCK_POSITION: Vector2 = Vector2(846.0, 470.0)
+const BIG_ROCK_SCALE: float = 2.4
 const GATE_POSITION: Vector2 = Vector2(742.0, 292.0)
 const GATE_SCALE: float = 1.5
 ## How far off screen a drifting sprite starts before it wraps.
@@ -97,7 +99,7 @@ func _build_big_rock() -> void:
 	_big_rock.texture = ROCK_TEXTURES[1]
 	_big_rock.scale = Vector2.ONE * BIG_ROCK_SCALE
 	_big_rock.position = BIG_ROCK_POSITION
-	_big_rock.modulate = Color(0.7, 0.74, 0.86, 0.55)
+	_big_rock.modulate = Color(0.7, 0.74, 0.86, 0.34)
 	add_child(_big_rock)
 
 
